@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 
-#include "VTexture.h"
 #include "VMesh.h"
 
 

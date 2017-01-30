@@ -1,0 +1,20 @@
+set(SOURCE ${SOURCE} ${CMAKE_CURRENT_SOURCE_DIR}/VelGL.cpp)
+set(HEADERS ${HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}/VelGL.h)
+
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VBuffers)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VCameras)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VDrawable)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VGeo)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VLights)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VMaterials)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VOpenGL)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VRendering)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VShaders)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VTextures)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VWindow)
+
+set_property( GLOBAL PROPERTY USE_FOLDERS ON)
+
+add_library(VelEng ${SOURCE} ${HEADERS})
+source_group(VWindow FILES VWindow.cpp VWindowInfo.cpp)
+target_include_directories (VelEng PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

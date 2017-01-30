@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "glm/glm.hpp"
-#include "VTexture.h"
+#include "VTextures/VTexture.h"
 
 namespace Vel
 {

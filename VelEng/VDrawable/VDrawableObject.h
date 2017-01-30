@@ -3,8 +3,8 @@
 #include <vector>
 #include "GL/glew.h"
 #include "glm/common.hpp"
-#include "VGLSLShader.h"
-#include "VGeo.h"
+#include "VShaders/VGLSLShader.h"
+#include "VGeo/VGeo.h"
 #include <memory>
 
 namespace Vel

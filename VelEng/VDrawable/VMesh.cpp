@@ -15,7 +15,7 @@ namespace Vel
 	}
 
 	//loads mesh from file into GPU
-	void VMesh::LoadMesh(const char * filename) //TODO loading an actual mesh
+	void VMesh::LoadMesh(const char * filename) //TODO loading an actual mesh, test cube for now
 	{
 		if (_isLoaded)
 			return;
@@ -53,7 +53,7 @@ namespace Vel
 		_isLoaded = true;
 	}
 
-	void VMesh::AddMaterial(const std::shared_ptr<VMaterial>& mat)
+	void VMesh::SetMaterial(const std::shared_ptr<VMaterial>& mat)
 	{
 		_material = mat;
 	}

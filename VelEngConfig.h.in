@@ -1,0 +1,2 @@
+#define CMakeAttempt_VERSION_MAJOR @CMakeAttempt_VERSION_MAJOR@ 
+#define CMakeAttempt_VERSION_MINOR @CMakeAttempt_VERSION_MINOR@

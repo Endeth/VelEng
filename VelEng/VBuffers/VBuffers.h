@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GL/glew.h"
-#include "VVertices.h"
+#include "VGeo/VVertices.h"
 #include <memory>
 #include <vector>
 

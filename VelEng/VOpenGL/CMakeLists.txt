@@ -1,0 +1,13 @@
+set(HEADERS
+   ${HEADERS}
+   ${CMAKE_CURRENT_SOURCE_DIR}/freeglut.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/freeglut_ext.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/freeglut_std.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/glew.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/glfw3.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/glfw3native.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/glut.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/glxew.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/wglew.h
+   PARENT_SCOPE
+)

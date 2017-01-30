@@ -6,7 +6,7 @@ namespace Vel
 {
 	using namespace std;
 
-	void ChangeRenderMode(shared_ptr<GLSLShader> &shader, int mode)
+	void ChangeRenderMode(std::shared_ptr<GLSLShader> &shader, int mode)
 	{
 		shader->Activate();
 		shader->SetUniformsValue(Uniform<int>{ "renderMode", mode});

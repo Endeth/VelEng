@@ -1,8 +1,8 @@
 #pragma once
 #include "GL/glew.h"
 #include "glm/glm.hpp"
-#include "VGLSLShader.h"
-#include "VFramebuffer.h"
+#include "VShaders/VGLSLShader.h"
+#include "VRendering/VFramebuffer.h"
 #include <memory>
 
 

@@ -4,12 +4,12 @@
 
 #include "GL/glew.h"
 #include "glm/glm.hpp"
-#include "VGLSLShader.h"
-#include "VGeo.h"
-#include "VBuffers.h"
-#include "VDrawableObject.h"
-#include "VTexture.h"
-#include "VMaterial.h"
+#include "VShaders/VGLSLShader.h"
+#include "VGeo/VGeo.h"
+#include "VBuffers/VBuffers.h"
+#include "VDrawable/VDrawableObject.h"
+#include "VTextures/VTexture.h"
+#include "VMaterials/VMaterial.h"
 
 namespace Vel
 {
@@ -21,7 +21,7 @@ namespace Vel
 		virtual ~VMesh();
 		
 		void LoadMesh(const char* filename = " ");
-		void AddMaterial(const std::shared_ptr<VMaterial>& mat);
+		void SetMaterial(const std::shared_ptr<VMaterial>& mat);
 		void DeleteVertices();
 
 		virtual void LoadIntoGPU();

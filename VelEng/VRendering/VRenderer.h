@@ -3,8 +3,8 @@
 #include "GL/glew.h"
 #include "glm/glm.hpp"
 #include "VFramebuffer.h"
-#include "VGLSLShader.h"
-#include "VScene.h"
+#include "VShaders/VGLSLShader.h"
+#include "VDrawable/VScene.h"
 
 namespace Vel
 {

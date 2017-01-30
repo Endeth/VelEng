@@ -6,19 +6,20 @@
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
-#include "VGLSLShader.h"
 
-#include "VWindow.h"
-#include "VelEngUti.h"
-#include "VScene.h"
-#include "VModel.h"
-#include "VCamera.h"
-#include "VTexture.h"
 #include "VTime.h"
-#include "VSky.h"
-#include "VRenderer.h"
-#include "VFramebuffer.h"
-#include "VLight.h"
+
+#include "VShaders/VGLSLShader.h"
+#include "VWindow/VWindow.h"
+#include "VUti/VelEngUti.h"
+#include "VDrawable/VScene.h"
+#include "VDrawable/VModel.h"
+#include "VDrawable/VSky.h"
+#include "VCameras/VCamera.h"
+#include "VTextures/VTexture.h"
+#include "VRendering/VRenderer.h"
+#include "VRendering/VFramebuffer.h"
+#include "VLights/VLight.h"
 
 
 namespace Vel
