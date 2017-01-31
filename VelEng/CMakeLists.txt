@@ -11,6 +11,7 @@ add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VOpenGL)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VRendering)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VShaders)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VTextures)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VUti)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VWindow)
 
 set_property( GLOBAL PROPERTY USE_FOLDERS ON)
