@@ -1,5 +1,5 @@
 
-#include "GL/glew.h"
+#include "glew.h"
 #include "VMaterial.h"
 
 namespace Vel

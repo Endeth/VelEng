@@ -1,2 +1,5 @@
-add_library (VelUti VTime.cpp)
-target_include_directories (VelUti PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+set(UTIHEADERS ${UTIHEADERS}
+	${CMAKE_CURRENT_SOURCE_DIR}/VSignal.h
+	${CMAKE_CURRENT_SOURCE_DIR}/VTime.h
+ )
+add_library (VelUti VTime.cpp ${UTIHEADERS})

@@ -4,10 +4,10 @@
 #include <memory>
 #include <string>
 
-#include "GL/glew.h"
-#include "GLFW/glfw3.h"
+#include "glew.h"
+#include "glfw3.h"
 
-#include "VTime.h"
+#include "../../VelUti/VTime.h"
 
 #include "VShaders/VGLSLShader.h"
 #include "VWindow/VWindow.h"
@@ -43,7 +43,7 @@ namespace Vel
 		bool AddShaderProgram(const std::string& name, const std::string& vertFilename, const std::string& fragFilename);
 		bool AddShaderProgram(const std::string& name, const std::string& vertFilename, const std::string& fragFilename, const std::string& geoFilename);
 
-		const std::shared_ptr<GLSLShader>& GetShader(const std::string& name);
+		const std::shared_ptr<VGLSLShader>& GetShader(const std::string& name);
 		const glm::ivec2& GetMainWindowSize() const { return _mainWindow->GetSize(); }
 		std::shared_ptr<VFreeCamera>& GetMainCamera() { return _mainCamera; }
 		VMouse& GetMouse() { return _mouse; }
@@ -68,7 +68,7 @@ namespace Vel
 		void GLFWInit();
 		void GlewInit();
 		
-		std::unordered_map<std::string, std::shared_ptr<GLSLShader>> _shaderPrograms;
+		std::unordered_map<std::string, std::shared_ptr<VGLSLShader>> _shaderPrograms;
 		std::map<std::string, std::shared_ptr<VScene>> _scenes;
 
 		std::shared_ptr<VFreeCamera> _mainCamera;

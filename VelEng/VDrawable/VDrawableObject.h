@@ -1,10 +1,10 @@
 #pragma once
 
 #include <vector>
-#include "GL/glew.h"
+#include "glew.h"
 #include "glm/common.hpp"
-#include "VShaders/VGLSLShader.h"
-#include "VGeo/VGeo.h"
+#include "../../VShaders/VGLSLShader.h"
+#include "../../VGeo/VGeo.h"
 #include <memory>
 
 namespace Vel
@@ -17,8 +17,8 @@ namespace Vel
 
 		void Draw();
 		void DrawWithImposedShader();
-		void SetShader(const std::shared_ptr<GLSLShader>& Shd) { _shader = Shd; SetVAO(); };
-		const std::shared_ptr<GLSLShader>& GetShader() const { return _shader; }
+		void SetShader(const std::shared_ptr<VGLSLShader>& Shd) { _shader = Shd; SetVAO(); };
+		const std::shared_ptr<VGLSLShader>& GetShader() const { return _shader; }
 
 		//virtual void SetUniformValue() = 0;
 		virtual void SetVAO() = 0;
@@ -38,6 +38,6 @@ namespace Vel
 		GLuint _vaoID;
 		GLenum _primitive;
 
-		std::shared_ptr<GLSLShader> _shader;
+		std::shared_ptr<VGLSLShader> _shader;
 	};
 }

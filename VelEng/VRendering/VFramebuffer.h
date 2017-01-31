@@ -2,10 +2,10 @@
 
 #include <memory>
 #include <vector>
-#include "GL/glew.h"
+#include "glew.h"
 #include "glm/glm.hpp"
 
-#include "VFBOTextures.h"
+#include "..\..\VTextures\VFBOTextures.h"
 
 namespace Vel
 {

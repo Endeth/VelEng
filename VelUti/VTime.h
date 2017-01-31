@@ -1,6 +1,6 @@
 #pragma once
 #include <chrono>
-#include "VelSignal.h"
+#include "VSignal.h"
 
 namespace Vel
 {

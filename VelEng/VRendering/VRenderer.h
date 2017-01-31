@@ -1,10 +1,10 @@
 #pragma once
 
-#include "GL/glew.h"
+#include "glew.h"
 #include "glm/glm.hpp"
-#include "VFramebuffer.h"
-#include "VShaders/VGLSLShader.h"
-#include "VDrawable/VScene.h"
+#include "../../VRendering/VFramebuffer.h"
+#include "../../VShaders/VGLSLShader.h"
+#include "../../VDrawable/VScene.h"
 
 namespace Vel
 {
@@ -24,7 +24,7 @@ namespace Vel
 
 	class VDefferedRenderer : public VRenderer
 	{
-		using ShaderPtr = std::shared_ptr<GLSLShader>;
+		using ShaderPtr = std::shared_ptr<VGLSLShader>;
 	public:
 		VDefferedRenderer(const glm::ivec2& resolution, const ShaderPtr &gPass, const ShaderPtr &lPass);
 		void Render();

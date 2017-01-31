@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GL/glew.h"
+#include "glew.h"
 #include "glm/glm.hpp"
 #include "VMesh.h"
 #include <memory>
@@ -11,7 +11,7 @@ namespace Vel
 	class VModel
 	{
 		friend class VMesh;
-		using ShaderPtr = std::shared_ptr<GLSLShader>;
+		using ShaderPtr = std::shared_ptr<VGLSLShader>;
 		using MeshPtr = std::shared_ptr<VMesh>;
 	public:
 		VModel();
@@ -34,7 +34,7 @@ namespace Vel
 		void ModelMatrixRotation();
 
 	private:
-		std::vector<std::shared_ptr<GLSLShader>> _shaders;
+		std::vector<std::shared_ptr<VGLSLShader>> _shaders;
 		std::vector<std::shared_ptr<VMesh>> _meshes;
 		glm::mat4 _modelMatrix;
 	};

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "VModel.h"
-#include "VShaders/VGLSLShader.h"
-#include "VLights/VLight.h"
+#include "../../VShaders/VGLSLShader.h"
+#include "../../VLights/VLight.h"
 #include <memory>
 #include <vector>
 
@@ -10,7 +10,7 @@ namespace Vel
 {
 	class VScene
 	{
-		using ShaderPtr = std::shared_ptr<GLSLShader>;
+		using ShaderPtr = std::shared_ptr<VGLSLShader>;
 	public:
 		void DrawScene();
 		void DrawSceneWithImposedShader(const ShaderPtr& shader);

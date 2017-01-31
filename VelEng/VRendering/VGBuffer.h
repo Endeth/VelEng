@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "GL/glew.h"
+#include "glew.h"
 #include "glm/glm.hpp"
 #include "VFramebuffer.h"
 namespace Vel

@@ -1,8 +1,8 @@
 #pragma once
-#include "GL/glew.h"
+#include "glew.h"
 #include "glm/glm.hpp"
-#include "VShaders/VGLSLShader.h"
-#include "VRendering/VFramebuffer.h"
+#include "../../VShaders/VGLSLShader.h"
+#include "../../VRendering/VFramebuffer.h"
 #include <memory>
 
 
@@ -36,7 +36,7 @@ namespace Vel
 	class VDynamicLight : public VLightSource
 	{
 	protected:
-		using ShaderPtr = std::shared_ptr<GLSLShader>;
+		using ShaderPtr = std::shared_ptr<VGLSLShader>;
 		using ShadowMapPtr = std::unique_ptr<VShadowMap>;
 	public:
 		VDynamicLight(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);

@@ -6,7 +6,7 @@ namespace Vel
 {
 	using namespace std;
 
-	void ChangeRenderMode(std::shared_ptr<GLSLShader> &shader, int mode)
+	void ChangeRenderMode(std::shared_ptr<VGLSLShader> &shader, int mode)
 	{
 		shader->Activate();
 		shader->SetUniformsValue(Uniform<int>{ "renderMode", mode});
@@ -58,7 +58,7 @@ namespace Vel
 	
 	bool VelEng::AddShaderProgram(const string & Name, const string & VertFilename, const string & FragFilename)
 	{
-		auto shader = _shaderPrograms.emplace(Name, make_shared<GLSLShader>()).first->second;
+		auto shader = _shaderPrograms.emplace(Name, make_shared<VGLSLShader>()).first->second;
 		shader->LoadFromFile(GL_VERTEX_SHADER, VertFilename);
 		shader->LoadFromFile(GL_FRAGMENT_SHADER, FragFilename);
 		shader->CreateAndLinkProgram();
@@ -70,7 +70,7 @@ namespace Vel
 
 	bool VelEng::AddShaderProgram(const string & Name, const string & VertFilename, const string & FragFilename, const string & GeoFilename)
 	{
-		auto shader = _shaderPrograms.emplace(Name, make_shared<GLSLShader>()).first->second;
+		auto shader = _shaderPrograms.emplace(Name, make_shared<VGLSLShader>()).first->second;
 		shader->LoadFromFile(GL_VERTEX_SHADER, VertFilename);
 		shader->LoadFromFile(GL_FRAGMENT_SHADER, FragFilename);
 		shader->LoadFromFile(GL_GEOMETRY_SHADER, GeoFilename);
@@ -79,7 +79,7 @@ namespace Vel
 		return true;
 	}
 
-	const shared_ptr<GLSLShader>& VelEng::GetShader(const string & name)
+	const shared_ptr<VGLSLShader>& VelEng::GetShader(const string & name)
 	{
 		return _shaderPrograms[name];
 	}

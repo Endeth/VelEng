@@ -16,5 +16,17 @@ add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VWindow)
 set_property( GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(VelEng ${SOURCE} ${HEADERS})
+
+find_package(OpenGL REQUIRED)
+
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/VOpenGL/)
+target_link_libraries(VelEng ${CMAKE_CURRENT_SOURCE_DIR}/VOpenGL/lib)
+
+include_directories(${OPENGL_INCLUDE_DIRS})
+target_link_libraries(VelEng ${OPENGL_LIBRARIES})
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/VOpenGL/SOIL)
+target_link_libraries(VelEng ${CMAKE_CURRENT_SOURCE_DIR}/VOpenGL/SOIL/)
+
 source_group(VWindow FILES VWindow.cpp VWindowInfo.cpp)
-target_include_directories (VelEng PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
