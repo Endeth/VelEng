@@ -18,7 +18,7 @@ add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VWindow)
 add_library(VelEng ${SOURCE} ${HEADERS})
 set(VelEngPath ${CMAKE_CURRENT_SOURCE_DIR})
 
-find_package(OpenGL REQUIRED)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/VOpenGL/)
 
 include_directories(${OPENGL_INCLUDE_DIRS})
