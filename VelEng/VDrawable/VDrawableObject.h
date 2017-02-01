@@ -1,10 +1,10 @@
 #pragma once
 
 #include <vector>
-#include "glew.h"
-#include "glm/common.hpp"
-#include "../../VShaders/VGLSLShader.h"
-#include "../../VGeo/VGeo.h"
+#include "../VOpenGL/glew.h"
+#include "../VOpenGL/glm/common.hpp"
+#include "../VShaders/VGLSLShader.h"
+#include "../VGeo/VGeo.h"
 #include <memory>
 
 namespace Vel

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "glew.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "../../VGeo/VGeo.h"
+#include "../VOpenGL/glew.h"
+#include "../VOpenGL/glm/glm.hpp"
+#include "../VOpenGL/glm/gtc/matrix_transform.hpp"
+#include "../VGeo/VGeo.h"
 
 namespace Vel
 {

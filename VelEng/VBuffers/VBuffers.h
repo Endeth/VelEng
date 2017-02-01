@@ -1,7 +1,7 @@
 #pragma once
 
-#include "glew.h"
-#include "../../VGeo/VVertices.h"
+#include "../VOpenGL/glew.h"
+#include "../VGeo/VVertices.h"
 #include <memory>
 #include <vector>
 

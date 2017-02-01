@@ -2,14 +2,14 @@
 #include <vector>
 #include <memory>
 
-#include "glew.h"
-#include "glm/glm.hpp"
-#include "../../VShaders/VGLSLShader.h"
-#include "../../VGeo/VGeo.h"
-#include "../../VBuffers/VBuffers.h"
-#include "../../VDrawable/VDrawableObject.h"
-#include "../../VTextures/VTexture.h"
-#include "../../VMaterials/VMaterial.h"
+#include "../VOpenGL/glew.h"
+#include "../VOpenGL/glm/glm.hpp"
+#include "../VShaders/VGLSLShader.h"
+#include "../VGeo/VGeo.h"
+#include "../VBuffers/VBuffers.h"
+#include "../VDrawable/VDrawableObject.h"
+#include "../VTextures/VTexture.h"
+#include "../VMaterials/VMaterial.h"
 
 namespace Vel
 {

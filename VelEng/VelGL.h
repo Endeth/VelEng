@@ -4,10 +4,10 @@
 #include <memory>
 #include <string>
 
-#include "glew.h"
-#include "glfw3.h"
+#include "VOpenGL/glew.h"
+#include "VOpenGL/glfw3.h"
 
-#include "../../VelUti/VTime.h"
+#include "../VelUti/VTime.h"
 
 #include "VShaders/VGLSLShader.h"
 #include "VWindow/VWindow.h"

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "glew.h"
-#include "glm/glm.hpp"
-#include "../../VRendering/VFramebuffer.h"
-#include "../../VShaders/VGLSLShader.h"
-#include "../../VDrawable/VScene.h"
+#include "../VOpenGL/glew.h"
+#include "../VOpenGL/glm/glm.hpp"
+#include "../VRendering/VFramebuffer.h"
+#include "../VShaders/VGLSLShader.h"
+#include "../VDrawable/VScene.h"
 
 namespace Vel
 {

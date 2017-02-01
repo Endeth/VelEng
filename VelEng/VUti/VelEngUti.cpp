@@ -87,6 +87,7 @@ const double Vel::VFrameClock::CalculateRenderTime()
 void Vel::VFrameClock::CapFPS()
 {
 	unsigned int sleepTime = (_frameRate - CalculateRenderTime()) * 1000;
-	if (sleepTime > 0);
+	if (sleepTime > 0)
 		std::this_thread::sleep_for(std::chrono::microseconds());
 }
+ 

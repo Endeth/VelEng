@@ -1,7 +1,7 @@
 #pragma once
 
-#include "glew.h"
-#include "glm/glm.hpp"
+#include "../VOpenGL/glew.h"
+#include "../VOpenGL/glm/glm.hpp"
 #include <string>
 
 namespace Vel

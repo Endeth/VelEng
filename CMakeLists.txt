@@ -1,17 +1,21 @@
 cmake_minimum_required(VERSION 3.7.0)
-project (VelEng)
+project (VelEngine)
 
-set (VelEng_VERSION_MAJOR 0)
-set (VelEng_VERSION_MINOR 1)
+set (VelEngine_VERSION_MAJOR 0)
+set (VelEngine_VERSION_MINOR 1)
+
+option(USE_VELTEST "Adds executable test case" ON)
 
 
-find_package(OpenGL REQUIRED)
 
 
 configure_file (
-	"${PROJECT_SOURCE_DIR}/VelEngConfig.h.in"
-	"${PROJECT_BINARY_DIR}/VelEngConfig.h"
+	"${PROJECT_SOURCE_DIR}/VelEngineConfig.h.in"
+	"${PROJECT_BINARY_DIR}/VelEngineConfig.h"
 )
  
 add_subdirectory(VelEng)
 add_subdirectory(VelUti)
+if(USE_VELTEST)
+	add_subdirectory(VelTest)
+endif()

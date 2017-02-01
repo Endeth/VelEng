@@ -1,8 +1,8 @@
 #pragma once
 
-#include "glew.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/type_ptr.hpp"
+#include "../VOpenGL/glew.h"
+#include "../VOpenGL/glm/glm.hpp"
+#include "../VOpenGL/glm/gtc/type_ptr.hpp"
 #include <iostream>
 #include <string>
 #include <map>

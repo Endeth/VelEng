@@ -1,8 +1,8 @@
 #pragma once
 
-#include "glew.h"
-#include "glfw3.h"
-#include "glm/glm.hpp"
+#include "../VOpenGL/glew.h"
+#include "../VOpenGL/glfw3.h"
+#include "../VOpenGL/glm/glm.hpp"
 #include <vector>
 #include <thread>
 #include <chrono>
@@ -45,7 +45,7 @@ namespace Vel
 		void KeyPress(const int key);
 		void KeyUp(const int key);
 		std::vector<int> _pressedKeys;
-		int _maxPressedKeys{ 4 };
+		size_t _maxPressedKeys{ 4 };
 	};
 
 	class VFrameClock
