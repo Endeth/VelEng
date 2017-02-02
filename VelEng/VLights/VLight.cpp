@@ -38,8 +38,8 @@ namespace Vel
 	VPointLight::VPointLight(const glm::vec3 & position, const VLightColor & colors) : VLightSource(colors), _position(position)
 	{
 		_constant = 1.0f;
-		_linear = 0.1f;
-		_quadratic = 0.1f;
+		_linear = 0.09f;
+		_quadratic = 0.032f;
 	}
 
 	void VPointLight::SetLightUniforms(GLuint lPassProgram)

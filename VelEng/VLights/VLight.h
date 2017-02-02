@@ -79,6 +79,7 @@ namespace Vel
 		void SetLightUniforms(GLuint lPassProgram);
 
 		const glm::vec3& GetPosition() const { return _position; }
+		void SetPosition(const glm::vec3 &pos) { _position = pos; }
 		void SetLightID(int id); //TODO debug func
 		
 	protected:
