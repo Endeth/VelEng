@@ -10,7 +10,7 @@ namespace Vel
 	class VSkybox : public VMesh
 	{
 	public:
-		VSkybox(std::shared_ptr<VSkyboxTexture> texture);
+		VSkybox(std::shared_ptr<VTextureCube> texture);
 		void SetVAO();
 	private:
 		void BindAdditionalDrawingOptions() final;
