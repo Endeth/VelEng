@@ -3,7 +3,7 @@
 
 Vel::VDefferedRenderer::VDefferedRenderer(const glm::ivec2& resolution, const ShaderPtr &gPass, const ShaderPtr &lPass) : _gBuffer(resolution), _gPassShader(gPass), _lPassShader(lPass)
 {
-	_quad.SetShader(lPass);	
+	_quad.SetShader(lPass);
 }
 
 //g and l passes
@@ -56,7 +56,7 @@ void Vel::VDefferedRenderer::LightingPass()
 Vel::VDefferedRenderer::LightingPassQuad::LightingPassQuad()
 {
 	_primitive = GL_TRIANGLES;
-	_vertices.reserve(8);
+	_vertices.reserve(4);
 	_vertices.push_back(Vertex(glm::vec3{ -1.0f,  1.0f, 0.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
 	_vertices.push_back(Vertex(glm::vec3{ -1.0f, -1.0f, 0.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec2{ 0.0f, 0.0f }));
 	_vertices.push_back(Vertex(glm::vec3{  1.0f,  1.0f, 0.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec2{ 1.0f, 1.0f }));

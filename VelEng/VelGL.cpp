@@ -178,7 +178,7 @@ namespace Vel
 
 	//adjusts camera and vp matrices in shaders, then renders scenes
 	void Vel::VelEng::RenderFrame()
-	{
+	{	
 		auto vMat = _mainCamera->GetViewMatrix();
 		auto pMat = _mainCamera->GetProjectionMatrix();
 
