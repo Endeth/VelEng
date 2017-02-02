@@ -31,6 +31,9 @@ namespace Vel
 
 		glTexParameteri(_textureType, GL_TEXTURE_WRAP_S, _wrapping);
 		glTexParameteri(_textureType, GL_TEXTURE_WRAP_T, _wrapping);
+
+		GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	}
 
 	VGeometryTexture::VGeometryTexture(const glm::ivec2 & size) : VFramebufferTexture(size)
@@ -70,5 +73,11 @@ namespace Vel
 		glTexImage2D(_textureType, 0, GL_DEPTH_COMPONENT32, _size.x, _size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 
+	void VDepthTexture::SetupTextureInfo()
+	{
+		_textureType = GL_TEXTURE_2D;
+		_wrapping = GL_MIRRORED_REPEAT;
+		_filtering = GL_LINEAR;
+	}
 
 }

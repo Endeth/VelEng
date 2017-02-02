@@ -123,6 +123,19 @@ namespace Vel
 	{
 		BindFBOWriting();
 		AddDepthTextureAttachment();
+		UnbindFBOWriting();
+	}
+
+	void VShadowMap::BindTexturesReading()
+	{
+		_depthAttachment->ActivateTextureUnit();
+		_depthAttachment->BindTexture();
+	}
+
+	void VShadowMap::UnbindTexturesReading()
+	{
+		_depthAttachment->ActivateTextureUnit();
+		_depthAttachment->UnbindTexture();
 	}
 
 	VShadowMap::~VShadowMap()
@@ -134,4 +147,5 @@ namespace Vel
 	{
 		VFramebuffer::AddDepthTextureAttachment();
 	}
+
 }

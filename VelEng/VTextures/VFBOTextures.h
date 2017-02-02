@@ -18,7 +18,7 @@ namespace Vel
 	public:
 		VGeometryTexture(const glm::ivec2& size);
 	private:
-		virtual void CreateTexture();
+		void CreateTexture();
 	};
 
 	class VAlbedoTexture : public VFramebufferTexture
@@ -26,16 +26,17 @@ namespace Vel
 	public:
 		VAlbedoTexture(const glm::ivec2& size);
 	private:
-		virtual void CreateTexture();
+		void CreateTexture();
 	};
 
 	class VDepthTexture : public VFramebufferTexture
 	{
 	public:
+		VDepthTexture(const glm::ivec2& size = glm::ivec2(512,512));
 		void AttachToFBO(GLuint attachment = GL_DEPTH_ATTACHMENT);
-		VDepthTexture(const glm::ivec2& size);
 		GLuint GetID() { return _texture; }
 	private:
-		virtual void CreateTexture();
+		void CreateTexture();
+		void SetupTextureInfo();
 	};
 }

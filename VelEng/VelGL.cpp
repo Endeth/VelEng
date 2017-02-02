@@ -179,8 +179,6 @@ namespace Vel
 	//adjusts camera and vp matrices in shaders, then renders scenes
 	void Vel::VelEng::RenderFrame()
 	{
-		//VelEng::Instance()->GetShader("BasicShader")->SetUniformsValue(Uniform<float>{ "Time", float(_frameClock.GetSimulationTime())});
-		//VelEng::Instance()->GetShader("BasicShader")->SetUniformsValue(Uniform<glm::vec3>{ "viewPos", _mainCamera->GetPosition()});
 		auto vMat = _mainCamera->GetViewMatrix();
 		auto pMat = _mainCamera->GetProjectionMatrix();
 
@@ -189,6 +187,14 @@ namespace Vel
 		gPassShd->SetUniformsValue(Uniform<glm::mat4>{ "V", vMat });
 		gPassShd->SetUniformsValue(Uniform<glm::mat4>{ "P", pMat });
 		gPassShd->Deactivate();
+
+		auto lpass = VelEng::Instance()->GetShader("LPass");
+		auto camPosition = VelEng::Instance()->_mainCamera->GetPosition();
+		lpass->Activate();
+		lpass->SetUniformsValue(Uniform<glm::vec3>{"viewPos", camPosition});
+		_scenes["World"]->SetLightUniforms(lpass->GetID());
+		lpass->Deactivate();
+
 
 		auto skybox = VelEng::Instance()->GetShader("SkyboxShader");
 		skybox->Activate();
@@ -203,7 +209,7 @@ namespace Vel
 
 	void VelEng::GLFWInit()
 	{
-		bool init = glfwInit();
+		int init = glfwInit();
 		assert(init);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);		
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);

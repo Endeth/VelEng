@@ -11,3 +11,4 @@ find_package(GLEW REQUIRED)
 include_directories(${GLEW_INCLUDE_DIRS})
 target_link_libraries(VelTest ${GLEW_LIBRARIES})
 
+set(RESPATH ${CMAKE_CURRENT_SOURCE_DIR}/Resources)

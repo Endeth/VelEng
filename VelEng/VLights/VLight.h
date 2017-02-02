@@ -4,16 +4,20 @@
 #include "../VShaders/VGLSLShader.h"
 #include "../VRendering/VFramebuffer.h"
 #include <memory>
+#include <list>
 
 
 namespace Vel
 {
-
 	class VLightSource
 	{
+	protected:
+		using ShaderPtr = std::shared_ptr<VGLSLShader>;
+		using ShadowMapFBOPtr = std::unique_ptr<VShadowMap>;
 	public:
 		class VLightColor
 		{
+
 		public:
 			VLightColor(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
 			const glm::vec3& GetAmbient() const { return _ambient; }
@@ -26,38 +30,65 @@ namespace Vel
 		};
 
 		VLightSource(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
-		VLightSource(const VLightColor& colors);
-		const VLightColor& GetColors() const { return _colors; }
+		VLightSource(const VLightColor& color);
+		void ActivateShader() { _depthShader->Activate(); }
+		void DeactivateShader() { _depthShader->Deactivate(); }
+		virtual void SetLightUniforms(GLuint lPassProgram) = 0;
+		//virtual void BindShadowMapForWriting() = 0; //TODO
+		void BindShadowMapForReading();
+		void UnbindShadowMapForReading();
 
+		void SetShader(const ShaderPtr& shader) { _depthShader = shader; }
+		const VLightColor& GetColor() const { return _color; }
+		const ShaderPtr& GetShader() const { return _depthShader; } //add default depth shader? might want to add cube depth
 	protected:
-		VLightColor _colors;
+		VLightColor _color;
+		ShaderPtr _depthShader;
+		ShadowMapFBOPtr _shadowMap;
 	};
 
-	class VDynamicLight : public VLightSource
+	/*class VDynamicLight : public VLightSource
 	{
-	protected:
-		using ShaderPtr = std::shared_ptr<VGLSLShader>;
-		using ShadowMapPtr = std::unique_ptr<VShadowMap>;
+
 	public:
 		VDynamicLight(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
 		VDynamicLight(const VDynamicLight& colors);
-		void SetShader(const ShaderPtr& shader); //TODO change to static shaders?
+		 //TODO change to static shaders?
 	protected:
 		void CreateShadowMap();
 
-		ShaderPtr _lightShader;
-		ShadowMapPtr _shadowMap;
+
 	};
+
+	class VStaticLight : public VLightSource
+	{
+
+	};
+
+	*/
 
 	class VPointLight : public VLightSource
 	{
+		/*class LightsPool
+		{
+		};*/
 	public:
 		VPointLight(const glm::vec3& position, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
 		VPointLight(const glm::vec3& position, const VLightColor& colors);
+		
+		void SetLightUniforms(GLuint lPassProgram);
+
 		const glm::vec3& GetPosition() const { return _position; }
+		void SetLightID(int id); //TODO debug func
 		
 	protected:
 		glm::vec3 _position;
+		GLfloat _constant;
+		GLfloat _linear;
+		GLfloat _quadratic;
+		GLuint _id;
+	private:
+
 	};
 
 	class VDirectionalLight : public VLightSource
@@ -77,6 +108,15 @@ namespace Vel
 
 	class VSceneLighting
 	{
+	public:
+		void DrawSceneShadows() {}; //TODO
+		void CleanUpLights() {}; //TODO
+		void AddLight(const std::shared_ptr<VLightSource>& lightSource);
 
+		//requires active shader
+		void SetLightUniforms(GLuint lPassProgram);
+	private:
+		glm::vec3 _ambientLight;
+		std::list<std::shared_ptr<VLightSource>> _sceneLights;
 	};
 }

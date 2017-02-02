@@ -56,7 +56,9 @@ namespace Vel
 	class VShadowMap : public VFramebuffer
 	{
 	public:
-		VShadowMap(const glm::ivec2& size);
+		VShadowMap(const glm::ivec2& size = glm::ivec2(512, 512));
+		void BindTexturesReading();
+		void UnbindTexturesReading();
 		virtual ~VShadowMap();
 	private:
 		void AddDepthTextureAttachment();
