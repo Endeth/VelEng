@@ -10,19 +10,19 @@ namespace Vel
 	}
 	VTexture::VTexture(const glm::ivec2& size) : _size(size)
 	{
-		SetupTextureInfo();
 		glGenTextures(1, &_texture);
+		SetupTextureInfo();
 		BindTexture();
 		SetTextureParameters();
-		CreateTexture();
+		CreateEmptyTexture();
 		UnbindTexture();
 
 	}
 
 	VTexture::VTexture(const std::string &path)
 	{
-		SetupTextureInfo();
 		glGenTextures(1, &_texture);
+		SetupTextureInfo();
 		BindTexture();
 		SetTextureParameters();
 		LoadTexture(path);
@@ -57,7 +57,7 @@ namespace Vel
 		SOIL_free_image_data(img);
 	}
 
-	void VTexture::CreateTexture()
+	void VTexture::CreateEmptyTexture()
 	{
 		glTexImage2D(_textureType, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	}
@@ -78,12 +78,24 @@ namespace Vel
 	}
 
 
+	VTextureCube::VTextureCube()
+	{
+	}
 
-	VSkyboxTexture::VSkyboxTexture(const std::string &Path)
+	VTextureCube::VTextureCube(const glm::ivec2 & size)
 	{
 		SetupTextureInfo();
 		SetTextureUnit();
-		glGenTextures(1, &_texture);
+		BindTexture();
+		SetTextureParameters();
+		CreateEmptyTexture();
+		UnbindTexture();
+	}
+
+	VTextureCube::VTextureCube(const std::string &Path)
+	{
+		SetupTextureInfo();
+		SetTextureUnit();
 		BindTexture();
 		SetTextureParameters();
 		LoadTexture(Path);
@@ -91,7 +103,7 @@ namespace Vel
 	}
 
 
-	void VSkyboxTexture::LoadTexture(const std::string &Path)
+	void VTextureCube::LoadTexture(const std::string &Path)
 	{
 		LoadSingleTexture(Path, "//posx.png", POSX);
 		LoadSingleTexture(Path, "//negx.png", NEGX);
@@ -103,20 +115,26 @@ namespace Vel
 		LoadSingleTexture(Path, "//negz.png", NEGZ);
 	}
 
-	void VSkyboxTexture::LoadSingleTexture(const std::string &Path, const char* TexName, TexturePosition Pos)
+	void VTextureCube::CreateEmptyTexture()
+	{
+		for(GLuint i = 0; i < 6; i++)
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	}
+
+	void VTextureCube::LoadSingleTexture(const std::string &Path, const char* TexName, TexturePosition Pos)
 	{
 		auto singleTexPath = Path + TexName;
-		_texturePointer = SOIL_load_image(singleTexPath.c_str(), &(_size.x), &(_size.y), 0, SOIL_LOAD_RGB);
+		unsigned char* _texturePointer = SOIL_load_image(singleTexPath.c_str(), &(_size.x), &(_size.y), 0, SOIL_LOAD_RGB);
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + Pos, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, _texturePointer);
 		SOIL_free_image_data(_texturePointer);
 	}
-	void VSkyboxTexture::SetupTextureInfo()
+	void VTextureCube::SetupTextureInfo()
 	{
 		_textureType = GL_TEXTURE_CUBE_MAP;
 		_wrapping = GL_CLAMP_TO_EDGE;
 		_filtering = GL_LINEAR;
 	}
-	void VSkyboxTexture::SetTextureParameters()
+	void VTextureCube::SetTextureParameters()
 	{
 		glTexParameteri(_textureType, GL_TEXTURE_MIN_FILTER, _filtering);
 		glTexParameteri(_textureType, GL_TEXTURE_MAG_FILTER, _filtering);

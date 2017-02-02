@@ -9,8 +9,8 @@ namespace Vel
 		void AttachToFBO(GLuint attachment);
 	protected:
 		VFramebufferTexture(const glm::ivec2& size);
-		void SetupTextureInfo();
-		void SetTextureParameters();
+		void SetupTextureInfo() override;
+		void SetTextureParameters() override;
 	};
 
 	class VGeometryTexture : public VFramebufferTexture
@@ -34,7 +34,25 @@ namespace Vel
 	public:
 		VDepthTexture(const glm::ivec2& size = glm::ivec2(512,512));
 		void AttachToFBO(GLuint attachment = GL_DEPTH_ATTACHMENT);
-		GLuint GetID() { return _texture; }
+	private:
+		void CreateTexture();
+	};
+
+	class VFramebufferTextureCube : public VTextureCube
+	{
+	public:
+		void AttachToFBO(GLuint attachment);
+	protected:
+		VFramebufferTextureCube(const glm::ivec2& size);
+		void SetupTextureInfo() override;
+		void SetTextureParameters() override;
+	};
+
+	class VDepthTextureCube : public VFramebufferTextureCube
+	{
+	public:
+		VDepthTextureCube(const glm::ivec2& size = glm::ivec2(512, 512));
+		void AttachToFBO(GLuint attachment = GL_DEPTH_ATTACHMENT);
 	private:
 		void CreateTexture();
 		void SetupTextureInfo();
