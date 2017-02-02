@@ -7,7 +7,7 @@ namespace Vel
 
 	glm::vec3 VBaseCamera::UP = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	VBaseCamera::VBaseCamera() : _position(glm::vec3{0.0,0.0,3.0}), _yaw(0.0f), _pitch(0.0f), _roll(0.0f)
+	VBaseCamera::VBaseCamera() : _position(glm::vec3{0.0,3.0,0.0}), _yaw(0.0f), _pitch(0.0f), _roll(0.0f)
 	{
 		_zNear = 0.1f;
 		_zFar = 1000.0f;
