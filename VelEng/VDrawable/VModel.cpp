@@ -30,7 +30,8 @@ namespace Vel
 	{
 		for (auto &Mesh : _meshes)
 		{
-			Mesh->DrawWithImposedShader();
+			//Mesh->DrawWithImposedShader();
+			Mesh->DrawVerticesWithImposedShader();
 		}
 	}
 

@@ -21,6 +21,7 @@ namespace Vel
 		virtual ~VMesh();
 		
 		void LoadMesh(const char* filename = " ");
+		void LoadVerticesOnly();
 		void SetMaterial(const std::shared_ptr<VMaterial>& mat);
 		void DeleteVertices();
 
@@ -32,10 +33,10 @@ namespace Vel
 	protected:
 		void UpdateVerticesInGPU();
 
-		virtual void SetVAO();
-
-		virtual void BindAdditionalDrawingOptions();
-		virtual void UnbindAdditionalDrawingOptions();
+		void SetVAO() override;
+		void SetVerticesVAO(); //DEBUG
+		void BindAdditionalDrawingOptions() override;
+		void UnbindAdditionalDrawingOptions() override;
 
 		VArrayBuffer _vboVertices;
 		VElementArrayBuffer _vboIndices;
@@ -48,6 +49,7 @@ namespace Vel
 	public:
 		VPlaneMesh();
 		void LoadMesh(const char* filename = " ");
+		void LoadVerticesOnly();
 	};
 
 

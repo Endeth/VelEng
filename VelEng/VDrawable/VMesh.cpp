@@ -53,6 +53,57 @@ namespace Vel
 		_isLoaded = true;
 	}
 
+	void VMesh::LoadVerticesOnly() //DEBUG
+	{
+			_vertices.reserve(36);
+			// Positions                      // Normals                       // Texture Coords
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 0.0f,  0.0f}));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 1.0f,  0.0f}));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 1.0f,  1.0f}));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 1.0f,  1.0f}));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f, -0.5f}, glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 0.0f,  1.0f}));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 0.0f,  0.0f}));
+
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f,  0.5f }, glm::vec3{ 0.0f,  0.0f,  1.0f }, glm::vec2{ 0.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f,  0.5f},  glm::vec3{ 0.0f,  0.0f,  1.0f },   glm::vec2{ 1.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 0.0f,  0.0f,  1.0f },  glm::vec2{ 1.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 0.0f,  0.0f,  1.0f },   glm::vec2{ 1.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f,  0.5f },  glm::vec3{ 0.0f,  0.0f,  1.0f },  glm::vec2{ 0.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f,  0.5f },  glm::vec3{ 0.0f,  0.0f,  1.0f },  glm::vec2{ 0.0f,  0.0f }));
+
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f,  0.5f }, glm::vec3{ -1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f, -0.5f }, glm::vec3{ -1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f }, glm::vec3{ -1.0f,  0.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f }, glm::vec3{ -1.0f,  0.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f,  0.5f }, glm::vec3{ -1.0f,  0.0f,  0.0f },  glm::vec2{ 0.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f,  0.5f }, glm::vec3{ -1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
+
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f, -0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f, -0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f, -0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f,  0.5f }, glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 0.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
+
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f },  glm::vec3{ 0.0f, -1.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f, -0.5f },  glm::vec3{ 0.0f, -1.0f,  0.0f },   glm::vec2{ 1.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f,  0.5f },  glm::vec3{ 0.0f, -1.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f,  0.5f }, glm::vec3{ 0.0f, -1.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f,  0.5f },  glm::vec3{ 0.0f, -1.0f,  0.0f },  glm::vec2{ 0.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f }, glm::vec3{ 0.0f, -1.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
+
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f, -0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f, -0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },  glm::vec2{ 1.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },   glm::vec2{ 1.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f,  0.5f }, glm::vec3{ 0.0f,  1.0f,  0.0f },  glm::vec2{ 0.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f, -0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },   glm::vec2{ 0.0f,  1.0f }));
+	
+
+
+		_vboVertices.FillBuffer(_vertices.size(), &_vertices[0]);
+	}
+
 	void VMesh::SetMaterial(const std::shared_ptr<VMaterial>& mat)
 	{
 		_material = mat;
@@ -72,7 +123,7 @@ namespace Vel
 	{
 	}
 
-	void VMesh::SetVAO()
+	void VMesh::SetVerticesVAO()
 	{
 		auto stride = sizeof(Vertex);
 
@@ -96,6 +147,25 @@ namespace Vel
 		_vboVertices.UnbindBuffer();
 	}
 
+	void VMesh::SetVAO()
+	{
+		auto stride = sizeof(Vertex);
+
+		glBindVertexArray(_vaoID);
+
+		_vboVertices.BindBuffer();
+
+		glEnableVertexAttribArray(_shader->GetAttribute("vVertex"));
+		glVertexAttribPointer(_shader->GetAttribute("vVertex"), 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, position));
+
+		glEnableVertexAttribArray(_shader->GetAttribute("vNormal"));
+		glVertexAttribPointer(_shader->GetAttribute("vNormal"), 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, normal));
+
+		glEnableVertexAttribArray(_shader->GetAttribute("vUV"));
+		glVertexAttribPointer(_shader->GetAttribute("vUV"), 2, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, UV));
+
+		glBindVertexArray(0);
+	}
 	void VMesh::BindAdditionalDrawingOptions()
 	{
 		_material->BindMaterial();
@@ -117,7 +187,7 @@ namespace Vel
 
 	VPlaneMesh::VPlaneMesh()
 	{
-		LoadMesh();
+		LoadVerticesOnly();
 	}
 
 	void VPlaneMesh::LoadMesh(const char * filename)
@@ -136,5 +206,18 @@ namespace Vel
 
 		LoadIntoGPU();
 		_isLoaded = true;
+	}
+	void VPlaneMesh::LoadVerticesOnly()
+	{
+		_vertices.reserve(6);
+		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 1.0f }));
+		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
+		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 0.0f }));
+
+		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
+		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 0.0f }));
+		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 0.0f }));
+
+		_vboVertices.FillBuffer(_vertices.size(), &_vertices[0]);
 	}
 }

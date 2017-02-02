@@ -17,6 +17,7 @@ namespace Vel
 
 		void Draw();
 		void DrawWithImposedShader();
+		void DrawVerticesWithImposedShader(); //DEBUG
 		void SetShader(const std::shared_ptr<VGLSLShader>& Shd) { _shader = Shd; SetVAO(); };
 		const std::shared_ptr<VGLSLShader>& GetShader() const { return _shader; }
 
