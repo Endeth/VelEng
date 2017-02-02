@@ -8,6 +8,6 @@ uniform samplerCube CubeSampler;
 
 void main()
 {
-	gDiffSpec = vec4(texture(CubeSampler, verUV).xyz, 0);
+	gDiffSpec = vec4(texture(CubeSampler, verUV).xyz, -1);
 }
 
