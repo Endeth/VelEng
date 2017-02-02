@@ -44,7 +44,7 @@ namespace Vel
 
 	void VGeometryTexture::CreateTexture()
 	{
-		glTexImage2D(_textureType, 0, GL_RGB, _size.x, _size.y, 0, GL_RGB, GL_FLOAT, NULL);
+		glTexImage2D(_textureType, 0, GL_RGB32F, _size.x, _size.y, 0, GL_RGB, GL_FLOAT, NULL);
 	}
 
 	VAlbedoTexture::VAlbedoTexture(const glm::ivec2 & size) : VFramebufferTexture(size)
