@@ -48,9 +48,9 @@ void DefShaderSetUp()
 	SkyboxShader->SetUniforms({ "M", "V", "P" });
 	GPassShader->SetAttributes({ "vVertex", "vNormal", "vUV" });
 	GPassShader->SetUniforms({ "M", "V", "P", "diffuse", "specular" });
-	LPassShader->SetAttributes({ "vVertex", "vNormal", "vUV" });
-	LPassShader->SetUniforms({ "gDiffSpec", "gPosition", "gNormal", "gDepth", "renderMode" }); //gDepth
 
+	LPassShader->SetAttributes(std::vector<std::string>{ "vVertex", "vUV"});
+	LPassShader->SetUniforms({ "gDiffSpec", "gPosition", "gNormal", "gDepth", "renderMode", "viewPos" });
 	GPassShader->Activate();
 	GPassShader->SetUniformsValue(Uniform<int>{ "diffuse", 0});
 	GPassShader->SetUniformsValue(Uniform<int>{ "specular", 1});
@@ -64,6 +64,42 @@ void DefShaderSetUp()
 	LPassShader->Deactivate();
 
 }
+
+std::shared_ptr<VPointLight> plight1; 
+//std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
+glm::vec3 originalPos1{ 2.5f, 1.5f, 0.0f };
+//glm::vec3 originalPos2{ -2.5f, 1.5f, 0.0f }; for second light
+
+void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)
+{
+	VLightSource::VLightColor c{ glm::vec3{0.1f,0.1f,0.1f}, glm::vec3{ 1.0f,1.0f,1.0f }, glm::vec3{ 1.0f,1.0f,1.0f } };
+
+	plight1 = std::make_shared<VPointLight>(glm::vec3{2.5f, 2.0f, 0.0f}, c);
+	plight1->SetLightID(0);
+	//plight2 = std::make_shared<VPointLight>(glm::vec3{ -2.5f, 2.0f, 0.0f }, c);
+	//plight2->SetLightID(1);
+
+	scene->AddLightSource(plight1);
+	//scene->AddLightSource(plight2);
+
+	std::vector<std::shared_ptr<VModel>> cubes(25);
+	for (auto& model : cubes)
+	{
+		model = std::make_shared<VModel>();
+		VelEng::Instance()->AddModelToScene("World", model);
+		model->AddMesh(cubeMesh);
+	}
+
+	for (int i = 0; i < 5; i++)
+	{
+		for (int j = 0; j < 5; j++)
+		{
+			auto ite = 5 * i + j;
+			cubes[ite]->ModelMatrixTranslation(glm::vec3{ (i - 2) * 3, 0, (j - 2) * 3 });
+		}
+	}
+}
+
 
 int main()
 {
@@ -84,11 +120,9 @@ int main()
 	std::shared_ptr<VModel> modelPlane = std::make_shared<VModel>();
 	std::shared_ptr<VModel> skyboxModel = std::make_shared<VModel>();
 
-	Vel::VDirectionalLight dirLightSource(SunlightDirection, glm::vec3{ 0.3, 0.3, 0.3 }, glm::vec3{ 0.6, 0.4, 0.5 }, glm::vec3{ 1.0, 1.0, 1.0 });
+	//Vel::VDirectionalLight dirLightSource(SunlightDirection, glm::vec3{ 0.3, 0.3, 0.3 }, glm::vec3{ 0.6, 0.4, 0.5 }, glm::vec3{ 1.0, 1.0, 1.0 });
 
 	VelEng::Instance()->AddModelToScene("Sky", skyboxModel);
-
-	
 	VelEng::Instance()->AddModelToScene("World", modelPlane);
 
 	
@@ -97,10 +131,10 @@ int main()
 	auto diffuseTex = std::make_shared<VTexture>("Resources\\Images\\BoxDiffuse.png");
 	auto specularTex = std::make_shared<VTexture>("Resources\\Images\\BoxSpecular.png");
 	std::shared_ptr<VMaterial> materialTest = std::make_shared<VMaterial>(diffuseTex, specularTex, shin);
-	
+
 	std::shared_ptr<VMesh> cubeMeshTest = std::make_shared<VMesh>();
 	std::shared_ptr<VMesh> planeMeshTest = std::make_shared<VPlaneMesh>();
-	std::shared_ptr<VMesh> skyboxMesh = std::make_shared<VSkybox>(std::make_shared<VSkyboxTexture>("Resources\\Skybox"));
+	std::shared_ptr<VMesh> skyboxMesh = std::make_shared<VSkybox>(std::make_shared<VTextureCube>("Resources\\Skybox"));
 
 	cubeMeshTest->SetShader(VelEng::Instance()->GetShader("BasicShader"));
 	planeMeshTest->SetShader(VelEng::Instance()->GetShader("BasicShader"));
@@ -108,28 +142,14 @@ int main()
 
 	cubeMeshTest->SetMaterial(materialTest);
 	planeMeshTest->SetMaterial(materialTest);
-	cubeMeshTest->LoadMesh();
+	cubeMeshTest->LoadVerticesOnly();
 
-	std::vector<std::shared_ptr<VModel>> cubes(25);
-	for (auto& model : cubes)
-	{
-		model = std::make_shared<VModel>();
-		VelEng::Instance()->AddModelToScene("World", model);
-		model->AddMesh(cubeMeshTest);
-	}
+	AddLightsAndCubesToScene(VelEng::Instance()->GetScene("World"), cubeMeshTest);
 
-	for (int i = 0; i < 5; i++)
-	{
-		for (int j = 0; j < 5; j++)
-		{
-			auto ite = 5*i + j;
-			cubes[ite]->ModelMatrixTranslation(glm::vec3{ (i-2)*3, 0, (j - 2) *3 });
-		}
-	}
 	
 	skyboxModel->AddMesh(skyboxMesh);
 	modelPlane->AddMesh(planeMeshTest);
-	modelPlane->ModelMatrixTranslation(glm::vec3{ 0, -1.01, 0 });
+	modelPlane->ModelMatrixTranslation(glm::vec3{ 0, -0.51, 0 });
 	modelPlane->ModelMatrixScale(glm::vec3{ 10.0, 1.0, 10.0 });
 	
 	//glutReshapeFunc(OnResize);
@@ -137,13 +157,12 @@ int main()
 	while (VelEng::Instance()->ShouldRun())
 	{
 		VelEng::Instance()->GetFrameClock().Tick();
+		auto posDiff = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()) * 5;
+		plight1->SetPosition({originalPos1.x, originalPos1.y, originalPos1.z + posDiff});
 		VelEng::Instance()->HandleInput();
 		VelEng::Instance()->RenderFrame();
 		VelEng::Instance()->GetFrameClock().CapFPS();
 	}
-
-
-
 
     return 0;
 }
