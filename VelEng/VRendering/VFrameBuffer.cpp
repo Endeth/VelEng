@@ -143,9 +143,15 @@ namespace Vel
 
 	}
 
-	void VShadowMap::AddDepthTextureAttachment()
+
+	VShadowMapCube::VShadowMapCube(const glm::ivec2 & size) : VShadowMap(size)
 	{
-		VFramebuffer::AddDepthTextureAttachment();
+	}
+
+	void VShadowMapCube::AddDepthTextureAttachment()
+	{
+		int a = 505050;
+		int b = 1212;
 	}
 
 }

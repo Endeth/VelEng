@@ -48,8 +48,8 @@ namespace Vel
 		virtual ~VGBufferFBO();
 
 	private:
-		void AddColorAttachment(const std::shared_ptr<VFramebufferTexture>& texture);
-		void AddDepthTextureAttachment();
+		void AddColorAttachment(const std::shared_ptr<VFramebufferTexture>& texture) override;
+		void AddDepthTextureAttachment() override;
 
 	};
 
@@ -61,6 +61,13 @@ namespace Vel
 		void UnbindTexturesReading();
 		virtual ~VShadowMap();
 	private:
-		void AddDepthTextureAttachment();
+	};
+
+	class VShadowMapCube : public VShadowMap
+	{
+	public:
+		VShadowMapCube(const glm::ivec2& size = glm::ivec2(512, 512));
+	protected:
+		void AddDepthTextureAttachment() override;
 	};
 }
