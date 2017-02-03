@@ -3,7 +3,7 @@
 
 Vel::VScene::VScene()
 {
-	_lighting = std::make_unique<VSceneLighting>();
+	_sceneLighting = std::make_unique<VSceneLighting>();
 }
 
 void Vel::VScene::DrawScene()
@@ -26,6 +26,11 @@ void Vel::VScene::DrawSceneWithImposedShader(const ShaderPtr& shader)
 	shader->Deactivate();
 }
 
+void Vel::VScene::DrawShadows()
+{
+	_sceneLighting->DrawSceneShadows(_models);
+}
+
 void Vel::VScene::AddModel(const ModelPtr& model)
 {
 	_models.push_back(model);
@@ -33,5 +38,5 @@ void Vel::VScene::AddModel(const ModelPtr& model)
 
 void Vel::VScene::AddLightSource(const LightPtr& lightSource)
 {
-	_lighting->AddLight(lightSource);
+	_sceneLighting->AddLight(lightSource);
 }

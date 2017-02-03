@@ -171,6 +171,7 @@ namespace Vel
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		_scenes["Sky"]->DrawScene();
 		_renderer->UnbindGBufferForWriting();
+		_scenes["World"]->DrawShadows();
 		_renderer->SetScene(_scenes["World"]);
 		_renderer->Render();
 		glfwSwapBuffers(_mainWindow->GetGLFWWindow());
@@ -194,6 +195,7 @@ namespace Vel
 		lpass->SetUniformsValue(Uniform<glm::vec3>{"viewPos", camPosition});
 		_scenes["World"]->SetLightUniforms(lpass->GetProgramID());
 		lpass->Deactivate();
+
 
 
 		auto skybox = VelEng::Instance()->GetShader("SkyboxShader");

@@ -50,7 +50,7 @@ void DefShaderSetUp()
 	GPassShader->SetUniforms({ "M", "V", "P", "diffuse", "specular" });
 
 	LPassShader->SetAttributes(std::vector<std::string>{ "vVertex", "vUV"});
-	LPassShader->SetUniforms({ "gDiffSpec", "gPosition", "gNormal", "gDepth", "renderMode", "viewPos" });
+	LPassShader->SetUniforms({ "gDiffSpec", "gPosition", "gNormal", "gDepth", "renderMode", "viewPos", "ambientLight" });
 	GPassShader->Activate();
 	GPassShader->SetUniformsValue(Uniform<int>{ "diffuse", 0});
 	GPassShader->SetUniformsValue(Uniform<int>{ "specular", 1});
@@ -75,7 +75,9 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 	VLightSource::VLightColor c{ glm::vec3{0.1f,0.1f,0.1f}, glm::vec3{ 1.0f,1.0f,1.0f }, glm::vec3{ 1.0f,1.0f,1.0f } };
 
 	plight1 = std::make_shared<VPointLight>(glm::vec3{2.5f, 2.0f, 0.0f}, c);
+	VelEng::Instance()->AddShaderProgram("ShadowShaderCube", "Resources\\Shaders\\Deffered\\ShadowsCube.vert", "Resources\\Shaders\\Deffered\\ShadowsCube.frag", "Resources\\Shaders\\Deffered\\ShadowsCube.geo");
 	plight1->SetLightID(0);
+	plight1->SetShader(VelEng::Instance()->GetShader("ShadowShaderCube"));
 	//plight2 = std::make_shared<VPointLight>(glm::vec3{ -2.5f, 2.0f, 0.0f }, c);
 	//plight2->SetLightID(1);
 

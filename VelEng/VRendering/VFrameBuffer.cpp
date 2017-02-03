@@ -25,7 +25,7 @@ namespace Vel
 			tex->ActivateTextureUnit();
 			tex->BindTexture(); 
 		}
-		if (_depthAttachment != nullptr)
+		if (_depthAttachment != nullptr) //in case of renderbuffer
 		{
 			_depthAttachment->ActivateTextureUnit();
 			_depthAttachment->BindTexture();
@@ -108,37 +108,60 @@ namespace Vel
 	{
 	}
 
-	VShadowMap::VShadowMap(const glm::ivec2& size) : VFramebuffer(size)
+	VShadowMap2D::VShadowMap2D(const glm::ivec2& size) : VFramebuffer(size)
 	{
 		BindFBOWriting();
 		AddDepthTextureAttachment();
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
 		UnbindFBOWriting();
 	}
 
-	void VShadowMap::BindTexturesReading()
+	void VShadowMap2D::BindTexturesReading()
 	{
 		_depthAttachment->ActivateTextureUnit();
 		_depthAttachment->BindTexture();
 	}
 
-	void VShadowMap::UnbindTexturesReading()
+	void VShadowMap2D::UnbindTexturesReading()
 	{
 		_depthAttachment->ActivateTextureUnit();
 		_depthAttachment->UnbindTexture();
 	}
 
-	VShadowMap::~VShadowMap()
+	VShadowMap2D::~VShadowMap2D()
 	{
 
 	}
 
 
-	VShadowMapCube::VShadowMapCube(const glm::ivec2 & size) : VShadowMap(size)
+	VShadowMapCube::VShadowMapCube(const glm::ivec2 & size) : VFramebuffer(size)
 	{
+		BindFBOWriting();
+		AddDepthTextureAttachment();
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+		UnbindFBOWriting();
 	}
 
 	void VShadowMapCube::AddDepthTextureAttachment()
 	{
+		_depthAttachment = std::make_shared<VDepthTextureCube>(_size);
+		_depthAttachment->SetTextureUnit(GL_TEXTURE0 + _texturesCount);
+		_depthAttachment->AttachToFBO();
+		_texturesCount++;
+	}
+
+	void VShadowMapCube::BindTexturesReading()
+	{
+		_depthAttachment->ActivateTextureUnit();
+		_depthAttachment->BindTexture();
+	}
+
+	void VShadowMapCube::UnbindTexturesReading()
+	{
+		_depthAttachment->ActivateTextureUnit();
+		_depthAttachment->UnbindTexture();
 	}
 
 }

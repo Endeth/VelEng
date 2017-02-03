@@ -38,7 +38,7 @@ namespace Vel
 		void CreateTexture();
 	};
 
-	class VFramebufferTextureCube : public VTextureCube
+	class VFramebufferTextureCube : public VTextureCube //TODO textures SUCK need to rethink their abstraction
 	{
 	public:
 		void AttachToFBO(GLuint attachment);
@@ -55,6 +55,5 @@ namespace Vel
 		void AttachToFBO(GLuint attachment = GL_DEPTH_ATTACHMENT);
 	private:
 		void CreateTexture();
-		void SetupTextureInfo();
 	};
 }

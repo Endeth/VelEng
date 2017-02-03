@@ -18,13 +18,14 @@ namespace Vel
 		VScene();
 		void DrawScene();
 		void DrawSceneWithImposedShader(const ShaderPtr& shader);
+		void DrawShadows();
 		void AddModel(const ModelPtr &model);
 		void AddLightSource(const LightPtr &lightSource);
-		void SetLightUniforms(GLuint lPassProgram) { _lighting->SetLightUniforms(lPassProgram); }
+		void SetLightUniforms(GLuint lPassProgram) { _sceneLighting->SetLightUniforms(lPassProgram); }
 
 	private:
 		void DrawSceneShadows();
 		std::vector<ModelPtr> _models; //TODO change to list, add cleaning up
-		std::unique_ptr<VSceneLighting> _lighting;
+		std::unique_ptr<VSceneLighting> _sceneLighting;
 	};
 }
