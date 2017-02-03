@@ -6,7 +6,7 @@ namespace Vel
 {
 
 
-	using VTexturePtr = std::shared_ptr<Vel::VTexture>;
+	
 
 	VMaterial::VMaterial(const VTexturePtr& diffuse, const VTexturePtr& specular, GLfloat & shininess)
 	{
@@ -43,7 +43,6 @@ namespace Vel
 		_emission = emission;
 		_emission->SetTextureUnit(GL_TEXTURE2);
 	}
-
 
 	void VEmissiveMaterial::BindMaterial()
 	{

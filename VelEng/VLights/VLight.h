@@ -76,7 +76,7 @@ namespace Vel
 		VPointLight(const glm::vec3& position, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
 		VPointLight(const glm::vec3& position, const VLightColor& colors);
 		
-		void SetLightUniforms(GLuint lPassProgram);
+		virtual void SetLightUniforms(GLuint lPassProgram) override;
 
 		const glm::vec3& GetPosition() const { return _position; }
 		void SetPosition(const glm::vec3 &pos) { _position = pos; }

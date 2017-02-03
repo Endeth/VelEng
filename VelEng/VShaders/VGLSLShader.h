@@ -50,7 +50,7 @@ namespace Vel
 		void SetUniforms(const std::string& Uniform);
 		GLuint GetAttribute(const std::string& Attribute);
 		GLuint GetUniform(const std::string& Uniform);
-		GLuint GetID() { return _program; }
+		GLuint GetProgramID() { return _program; }
 		void DeleteShaderProgram();
 
 		template <typename T, typename... UniVal>

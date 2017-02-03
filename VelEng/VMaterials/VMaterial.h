@@ -9,9 +9,11 @@ namespace Vel
 {
 	class VMaterial 
 	{
+	protected:
+		using VTexturePtr = std::shared_ptr<Vel::VTexture>;
 	public:
-		VMaterial(const std::shared_ptr<VTexture>& diffuse, const std::shared_ptr<VTexture>& specular, GLfloat& shininess);
-		virtual void SetTexturesUnits();
+		VMaterial(const VTexturePtr& diffuse, const VTexturePtr& specular, GLfloat& shininess);
+		void SetTexturesUnits();
 		virtual void BindMaterial();
 		virtual void UnbindMaterial();
 	private:
@@ -23,7 +25,7 @@ namespace Vel
 	class VEmissiveMaterial : public VMaterial
 	{
 	public:
-		VEmissiveMaterial(const std::shared_ptr<VTexture>& diffuse, const std::shared_ptr<VTexture>& specular, const std::shared_ptr<VTexture>& emission, GLfloat& shininess);
+		VEmissiveMaterial(const VTexturePtr& diffuse, const VTexturePtr& specular, const VTexturePtr& emission, GLfloat& shininess);
 		void BindMaterial() final;
 		void UnbindMaterial() final;
 	protected:

@@ -234,23 +234,4 @@ namespace Vel
 		return _speed;
 	}
 
-	VMirrorCamera::VMirrorCamera()
-	{
-
-	}
-
-	VMirrorCamera::~VMirrorCamera()
-	{
-	}
-
-
-	void VMirrorCamera::SetPosition(const glm::vec3 & position)
-	{
-		_position = position;
-	}
-
-	void VMirrorCamera::SetPosition(const glm::vec3 & reflectedCameraPosition, const VPlane & reflectionPlane)
-	{
-	}
-
 }

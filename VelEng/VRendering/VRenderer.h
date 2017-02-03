@@ -27,7 +27,7 @@ namespace Vel
 		using ShaderPtr = std::shared_ptr<VGLSLShader>;
 	public:
 		VDefferedRenderer(const glm::ivec2& resolution, const ShaderPtr &gPass, const ShaderPtr &lPass);
-		void Render();
+		virtual void Render() override;
 		void SetGPassShader(const ShaderPtr& shader){ _gPassShader = shader; }
 		void SetLPassShader(const ShaderPtr& shader);
 		void BindGBufferForWriting();

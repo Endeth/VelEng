@@ -64,7 +64,7 @@ namespace Vel
 		VFreeCamera();
 		~VFreeCamera();
 
-		void Update();
+		virtual void Update() override;
 
 		void Walk(const float dT);
 		void Strafe(const float dT);
@@ -81,7 +81,7 @@ namespace Vel
 		glm::vec3 _translation;
 	};
 
-	class VMirrorCamera : public VBaseCamera
+	/*class VMirrorCamera : public VBaseCamera //not implemented right now, also - not needed right now
 	{
 	public:
 		VMirrorCamera();
@@ -93,6 +93,6 @@ namespace Vel
 		void SetupProjection(const glm::vec3 &mirrorPosition, GLfloat mirrorWidth, GLfloat mirrorHeight);
 	private:
 		void SetFOV(const glm::vec3 &mirrorPosition, GLfloat mirrorWidth, GLfloat mirrorHeight);
-	};
+	};*/
 
 }

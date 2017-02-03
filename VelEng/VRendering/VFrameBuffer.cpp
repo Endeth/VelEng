@@ -3,7 +3,6 @@
 
 namespace Vel
 {
-
 	VFramebuffer::VFramebuffer(const glm::ivec2& size) : _size(size)
 	{
 		glGenFramebuffers(1, &_fboID);
@@ -109,16 +108,6 @@ namespace Vel
 	{
 	}
 
-	void VGBufferFBO::AddColorAttachment(const std::shared_ptr<VFramebufferTexture>& texture)
-	{
-		VFramebuffer::AddColorAttachment(texture);
-	}
-
-	void VGBufferFBO::AddDepthTextureAttachment()
-	{
-		VFramebuffer::AddDepthTextureAttachment(); //for traditional texture
-	}
-
 	VShadowMap::VShadowMap(const glm::ivec2& size) : VFramebuffer(size)
 	{
 		BindFBOWriting();
@@ -150,8 +139,6 @@ namespace Vel
 
 	void VShadowMapCube::AddDepthTextureAttachment()
 	{
-		int a = 505050;
-		int b = 1212;
 	}
 
 }

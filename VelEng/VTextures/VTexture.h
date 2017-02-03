@@ -39,9 +39,9 @@ namespace Vel
 		VTextureCube(const std::string &Path);
 	protected:
 		VTextureCube();
-		void CreateEmptyTexture() override;
-		void SetupTextureInfo() override;
-		void SetTextureParameters() override;
+		virtual void CreateEmptyTexture() override;
+		virtual void SetupTextureInfo() override;
+		virtual void SetTextureParameters() override;
 		void LoadTexture(const std::string &Path);
 	private:
 		enum TexturePosition

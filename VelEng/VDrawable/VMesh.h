@@ -33,10 +33,10 @@ namespace Vel
 	protected:
 		void UpdateVerticesInGPU();
 
-		void SetVAO() override;
-		void SetVerticesVAO(); //DEBUG
-		void BindAdditionalDrawingOptions() override;
-		void UnbindAdditionalDrawingOptions() override;
+		virtual void SetVAO() override;
+		void SetVerticesVAO(); //DEBUG (not even in base class) though might be useful
+		virtual void BindAdditionalDrawingOptions() override;
+		virtual void UnbindAdditionalDrawingOptions() override;
 
 		VArrayBuffer _vboVertices;
 		VElementArrayBuffer _vboIndices;

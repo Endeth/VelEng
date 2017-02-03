@@ -192,7 +192,7 @@ namespace Vel
 		auto camPosition = VelEng::Instance()->_mainCamera->GetPosition();
 		lpass->Activate();
 		lpass->SetUniformsValue(Uniform<glm::vec3>{"viewPos", camPosition});
-		_scenes["World"]->SetLightUniforms(lpass->GetID());
+		_scenes["World"]->SetLightUniforms(lpass->GetProgramID());
 		lpass->Deactivate();
 
 
