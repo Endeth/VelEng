@@ -50,7 +50,7 @@ void DefShaderSetUp()
 	GPassShader->SetUniforms({ "M", "V", "P", "diffuse", "specular" });
 
 	LPassShader->SetAttributes(std::vector<std::string>{ "vVertex", "vUV"});
-	LPassShader->SetUniforms({ "gDiffSpec", "gPosition", "gNormal", "gDepth", "viewPos", "ambientLight", "shadowMap" });
+	LPassShader->SetUniforms({ "gDiffSpec", "gPosition", "gNormal", "gDepth", "viewPos", "ambientLight", "shadowMap", "lightSpaceMatrix" });
 	GPassShader->Activate();
 	GPassShader->SetUniformsValue(Uniform<int>{ "diffuse", 0});
 	GPassShader->SetUniformsValue(Uniform<int>{ "specular", 1});
@@ -68,7 +68,7 @@ void DefShaderSetUp()
 
 std::shared_ptr<VPointLight> plight1; 
 //std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
-glm::vec3 originalPos1{ 2.5f, 1.5f, 0.0f };
+glm::vec3 originalPos1{ 8.5f, 5.0f, 0.0f };
 //glm::vec3 originalPos2{ -2.5f, 1.5f, 0.0f }; for second light
 
 void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)
@@ -103,6 +103,7 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 		for (int j = 0; j < 5; j++)
 		{
 			auto ite = 5 * i + j;
+			std::cout << "X - " << (i - 2) * 3 << " Y - " << 0 << " Z - " << (j - 2) * 3 << std::endl;
 			cubes[ite]->ModelMatrixTranslation(glm::vec3{ (i - 2) * 3, 0, (j - 2) * 3 });
 		}
 	}

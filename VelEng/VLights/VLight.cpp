@@ -40,7 +40,7 @@ namespace Vel
 
 	VPointLight::VPointLight(const glm::vec3 & position, const glm::vec3 & ambient, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(ambient, diffuse, specular)
 	{
-		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 512,512 });
+		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 1024,1024 });
 		SetPosition(position);
 		_far = 25.0f;
 		_constant = 1.0f;
@@ -50,12 +50,12 @@ namespace Vel
 
 	VPointLight::VPointLight(const glm::vec3 & position, const VLightColor & colors) : VLightSource(colors)
 	{
-		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 512,512 });
+		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 1024,1024 });
 		SetPosition(position);
 		_far = 7.5f;
 		_constant = 1.0f;
-		_linear = 0.1f;
-		_quadratic = 0.03f;
+		_linear = 0.03f;
+		_quadratic = 0.02f;
 	}
 
 	void VPointLight::SetLightUniforms(GLuint lPassProgram)
@@ -67,6 +67,7 @@ namespace Vel
 		glUniform1f(glGetUniformLocation(lPassProgram, ("pLights[" + id + "].Constant").c_str()), _constant);
 		glUniform1f(glGetUniformLocation(lPassProgram, ("pLights[" + id + "].Linear").c_str()), _linear);
 		glUniform1f(glGetUniformLocation(lPassProgram, ("pLights[" + id + "].Quadratic").c_str()), _quadratic);
+		glUniformMatrix4fv(glGetUniformLocation(lPassProgram, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 	}
 
 	void VPointLight::SetShadowUniforms()
@@ -90,10 +91,10 @@ namespace Vel
 	{
 		GLfloat aspect = 1;
 		GLfloat near = 1.0f;
-		//glm::mat4 shadowProj = glm::perspective(90.0f, aspect, near, _far);
-		auto lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near, _far);
-		auto lightView = glm::lookAt(_position, glm::vec3(0.0), glm::vec3(0.0, -1.0, 0.0));
-		lightSpaceMatrix = lightProj * lightView;
+		glm::mat4 shadowProj = glm::perspective(90.0f, aspect, near, _far);
+		//auto shadowProj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near, _far);
+		auto lightView = glm::lookAt(_position, glm::vec3(0.0), glm::vec3(0.0, 1.0, 0.0));
+		lightSpaceMatrix = shadowProj * lightView;
 	}
 
 	void VPointLight::BindShadowMapForWriting()
@@ -127,6 +128,7 @@ namespace Vel
 	{
 		for(auto &lightSource : _sceneLights)
 		{
+			glViewport(0, 0, 1024, 1024);
 			lightSource->BindShadowMapForWriting();
 			glClear(GL_DEPTH_BUFFER_BIT);
 			lightSource->ActivateShader();
@@ -139,6 +141,7 @@ namespace Vel
 			}
 			lightSource->DeactivateShader();
 			lightSource->UnbindShadowMapForWriting();
+			glViewport(0, 0, 1366, 768);
 		}
 	}
 	void VSceneLighting::AddLight(const std::shared_ptr<VLightSource>& lightSource)

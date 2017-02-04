@@ -54,7 +54,7 @@ namespace Vel
 	class VShadowMap2D : public VFramebuffer
 	{
 	public:
-		VShadowMap2D(const glm::ivec2& size = glm::ivec2(512, 512));
+		VShadowMap2D(const glm::ivec2& size = glm::ivec2(1024, 1024));
 		virtual void BindTexturesReading() override;
 		virtual void UnbindTexturesReading() override;
 		virtual ~VShadowMap2D();
