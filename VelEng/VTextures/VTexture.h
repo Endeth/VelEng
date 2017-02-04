@@ -55,8 +55,5 @@ namespace Vel
 		};
 
 		void LoadSingleTexture(const std::string &Path, const char *TexName, TexturePosition Pos);
-
-		//unsigned char* _texturePointer;
-
 	};
 }

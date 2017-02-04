@@ -44,7 +44,7 @@ namespace Vel
 
 		void SetShader(const ShaderPtr& shader) { _depthShader = shader; }
 		const VLightColor& GetColor() const { return _color; }
-		const ShaderPtr& GetShader() const { return _depthShader; } //add default depth shader? might want to add cube depth
+		const ShaderPtr& GetShader() const { return _depthShader; }
 	protected:
 		VLightColor _color;
 		ShaderPtr _depthShader;
@@ -74,9 +74,6 @@ namespace Vel
 
 	class VPointLight : public VLightSource
 	{
-		/*class LightsPool
-		{
-		};*/
 	public:
 		VPointLight(const glm::vec3& position, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
 		VPointLight(const glm::vec3& position, const VLightColor& colors);
@@ -126,6 +123,9 @@ namespace Vel
 
 	class VSceneLighting
 	{
+	/*
+		maybe light sorting? then calculating first X lights, same principal with shadows?
+	*/
 	public:
 		void DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models); 
 		void CleanUpLights() {}; //TODO

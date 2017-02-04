@@ -17,7 +17,7 @@ namespace Vel
 		_vboVertices.BindBuffer();
 
 		glEnableVertexAttribArray(_shader->GetAttribute("vVertex"));
-		glVertexAttribPointer(_shader->GetAttribute("vVertex"), 3, GL_FLOAT, GL_FALSE, stride, 0); //TODO get rid of UV
+		glVertexAttribPointer(_shader->GetAttribute("vVertex"), 3, GL_FLOAT, GL_FALSE, stride, 0);
 
 		_vboIndices.BindBuffer();
 

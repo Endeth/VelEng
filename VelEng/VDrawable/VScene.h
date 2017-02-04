@@ -25,7 +25,7 @@ namespace Vel
 
 	private:
 		void DrawSceneShadows();
-		std::vector<ModelPtr> _models; //TODO change to list, add cleaning up
+		std::vector<ModelPtr> _models; //TODO change to list maybe, add cleaning up
 		std::unique_ptr<VSceneLighting> _sceneLighting;
 	};
 }
