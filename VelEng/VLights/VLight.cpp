@@ -40,7 +40,7 @@ namespace Vel
 
 	VPointLight::VPointLight(const glm::vec3 & position, const glm::vec3 & ambient, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(ambient, diffuse, specular)
 	{
-		_shadowMap = std::make_unique<VShadowMapCube>(glm::vec2{ 512,512 });
+		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 512,512 });
 		SetPosition(position);
 		_far = 25.0f;
 		_constant = 1.0f;
@@ -50,12 +50,12 @@ namespace Vel
 
 	VPointLight::VPointLight(const glm::vec3 & position, const VLightColor & colors) : VLightSource(colors)
 	{
-		_shadowMap = std::make_unique<VShadowMapCube>(glm::vec2{ 512,512 });
+		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 512,512 });
 		SetPosition(position);
-		_far = 25.0f;
+		_far = 7.5f;
 		_constant = 1.0f;
-		_linear = 0.09f;
-		_quadratic = 0.032f;
+		_linear = 0.1f;
+		_quadratic = 0.03f;
 	}
 
 	void VPointLight::SetLightUniforms(GLuint lPassProgram)
@@ -71,12 +71,8 @@ namespace Vel
 
 	void VPointLight::SetShadowUniforms()
 	{
-		for (int i = 0; i < 6; i++)
-		{
-			auto uni = ("shadowMatrices[" + std::to_string(i) + "]").c_str();
-			auto ptr = glm::value_ptr(_shadowTransforms[i]);
-			glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID() , uni), 1, GL_FALSE, ptr);
-		}
+		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID() , "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
 	}
 
 	void VPointLight::SetPosition(const glm::vec3 & pos)
@@ -94,19 +90,10 @@ namespace Vel
 	{
 		GLfloat aspect = 1;
 		GLfloat near = 1.0f;
-		glm::mat4 shadowProj = glm::perspective(90.0f, aspect, near, _far);
-		auto view = glm::lookAt(_position, _position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)); //make a function ffs
-		_shadowTransforms.push_back(shadowProj * view);
-		view = glm::lookAt(_position, _position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
-		_shadowTransforms.push_back(shadowProj * view);
-		view = glm::lookAt(_position, _position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0));
-		_shadowTransforms.push_back(shadowProj * view);
-		view = glm::lookAt(_position, _position + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
-		_shadowTransforms.push_back(shadowProj * view);
-		view = glm::lookAt(_position, _position + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
-		_shadowTransforms.push_back(shadowProj * view);
-		view = glm::lookAt(_position, _position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
-		_shadowTransforms.push_back(shadowProj * view);
+		//glm::mat4 shadowProj = glm::perspective(90.0f, aspect, near, _far);
+		auto lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near, _far);
+		auto lightView = glm::lookAt(_position, glm::vec3(0.0), glm::vec3(0.0, -1.0, 0.0));
+		lightSpaceMatrix = lightProj * lightView;
 	}
 
 	void VPointLight::BindShadowMapForWriting()
@@ -141,6 +128,7 @@ namespace Vel
 		for(auto &lightSource : _sceneLights)
 		{
 			lightSource->BindShadowMapForWriting();
+			glClear(GL_DEPTH_BUFFER_BIT);
 			lightSource->ActivateShader();
 			
 			lightSource->SetShadowUniforms();

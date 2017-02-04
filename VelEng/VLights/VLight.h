@@ -50,6 +50,7 @@ namespace Vel
 		ShaderPtr _depthShader;
 		//TODO template? same with framebuffers
 		ShadowMapFBOPtr _shadowMap;
+		glm::mat4 lightSpaceMatrix;
 	};
 
 	/*class VDynamicLight : public VLightSource
@@ -100,10 +101,9 @@ namespace Vel
 		GLuint _id;
 		
 	private:
-		std::unique_ptr<VShadowMapCube> _shadowMap;
+		//std::unique_ptr<VShadowMapCube> _shadowMap;
 		GLfloat _far;
 		void UpdateShadowTransforms();
-		std::vector<glm::mat4> _shadowTransforms;
 	};
 
 	class VDirectionalLight : public VLightSource

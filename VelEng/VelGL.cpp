@@ -134,9 +134,9 @@ namespace Vel
 		{
 
 		}
-		if (_keyboard.IsKeyPressed(GLFW_KEY_1))
+		/*if (_keyboard.IsKeyPressed(GLFW_KEY_1))
 		{
-			ChangeRenderMode(_shaderPrograms["LPass"], 0);
+			ChangeRenderMode(_shaderPrograms["LPass"], 0); //for debug
 		}
 		if (_keyboard.IsKeyPressed(GLFW_KEY_2))
 		{
@@ -157,8 +157,8 @@ namespace Vel
 		if (_keyboard.IsKeyPressed(GLFW_KEY_6))
 		{
 			ChangeRenderMode(_shaderPrograms["LPass"], 5);
-		}
-		if(_keyboard.IsKeyPressed(GLFW_KEY_F1))
+		}*/
+		if(_keyboard.IsKeyPressed(GLFW_KEY_1))
 			VelEng::Instance()->GetMouse().ChangeResetting();
 		if (_keyboard.IsKeyPressed(GLFW_KEY_ESCAPE))
 			VelEng::Instance()->_shouldRun = false;

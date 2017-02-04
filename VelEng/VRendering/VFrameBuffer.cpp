@@ -110,6 +110,7 @@ namespace Vel
 
 	VShadowMap2D::VShadowMap2D(const glm::ivec2& size) : VFramebuffer(size)
 	{
+		_texturesCount = 4; //TODO erase this nasty hack
 		BindFBOWriting();
 		AddDepthTextureAttachment();
 		glDrawBuffer(GL_NONE);
