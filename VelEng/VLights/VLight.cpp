@@ -145,6 +145,10 @@ namespace Vel
 	{
 		_sceneLights.push_back(lightSource);
 	}
+	void VSceneLighting::ActivateShadowMap()
+	{
+		_sceneLights.front()->BindShadowMapForReading();
+	}
 	void VSceneLighting::SetLightUniforms(GLuint lPassProgram)
 	{
 		glUniform3fv(glGetUniformLocation(lPassProgram, ("ambientLight")), 1, &_ambientLight[0]);

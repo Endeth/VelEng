@@ -173,6 +173,7 @@ namespace Vel
 		_renderer->UnbindGBufferForWriting();
 		_scenes["World"]->DrawShadows();
 		_renderer->SetScene(_scenes["World"]);
+		_renderer->BindShadowMapReading();
 		_renderer->Render();
 		glfwSwapBuffers(_mainWindow->GetGLFWWindow());
 	}

@@ -22,6 +22,7 @@ namespace Vel
 		void AddModel(const ModelPtr &model);
 		void AddLightSource(const LightPtr &lightSource);
 		void SetLightUniforms(GLuint lPassProgram) { _sceneLighting->SetLightUniforms(lPassProgram); }
+		void ActivateShadowMap() { _sceneLighting->ActivateShadowMap(); } //DEBUG
 
 	private:
 		void DrawSceneShadows();

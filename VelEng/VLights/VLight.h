@@ -130,6 +130,7 @@ namespace Vel
 		void DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models); 
 		void CleanUpLights() {}; //TODO
 		void AddLight(const std::shared_ptr<VLightSource>& lightSource);
+		void ActivateShadowMap(); //DEBUG
 
 		//requires active shader
 		void SetLightUniforms(GLuint lPassProgram);
