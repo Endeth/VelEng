@@ -68,7 +68,7 @@ void DefShaderSetUp()
 
 std::shared_ptr<VPointLight> plight1; 
 //std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
-glm::vec3 originalPos1{ 8.5f, 5.0f, 0.0f };
+glm::vec3 originalPos1{ 8.5f, 3.5f, 0.0f };
 //glm::vec3 originalPos2{ -2.5f, 1.5f, 0.0f }; for second light
 
 void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)

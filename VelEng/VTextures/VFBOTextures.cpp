@@ -70,7 +70,7 @@ namespace Vel
 
 	void VDepthTexture::CreateTexture()
 	{
-		glTexImage2D(_textureType, 0, GL_DEPTH_COMPONENT32, _size.x, _size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexImage2D(_textureType, 0, GL_DEPTH_COMPONENT, _size.x, _size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 
 	VFramebufferTextureCube::VFramebufferTextureCube(const glm::ivec2 & size)

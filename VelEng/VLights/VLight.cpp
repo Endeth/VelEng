@@ -52,7 +52,7 @@ namespace Vel
 	{
 		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 1024,1024 });
 		SetPosition(position);
-		_far = 7.5f;
+		_far = 20.0f;
 		_constant = 1.0f;
 		_linear = 0.03f;
 		_quadratic = 0.02f;
@@ -90,10 +90,10 @@ namespace Vel
 	void VPointLight::UpdateShadowTransforms()
 	{
 		GLfloat aspect = 1;
-		GLfloat near = 1.0f;
-		glm::mat4 shadowProj = glm::perspective(90.0f, aspect, near, _far);
-		//auto shadowProj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near, _far);
-		auto lightView = glm::lookAt(_position, glm::vec3(0.0), glm::vec3(0.0, 1.0, 0.0));
+		GLfloat near = 0.5f;
+		//glm::mat4 shadowProj = glm::perspective(90.0f, aspect, near, _far);
+		auto shadowProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near, _far);
+		auto lightView = glm::lookAt(_position, glm::vec3(0.0), glm::vec3(0.0, 1.0, 0.0)); //TODO erase hard code
 		lightSpaceMatrix = shadowProj * lightView;
 	}
 
