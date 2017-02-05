@@ -50,7 +50,8 @@ void DefShaderSetUp()
 	GPassShader->SetUniforms({ "M", "V", "P", "diffuse", "specular" });
 
 	LPassShader->SetAttributes(std::vector<std::string>{ "vVertex", "vUV"});
-	LPassShader->SetUniforms({ "gDiffSpec", "gPosition", "gNormal", "gDepth", "viewPos", "ambientLight", "shadowMap", "lightSpaceMatrix" });
+	LPassShader->SetUniforms({ "gDiffSpec", "gPosition", "gNormal", "gDepth", "viewPos", "ambientLight", "lightSpaceMatrix" });
+	LPassShader->SetUniforms({ "shadowMap0",  "shadowMap1",  "shadowMap2",  "shadowMap3"});
 	GPassShader->Activate();
 	GPassShader->SetUniformsValue(Uniform<int>{ "diffuse", 0});
 	GPassShader->SetUniformsValue(Uniform<int>{ "specular", 1});
@@ -61,14 +62,17 @@ void DefShaderSetUp()
 	LPassShader->SetUniformsValue(Uniform<int>{ "gPosition", 1});
 	LPassShader->SetUniformsValue(Uniform<int>{ "gNormal", 2});
 	LPassShader->SetUniformsValue(Uniform<int>{ "gDepth", 3});
-	LPassShader->SetUniformsValue(Uniform<int>{ "shadowMap", 4});
+	LPassShader->SetUniformsValue(Uniform<int>{ "shadowMap0", 4});
+	LPassShader->SetUniformsValue(Uniform<int>{ "shadowMap1", 5});
+	LPassShader->SetUniformsValue(Uniform<int>{ "shadowMap2", 6});
+	LPassShader->SetUniformsValue(Uniform<int>{ "shadowMap3", 7});
 	LPassShader->Deactivate();
 
 }
 
 std::shared_ptr<VPointLight> plight1; 
 //std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
-glm::vec3 originalPos1{ 8.5f, 3.5f, 0.0f };
+glm::vec3 originalPos1{ 8.5f, 4.25f, 0.0f };
 //glm::vec3 originalPos2{ -2.5f, 1.5f, 0.0f }; for second light
 
 void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)
@@ -82,7 +86,6 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 	shdwshd->Activate();
 	shdwshd->SetUniforms(std::vector<std::string>{ "lightSpaceMatrix", "M" });
 	shdwshd->Deactivate();
-	plight1->SetLightID(0);
 	plight1->SetShader(shdwshd);
 	//plight2 = std::make_shared<VPointLight>(glm::vec3{ -2.5f, 2.0f, 0.0f }, c);
 	//plight2->SetLightID(1);
@@ -103,12 +106,10 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 		for (int j = 0; j < 5; j++)
 		{
 			auto ite = 5 * i + j;
-			std::cout << "X - " << (i - 2) * 3 << " Y - " << 0 << " Z - " << (j - 2) * 3 << std::endl;
 			cubes[ite]->ModelMatrixTranslation(glm::vec3{ (i - 2) * 3, 0, (j - 2) * 3 });
 		}
 	}
 }
-
 
 int main()
 {

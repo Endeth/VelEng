@@ -35,8 +35,10 @@ namespace Vel
 		VLightSource(const VLightColor& color);
 		void ActivateShader() { _depthShader->Activate(); }
 		void DeactivateShader() { _depthShader->Deactivate(); }
-		virtual void SetLightUniforms(GLuint lPassProgram) = 0;
-		virtual void SetShadowUniforms() = 0;
+
+		virtual void SetLightUniforms(GLuint lPassProgram, GLuint uniformID) = 0;
+		virtual void SetShadowUniforms();
+
 		virtual void BindShadowMapForWriting();
 		virtual void UnbindShadowMapForWriting(); 
 		virtual void BindShadowMapForReading();
@@ -50,7 +52,7 @@ namespace Vel
 		ShaderPtr _depthShader;
 		//TODO template? same with framebuffers
 		ShadowMapFBOPtr _shadowMap;
-		glm::mat4 lightSpaceMatrix;
+		glm::mat4 _lightSpaceMatrix;
 	};
 
 	/*class VDynamicLight : public VLightSource
@@ -79,19 +81,15 @@ namespace Vel
 		VPointLight(const glm::vec3& position, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
 		VPointLight(const glm::vec3& position, const VLightColor& colors);
 		
-		virtual void SetLightUniforms(GLuint lPassProgram) override;
+		//Pass iterator from VSceneLights to uniformID when setting uniforms
+		virtual void SetLightUniforms(GLuint lPassProgram, GLuint uniformID) override;
+		//Sets uniforms in shadow map generating shader
 		virtual void SetShadowUniforms() override;
 
 		const glm::vec3& GetPosition() const { return _position; }
 
 		//sets position and recalculates shadow transforms matrices - might want to set those apart
 		void SetPosition(const glm::vec3 &pos);
-		void SetLightID(int id); //TODO debug func
-
-		virtual void BindShadowMapForWriting() override;
-		virtual void UnbindShadowMapForWriting() override;
-		virtual void BindShadowMapForReading() override;
-		virtual void UnbindShadowMapForReading() override;
 		
 	protected:
 		glm::vec3 _position;
@@ -102,7 +100,6 @@ namespace Vel
 		
 	private:
 		//std::unique_ptr<VShadowMapCube> _shadowMap;
-		GLfloat _far;
 		void UpdateShadowTransforms();
 	};
 
@@ -111,6 +108,7 @@ namespace Vel
 	public:
 		VDirectionalLight(const glm::vec3& direction, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
 		VDirectionalLight(const glm::vec3& direction, const VLightColor& colors);
+
 		const glm::vec3& GetDirection() const { return _direction; }
 	protected:
 		glm::vec3 _direction;

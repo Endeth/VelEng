@@ -18,6 +18,11 @@ namespace Vel
 	{
 	}
 
+	void VLightSource::SetShadowUniforms()
+	{
+		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));
+	}
+
 	void VLightSource::BindShadowMapForWriting()
 	{
 		_shadowMap->BindFBOWriting();
@@ -38,41 +43,45 @@ namespace Vel
 		_shadowMap->UnbindTexturesReading();
 	}
 
+
+
 	VPointLight::VPointLight(const glm::vec3 & position, const glm::vec3 & ambient, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(ambient, diffuse, specular)
 	{
-		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 1024,1024 });
+		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 1024,1024 }); //TODO add some sort of options
 		SetPosition(position);
-		_far = 25.0f;
 		_constant = 1.0f;
 		_linear = 0.09f;
 		_quadratic = 0.032f;
+
+		UpdateShadowTransforms();
 	}
 
 	VPointLight::VPointLight(const glm::vec3 & position, const VLightColor & colors) : VLightSource(colors)
 	{
 		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 1024,1024 });
 		SetPosition(position);
-		_far = 20.0f;
 		_constant = 1.0f;
 		_linear = 0.03f;
 		_quadratic = 0.02f;
+
+		UpdateShadowTransforms();
 	}
 
-	void VPointLight::SetLightUniforms(GLuint lPassProgram)
+	void VPointLight::SetLightUniforms(GLuint lPassProgram, GLuint uniformID)
 	{
-		auto id = std::to_string(_id);
+		auto id = std::to_string(uniformID);
 
 		glUniform3fv(glGetUniformLocation(lPassProgram, ("pLights[" + id + "].Position").c_str()), 1, &_position[0]);
 		glUniform3fv(glGetUniformLocation(lPassProgram, ("pLights[" + id + "].Color").c_str()), 1, &_color.GetDiffuse()[0]);
 		glUniform1f(glGetUniformLocation(lPassProgram, ("pLights[" + id + "].Constant").c_str()), _constant);
 		glUniform1f(glGetUniformLocation(lPassProgram, ("pLights[" + id + "].Linear").c_str()), _linear);
 		glUniform1f(glGetUniformLocation(lPassProgram, ("pLights[" + id + "].Quadratic").c_str()), _quadratic);
-		glUniformMatrix4fv(glGetUniformLocation(lPassProgram, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+		glUniformMatrix4fv(glGetUniformLocation(lPassProgram, ("pLights[" + id + "].lightSpaceMatrix").c_str()), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));
 	}
 
 	void VPointLight::SetShadowUniforms()
 	{
-		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID() , "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID() , "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix)); //TODO Don't know if this will be the same with cube shadow
 
 	}
 
@@ -82,39 +91,17 @@ namespace Vel
 		UpdateShadowTransforms();
 	}
 
-	void VPointLight::SetLightID(int id)
-	{
-		_id = id;
-	}
 
 	void VPointLight::UpdateShadowTransforms()
 	{
-		GLfloat aspect = 1;
+		GLfloat aspect = 1; //TODO get this shit straight
+		GLfloat far = 25.0f;
 		GLfloat near = 0.5f;
 		//glm::mat4 shadowProj = glm::perspective(90.0f, aspect, near, _far);
-		auto shadowProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near, _far);
-		auto lightView = glm::lookAt(_position, glm::vec3(0.0), glm::vec3(0.0, 1.0, 0.0)); //TODO erase hard code
-		lightSpaceMatrix = shadowProj * lightView;
-	}
+		auto _lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near, far);
+		auto _lightView = glm::lookAt(_position, glm::vec3(0.0), glm::vec3(0.0, 1.0, 0.0)); //TODO when creating shadow cube this will look different
 
-	void VPointLight::BindShadowMapForWriting()
-	{
-		_shadowMap->BindFBOWriting();
-	}
-
-	void VPointLight::UnbindShadowMapForWriting()
-	{
-		_shadowMap->UnbindFBOWriting();
-	}
-
-	void VPointLight::BindShadowMapForReading()
-	{
-		_shadowMap->BindTexturesReading();
-	}
-
-	void VPointLight::UnbindShadowMapForReading()
-	{
-		_shadowMap->UnbindTexturesReading();
+		_lightSpaceMatrix = _lightProj * _lightView;
 	}
 
 	VDirectionalLight::VDirectionalLight(const glm::vec3 & direction, const glm::vec3 & ambient, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(ambient, diffuse, specular), _direction(direction)
@@ -155,13 +142,13 @@ namespace Vel
 	void VSceneLighting::SetLightUniforms(GLuint lPassProgram)
 	{
 		glUniform3fv(glGetUniformLocation(lPassProgram, ("ambientLight")), 1, &_ambientLight[0]);
-		if (_sceneLights.empty())
-		{
-			return;
-		}
+
+		int ite = 0;
 		for (auto& lightSource : _sceneLights)
 		{
-			lightSource->SetLightUniforms(lPassProgram);
+			if(ite < 16)
+				lightSource->SetLightUniforms(lPassProgram, ite);
+			ite++;
 		}
 	}
 }
