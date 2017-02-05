@@ -71,15 +71,16 @@ void DefShaderSetUp()
 }
 
 std::shared_ptr<VPointLight> plight1; 
-//std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
+std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
 glm::vec3 originalPos1{ 8.5f, 4.25f, 0.0f };
-//glm::vec3 originalPos2{ -2.5f, 1.5f, 0.0f }; for second light
+glm::vec3 originalPos2{ 0.0f,4.25f, 8.5f };
 
 void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)
 {
 	VLightSource::VLightColor c{ glm::vec3{0.1f,0.1f,0.1f}, glm::vec3{ 1.0f,1.0f,1.0f }, glm::vec3{ 1.0f,1.0f,1.0f } };
 
-	plight1 = std::make_shared<VPointLight>(glm::vec3{2.5f, 2.0f, 0.0f}, c);
+	plight1 = std::make_shared<VPointLight>(originalPos1, c);
+	plight2 = std::make_shared<VPointLight>(originalPos1, c);
 	VelEng::Instance()->AddShaderProgram("ShadowMapping", "Resources\\Shaders\\Deffered\\ShadowMapping.vert", "Resources\\Shaders\\Deffered\\ShadowMapping.frag");
 	auto shdwshd = VelEng::Instance()->GetShader("ShadowMapping");
 	shdwshd->SetAttributes({ "vVertex", "vNormal", "vUV" });
@@ -87,11 +88,12 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 	shdwshd->SetUniforms(std::vector<std::string>{ "lightSpaceMatrix", "M" });
 	shdwshd->Deactivate();
 	plight1->SetShader(shdwshd);
+	plight2->SetShader(shdwshd);
 	//plight2 = std::make_shared<VPointLight>(glm::vec3{ -2.5f, 2.0f, 0.0f }, c);
 	//plight2->SetLightID(1);
 
 	scene->AddLightSource(plight1);
-	//scene->AddLightSource(plight2);
+	scene->AddLightSource(plight2);
 
 	std::vector<std::shared_ptr<VModel>> cubes(25);
 	for (auto& model : cubes)
@@ -169,6 +171,7 @@ int main()
 		VelEng::Instance()->GetFrameClock().Tick();
 		auto posDiff = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()) * 5;
 		plight1->SetPosition({originalPos1.x, originalPos1.y, originalPos1.z + posDiff});
+		plight2->SetPosition({ originalPos2.x + posDiff, originalPos2.y, originalPos2.z});
 		VelEng::Instance()->HandleInput();
 		VelEng::Instance()->RenderFrame();
 		VelEng::Instance()->GetFrameClock().CapFPS();
