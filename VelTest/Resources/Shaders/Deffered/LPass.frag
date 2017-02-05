@@ -27,43 +27,27 @@ uniform sampler2D shadowMap2;
 uniform sampler2D shadowMap3;
 uniform vec3 ambientLight;
 
-vec2 ShadowCalcTexelSize(int ite)
-{
-	if(ite == 0)
-	{
-		return textureSize(shadowMap0, 0);
-	}
-	if(ite == 1)
-	{
-		return textureSize(shadowMap1, 0);
-	}
-	if(ite == 2)
-	{
-		return textureSize(shadowMap2, 0);
-	}
-	if(ite == 3)
-	{
-		return textureSize(shadowMap3, 0);
-	}
-}
-
 float ShadowCalcDepth(vec3 projCoordinates, vec2 offset, int ite)
 {
-	vec2 texelSize = 1.0 / ShadowCalcTexelSize(ite);
+	vec2 texelSize;
 	if(ite == 0)
 	{
+		texelSize = 1.0 / textureSize(shadowMap0, 0);
 		return texture(shadowMap0, projCoordinates.xy + offset * texelSize).r;
 	}
 	if(ite == 1)
 	{
+		texelSize = 1.0 / textureSize(shadowMap1, 0);
 		return texture(shadowMap1, projCoordinates.xy + offset * texelSize).r;
 	}
 	if(ite == 2)
 	{
+		texelSize = 1.0 / textureSize(shadowMap2, 0);
 		return texture(shadowMap2, projCoordinates.xy + offset * texelSize).r;
 	}
 	if(ite == 3)
 	{
+		texelSize = 1.0 / textureSize(shadowMap3, 0);
 		return texture(shadowMap3, projCoordinates.xy + offset * texelSize).r;
 	}
 }
