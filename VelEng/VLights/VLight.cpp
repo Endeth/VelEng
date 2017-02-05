@@ -114,22 +114,29 @@ namespace Vel
 	}
 	void VSceneLighting::DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models)
 	{
+		int counter = 0;
 		for(auto &lightSource : _sceneLights)
 		{
-			glViewport(0, 0, 1024, 1024);
-			lightSource->BindShadowMapForWriting();
-			glClear(GL_DEPTH_BUFFER_BIT);
-			lightSource->ActivateShader();
-			
-			lightSource->SetShadowUniforms();
-			for (auto &model : models)
+			if (counter < 4)
 			{
-				model->SetModelMatrixUniform(lightSource->GetShader());
-				model->DrawModelWithImposedShader();
+				glViewport(0, 0, 1024, 1024);
+				lightSource->BindShadowMapForWriting();
+				glClear(GL_DEPTH_BUFFER_BIT);
+				lightSource->ActivateShader();
+
+				lightSource->SetShadowUniforms();
+				for (auto &model : models)
+				{
+					model->SetModelMatrixUniform(lightSource->GetShader());
+					model->DrawModelWithImposedShader();
+				}
+				lightSource->DeactivateShader();
+				lightSource->UnbindShadowMapForWriting();
+				glViewport(0, 0, 1366, 768);
+				counter++;
+				continue;
 			}
-			lightSource->DeactivateShader();
-			lightSource->UnbindShadowMapForWriting();
-			glViewport(0, 0, 1366, 768);
+			break;
 		}
 	}
 	void VSceneLighting::AddLight(const std::shared_ptr<VLightSource>& lightSource)

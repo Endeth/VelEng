@@ -108,6 +108,7 @@ namespace Vel
 		maybe light sorting? then calculating first X lights, same principal with shadows?
 	*/
 	public:
+		//Draws MAX 4 shadow maps
 		void DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models); 
 		void CleanUpLights() {}; //TODO
 		void AddLight(const std::shared_ptr<VLightSource>& lightSource);
