@@ -12,7 +12,7 @@ uniform sampler2D gDepth;
 struct PointLight {
     vec3 Position;
     vec3 Color;
-    
+    mat4 lightSpaceMatrix;
 	float Constant;
     float Linear;
     float Quadratic;
@@ -21,7 +21,60 @@ struct PointLight {
 const int NR_LIGHTS = 2;
 uniform PointLight pLights[NR_LIGHTS];
 uniform vec3 viewPos;
-uniform sampler2D shadowMap;
+uniform sampler2D shadowMap0;
+uniform sampler2D shadowMap1;
+uniform sampler2D shadowMap2;
+uniform sampler2D shadowMap3;
+uniform vec3 ambientLight;
+
+vec2 ShadowCalcTexelSize(int ite)
+{
+	if(ite == 0)
+	{
+		return textureSize(shadowMap0, 0);
+	}
+	if(ite == 1)
+	{
+		return textureSize(shadowMap1, 0);
+	}
+	if(ite == 2)
+	{
+		return textureSize(shadowMap2, 0);
+	}
+	if(ite == 3)
+	{
+		return textureSize(shadowMap3, 0);
+	}
+}
+
+float ShadowCalculation(vec3 fragPos, vec3 normal, int lIte)
+{
+	vec4 fragPosLightSpace = pLights[lIte].lightSpaceMatrix * vec4(fragPos, 1.0);
+	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+	projCoords = projCoords * 0.5 + 0.5;
+	float currentDepth = projCoords.z;
+	
+    vec3 lightDir = normalize(pLights[0].Position - fragPos);
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+	
+	float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap0, 0);
+	//PCF
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = texture(shadowMap0, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
+        }    
+    }
+    shadow /= 9.0;
+	
+	if(projCoords.z > 1.0)
+        shadow = 0.0;
+        
+    return shadow;
+}
 
 void main()
 {
@@ -37,27 +90,36 @@ void main()
 	}
 	else
 	{
-		vec3 lighting  = Diffuse * 0.1; // hard-coded ambient component
+		vec3 lighting  = Diffuse * ambientLight; // hard-coded ambient component
 		vec3 viewDir  = normalize(viewPos - FragPos);
 		
-		for(int i = 0; i < NR_LIGHTS; ++i)
+		for(int lightIte = 0; lightIte < NR_LIGHTS; ++lightIte)
 		{
 			// Diffuse
-			vec3 lightDir = normalize(pLights[i].Position - FragPos);
-			vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * pLights[i].Color;
+			vec3 lightDir = normalize(pLights[lightIte].Position - FragPos);
+			vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * pLights[lightIte].Color;
 			
 			// Specular
 			vec3 halfwayDir = normalize(lightDir + viewDir);  
 			float spec = pow(max(dot(Normal, halfwayDir), 0.0), 16.0);
-			vec3 specular = pLights[i].Color * spec * Specular;
+			vec3 specular = pLights[lightIte].Color * spec * Specular;
 			
 			// Attenuation
-			float distance = length(pLights[i].Position - FragPos);
-			float attenuation = 1.0 / (1.0 + pLights[i].Linear * distance + pLights[i].Quadratic * distance * distance);
+			float distance = length(pLights[lightIte].Position - FragPos);
+			float attenuation = 1.0 / (1.0 + pLights[lightIte].Linear * distance + pLights[lightIte].Quadratic * distance * distance);
 			diffuse *= attenuation;
 			specular *= attenuation;
-			lighting += diffuse + specular;
+			if(lightIte < 4) //Shadows only for the first 4 lights 
+			{
+				float shadow = ShadowCalculation(FragPos, Normal, lightIte);
+				lighting += ((diffuse + specular) *(1.0 - shadow));
+			}
+			else //No shadow calculations for rest of lights
+			{
+				lighting += (diffuse + specular);
+			}
 		} 
 		FragColor = vec4(lighting, 1.0);
+		//FragColor = vec4(Diffuse.r,Diffuse.r,Diffuse.r, 1.0);
 	}
 }
