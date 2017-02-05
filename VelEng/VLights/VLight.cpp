@@ -73,11 +73,11 @@ namespace Vel
 		auto id = std::to_string(uniformID);
 
 		glUniform3fv(glGetUniformLocation(program, ("pLights[" + id + "].Position").c_str()), 1, &_position[0]);
-		glUniform3fv(glGetUniformLocation(program, ("pLights[" + id + "].Color").c_str()), 1, &_color.GetDiffuse()[0]);
+		glUniform3fv(glGetUniformLocation(program, ("pLights[" + id + "].Color").c_str()), 1, &_color.GetDiffuse()[0]); 
 		glUniform1f(glGetUniformLocation(program, ("pLights[" + id + "].Constant").c_str()), _constant);
 		glUniform1f(glGetUniformLocation(program, ("pLights[" + id + "].Linear").c_str()), _linear);
 		glUniform1f(glGetUniformLocation(program, ("pLights[" + id + "].Quadratic").c_str()), _quadratic);
-		glUniformMatrix4fv(glGetUniformLocation(program, ("pLights[" + id + "].lightSpaceMatrix").c_str()), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));
+		glUniformMatrix4fv(glGetUniformLocation(program, ("pLights[" + id + "].lightSpaceMatrix").c_str()), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix)); //TODO Don't know if this will be the same with cube shadow
 	}
 
 	void VPointLight::SetShadowUniforms()

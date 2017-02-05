@@ -47,6 +47,27 @@ vec2 ShadowCalcTexelSize(int ite)
 	}
 }
 
+float ShadowCalcDepth(vec3 projCoordinates, vec2 offset, int ite)
+{
+	vec2 texelSize = 1.0 / ShadowCalcTexelSize(ite);
+	if(ite == 0)
+	{
+		return texture(shadowMap0, projCoordinates.xy + offset * texelSize).r;
+	}
+	if(ite == 1)
+	{
+		return texture(shadowMap1, projCoordinates.xy + offset * texelSize).r;
+	}
+	if(ite == 2)
+	{
+		return texture(shadowMap2, projCoordinates.xy + offset * texelSize).r;
+	}
+	if(ite == 3)
+	{
+		return texture(shadowMap3, projCoordinates.xy + offset * texelSize).r;
+	}
+}
+
 float ShadowCalculation(vec3 fragPos, vec3 normal, int lIte)
 {
 	vec4 fragPosLightSpace = pLights[lIte].lightSpaceMatrix * vec4(fragPos, 1.0);
@@ -54,17 +75,16 @@ float ShadowCalculation(vec3 fragPos, vec3 normal, int lIte)
 	projCoords = projCoords * 0.5 + 0.5;
 	float currentDepth = projCoords.z;
 	
-    vec3 lightDir = normalize(pLights[0].Position - fragPos);
+    vec3 lightDir = normalize(pLights[lIte].Position - fragPos);
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-	
 	float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap0, 0);
+    
 	//PCF
     for(int x = -1; x <= 1; ++x)
     {
         for(int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(shadowMap0, projCoords.xy + vec2(x, y) * texelSize).r; 
+            float pcfDepth =  ShadowCalcDepth(projCoords, vec2(x, y), lIte);
             shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
         }    
     }
