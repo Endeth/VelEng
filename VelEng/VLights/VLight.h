@@ -36,9 +36,13 @@ namespace Vel
 		void ActivateShader() { _depthShader->Activate(); }
 		void DeactivateShader() { _depthShader->Deactivate(); }
 
-		virtual void SetLightUniforms(GLuint lPassProgram, GLuint uniformID) = 0;
+		/*	Sets uniforms in light using shader
+		Pass iterator from VSceneLights to uniformID when setting uniforms*/
+		virtual void SetLightUniforms(GLuint program, GLuint uniformID) = 0;
+		//Sets uniforms in shadow map generating shader
 		virtual void SetShadowUniforms();
 
+		virtual void SetTextureUnit(GLuint textureUnit);
 		virtual void BindShadowMapForWriting();
 		virtual void UnbindShadowMapForWriting(); 
 		virtual void BindShadowMapForReading();
@@ -55,35 +59,14 @@ namespace Vel
 		glm::mat4 _lightSpaceMatrix;
 	};
 
-	/*class VDynamicLight : public VLightSource
-	{
-
-	public:
-		VDynamicLight(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
-		VDynamicLight(const VDynamicLight& colors);
-		 //TODO change to static shaders?
-	protected:
-		void CreateShadowMap();
-
-
-	};
-
-	class VStaticLight : public VLightSource
-	{
-
-	};
-
-	*/
-
 	class VPointLight : public VLightSource
 	{
 	public:
 		VPointLight(const glm::vec3& position, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
 		VPointLight(const glm::vec3& position, const VLightColor& colors);
 		
-		//Pass iterator from VSceneLights to uniformID when setting uniforms
-		virtual void SetLightUniforms(GLuint lPassProgram, GLuint uniformID) override;
-		//Sets uniforms in shadow map generating shader
+
+		virtual void SetLightUniforms(GLuint program, GLuint uniformID) override;
 		virtual void SetShadowUniforms() override;
 
 		const glm::vec3& GetPosition() const { return _position; }
@@ -128,7 +111,10 @@ namespace Vel
 		void DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models); 
 		void CleanUpLights() {}; //TODO
 		void AddLight(const std::shared_ptr<VLightSource>& lightSource);
-		void ActivateShadowMap(); //DEBUG
+
+		/*Activates first 4 (or less if there aren't that many textures) unit textures
+		from GL_TEXTURE4 to GL_TEXTURE7 and binds appropriate textures*/
+		void ActivateShadowMap();
 
 		//requires active shader
 		void SetLightUniforms(GLuint lPassProgram);

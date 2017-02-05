@@ -57,6 +57,7 @@ namespace Vel
 		VShadowMap2D(const glm::ivec2& size = glm::ivec2(1024, 1024));
 		virtual void BindTexturesReading() override;
 		virtual void UnbindTexturesReading() override;
+		void SetTextureUnit(GLuint textureUnit);
 		virtual ~VShadowMap2D();
 	private:
 	};

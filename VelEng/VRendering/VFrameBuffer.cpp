@@ -130,6 +130,11 @@ namespace Vel
 		_depthAttachment->UnbindTexture();
 	}
 
+	void VShadowMap2D::SetTextureUnit(GLuint textureUnit)
+	{
+		_depthAttachment->SetTextureUnit(textureUnit);
+	}
+
 	VShadowMap2D::~VShadowMap2D()
 	{
 
