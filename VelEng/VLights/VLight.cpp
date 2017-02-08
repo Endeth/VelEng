@@ -98,7 +98,7 @@ namespace Vel
 		GLfloat aspect = 1; //TODO get this shit straight
 		GLfloat far = 25.0f;
 		GLfloat near = 0.5f;
-		//glm::mat4 shadowProj = glm::perspective(90.0f, aspect, near, _far); //TODO change to this somewhere soon
+		//glm::mat4 _lightProj = glm::perspective(90.0f, aspect, near, far); //TODO change to this somewhere soon
 		auto _lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near, far);
 		auto _lightView = glm::lookAt(_position, glm::vec3(0.0), glm::vec3(0.0, 1.0, 0.0)); //TODO when creating shadow cube this will look different
 
@@ -110,6 +110,18 @@ namespace Vel
 	}
 
 	VDirectionalLight::VDirectionalLight(const glm::vec3 & direction, const VLightColor & colors) : VLightSource(colors), _direction(direction)
+	{
+	}
+	void VDirectionalLight::SetLightUniforms(GLuint program, GLuint uniformID)
+	{
+	}
+	void VDirectionalLight::SetShadowUniforms()
+	{
+	}
+	void VDirectionalLight::SetDirection(const glm::vec3 & dir)
+	{
+	}
+	void VDirectionalLight::UpdateShadowTransforms()
 	{
 	}
 	void VSceneLighting::DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models)

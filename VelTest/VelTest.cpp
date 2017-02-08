@@ -11,6 +11,7 @@
 
 using namespace Vel;
 
+
 glm::vec3 SunlightDirection{ -1.0, -0.35, 0.4 };
 
 void BasicShaderSetUp()
@@ -72,15 +73,23 @@ void DefShaderSetUp()
 
 std::shared_ptr<VPointLight> plight1; 
 std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
+std::shared_ptr<VPointLight> plight3;
+std::shared_ptr<VPointLight> plight4;
+std::shared_ptr<VPointLight> plight5; // no shadow for this one
 glm::vec3 originalPos1{ 8.5f, 4.25f, 0.0f };
 glm::vec3 originalPos2{ 0.0f,4.25f, 8.5f };
 
 void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)
 {
-	VLightSource::VLightColor c{ glm::vec3{0.1f,0.1f,0.1f}, glm::vec3{ 1.0f,1.0f,1.0f }, glm::vec3{ 1.0f,1.0f,1.0f } };
+	//glEnable(GL_CULL_FACE); //TODO fix faces direction
+	//glCullFace(GL_BACK);
+	VLightSource::VLightColor c{ glm::vec3{0.1f,0.1f,0.1f}, glm::vec3{ 0.0f,0.0f,1.0f }, glm::vec3{ 0.0f,0.0f,1.0f } };
+	VLightSource::VLightColor c2{ glm::vec3{ 0.1f,0.1f,0.1f }, glm::vec3{ 0.7f,0.0f,0.0f }, glm::vec3{ 0.7f,0.0f,0.0f } };
 
 	plight1 = std::make_shared<VPointLight>(originalPos1, c);
-	plight2 = std::make_shared<VPointLight>(originalPos1, c);
+	plight2 = std::make_shared<VPointLight>(originalPos2, c);
+	plight3 = std::make_shared<VPointLight>(originalPos1, c2);
+	plight4 = std::make_shared<VPointLight>(originalPos2, c2);
 	VelEng::Instance()->AddShaderProgram("ShadowMapping", "Resources\\Shaders\\Deffered\\ShadowMapping.vert", "Resources\\Shaders\\Deffered\\ShadowMapping.frag");
 	auto shdwshd = VelEng::Instance()->GetShader("ShadowMapping");
 	shdwshd->SetAttributes({ "vVertex", "vNormal", "vUV" });
@@ -89,11 +98,15 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 	shdwshd->Deactivate();
 	plight1->SetShader(shdwshd);
 	plight2->SetShader(shdwshd);
+	plight3->SetShader(shdwshd);
+	plight4->SetShader(shdwshd);
 	//plight2 = std::make_shared<VPointLight>(glm::vec3{ -2.5f, 2.0f, 0.0f }, c);
 	//plight2->SetLightID(1);
 
 	scene->AddLightSource(plight1);
 	scene->AddLightSource(plight2);
+	scene->AddLightSource(plight3);
+	scene->AddLightSource(plight4);
 
 	std::vector<std::shared_ptr<VModel>> cubes(25);
 	for (auto& model : cubes)
@@ -169,9 +182,12 @@ int main()
 	while (VelEng::Instance()->ShouldRun())
 	{
 		VelEng::Instance()->GetFrameClock().Tick();
-		auto posDiff = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()) * 5;
-		plight1->SetPosition({originalPos1.x, originalPos1.y, originalPos1.z + posDiff});
-		plight2->SetPosition({ originalPos2.x + posDiff, originalPos2.y, originalPos2.z});
+		auto posDiff1 = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()) * 5;
+		auto posDiff2 = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()*2) * 5;
+		plight1->SetPosition({originalPos1.x, originalPos1.y, originalPos1.z + posDiff1});
+		plight2->SetPosition({ originalPos2.x + posDiff2, originalPos2.y, originalPos2.z});
+		plight3->SetPosition({ originalPos1.x, originalPos1.y, originalPos1.z - posDiff1 });
+		plight4->SetPosition({ originalPos2.x - posDiff2, originalPos2.y, originalPos2.z });
 		VelEng::Instance()->HandleInput();
 		VelEng::Instance()->RenderFrame();
 		VelEng::Instance()->GetFrameClock().CapFPS();

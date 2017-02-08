@@ -18,7 +18,7 @@ struct PointLight {
     float Quadratic;
 };
 
-const int NR_LIGHTS = 2;
+const int NR_LIGHTS = 16;
 uniform PointLight pLights[NR_LIGHTS];
 uniform vec3 viewPos;
 uniform sampler2D shadowMap0;

@@ -11,7 +11,7 @@
 
 namespace Vel
 {
-	class VLightSource
+	class VLightSource //TODO make a generic class GEOMETRY OBJECT or something like that
 	{
 	protected:
 		using ShaderPtr = std::shared_ptr<VGLSLShader>;
@@ -31,7 +31,7 @@ namespace Vel
 			glm::vec3 _specular;
 		};
 
-		VLightSource(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
+		VLightSource(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular); 
 		VLightSource(const VLightColor& color);
 		void ActivateShader() { _depthShader->Activate(); }
 		void DeactivateShader() { _depthShader->Deactivate(); }
@@ -62,24 +62,22 @@ namespace Vel
 	class VPointLight : public VLightSource
 	{
 	public:
-		VPointLight(const glm::vec3& position, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
+		VPointLight(const glm::vec3& position, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular); //no reason to keep ambient
 		VPointLight(const glm::vec3& position, const VLightColor& colors);
 		
 
 		virtual void SetLightUniforms(GLuint program, GLuint uniformID) override;
 		virtual void SetShadowUniforms() override;
 
-		const glm::vec3& GetPosition() const { return _position; }
-
 		//sets position and recalculates shadow transforms matrices - might want to set those apart
 		void SetPosition(const glm::vec3 &pos);
+		const glm::vec3& GetPosition() const { return _position; }
 		
 	protected:
 		glm::vec3 _position;
 		GLfloat _constant;
 		GLfloat _linear;
 		GLfloat _quadratic;
-		GLuint _id;
 		
 	private:
 		//std::unique_ptr<VShadowMapCube> _shadowMap;
@@ -92,14 +90,38 @@ namespace Vel
 		VDirectionalLight(const glm::vec3& direction, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
 		VDirectionalLight(const glm::vec3& direction, const VLightColor& colors);
 
+		virtual void SetLightUniforms(GLuint program, GLuint uniformID) override;
+		virtual void SetShadowUniforms() override;
+
+		//sets direction and recalculates shadow transforms matrices - might want to set those apart
+		void SetDirection(const glm::vec3 &dir);
 		const glm::vec3& GetDirection() const { return _direction; }
 	protected:
 		glm::vec3 _direction;
+	private:
+		void UpdateShadowTransforms(); //TODO - implement directional light following camera
 	};
 
-	class VSpotLight : public VPointLight, public VDirectionalLight
+	class VSpotLight : public VLightSource
 	{
+	public:
+		VSpotLight(const glm::vec3& direction, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
+		VSpotLight(const glm::vec3& direction, const VLightColor& colors);
 
+		virtual void SetLightUniforms(GLuint program, GLuint uniformID) override;
+		virtual void SetShadowUniforms() override;
+
+		//sets direction and recalculates shadow transforms matrices - might want to set those apart
+		void SetDirection(const glm::vec3 &dir);
+		const glm::vec3& GetDirection() const { return _direction; }
+	protected:
+		glm::vec3 _position;
+		glm::vec3 _direction;
+		GLfloat _constant;
+		GLfloat _linear;
+		GLfloat _quadratic;
+	private:
+		void UpdateShadowTransforms();
 	};
 
 	class VSceneLighting
