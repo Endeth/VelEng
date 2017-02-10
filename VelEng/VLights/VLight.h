@@ -21,17 +21,15 @@ namespace Vel
 		{
 
 		public:
-			VLightColor(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
-			const glm::vec3& GetAmbient() const { return _ambient; }
+			VLightColor(const glm::vec3& diffuse, const glm::vec3& specular);
 			const glm::vec3& GetDiffuse() const { return _diffuse; }
 			const glm::vec3& GetSpecular() const { return _specular; }
 		private:
-			glm::vec3 _ambient;
 			glm::vec3 _diffuse;
 			glm::vec3 _specular;
 		};
 
-		VLightSource(const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular); 
+		VLightSource(const glm::vec3& diffuse, const glm::vec3& specular); 
 		VLightSource(const VLightColor& color);
 		void ActivateShader() { _depthShader->Activate(); }
 		void DeactivateShader() { _depthShader->Deactivate(); }
@@ -62,7 +60,7 @@ namespace Vel
 	class VPointLight : public VLightSource
 	{
 	public:
-		VPointLight(const glm::vec3& position, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular); //no reason to keep ambient
+		VPointLight(const glm::vec3& position, const glm::vec3& diffuse, const glm::vec3& specular); //no reason to keep ambient
 		VPointLight(const glm::vec3& position, const VLightColor& colors);
 		
 
@@ -87,7 +85,7 @@ namespace Vel
 	class VDirectionalLight : public VLightSource
 	{
 	public:
-		VDirectionalLight(const glm::vec3& direction, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
+		VDirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
 		VDirectionalLight(const glm::vec3& direction, const VLightColor& colors);
 
 		virtual void SetLightUniforms(GLuint program, GLuint uniformID) override;
@@ -105,14 +103,14 @@ namespace Vel
 	class VSpotLight : public VLightSource
 	{
 	public:
-		VSpotLight(const glm::vec3& direction, const glm::vec3& ambient, const glm::vec3& diffuse, const glm::vec3& specular);
+		VSpotLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
 		VSpotLight(const glm::vec3& direction, const VLightColor& colors);
 
 		virtual void SetLightUniforms(GLuint program, GLuint uniformID) override;
 		virtual void SetShadowUniforms() override;
 
 		//sets direction and recalculates shadow transforms matrices - might want to set those apart
-		void SetDirection(const glm::vec3 &dir);
+		void SetDirection(const glm::vec3 &dir) { _direction = dir; }
 		const glm::vec3& GetDirection() const { return _direction; }
 	protected:
 		glm::vec3 _position;
@@ -127,7 +125,7 @@ namespace Vel
 	class VSceneLighting
 	{
 	/*
-		maybe light sorting? then calculating first X lights, same principal with shadows?
+		maybe light sorting? then calculating first X lights, same principle with shadows?
 	*/
 	public:
 		//Draws MAX 4 shadow maps

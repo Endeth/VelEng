@@ -83,8 +83,8 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 {
 	//glEnable(GL_CULL_FACE); //TODO fix faces direction
 	//glCullFace(GL_BACK);
-	VLightSource::VLightColor c{ glm::vec3{0.1f,0.1f,0.1f}, glm::vec3{ 0.0f,0.0f,1.0f }, glm::vec3{ 0.0f,0.0f,1.0f } };
-	VLightSource::VLightColor c2{ glm::vec3{ 0.1f,0.1f,0.1f }, glm::vec3{ 0.7f,0.0f,0.0f }, glm::vec3{ 0.7f,0.0f,0.0f } };
+	VLightSource::VLightColor c{ glm::vec3{ 0.0f,0.0f,1.0f }, glm::vec3{ 0.0f,0.0f,1.0f } };
+	VLightSource::VLightColor c2{ glm::vec3{ 0.7f,0.0f,0.0f }, glm::vec3{ 0.7f,0.0f,0.0f } };
 
 	plight1 = std::make_shared<VPointLight>(originalPos1, c);
 	plight2 = std::make_shared<VPointLight>(originalPos2, c);

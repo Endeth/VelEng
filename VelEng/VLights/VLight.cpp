@@ -5,11 +5,11 @@ using namespace std;
 
 namespace Vel 
 {
-	VLightSource::VLightColor::VLightColor(const glm::vec3 & ambient, const glm::vec3 & diffuse, const glm::vec3 & specular) : _ambient(ambient), _diffuse(diffuse), _specular(specular)
+	VLightSource::VLightColor::VLightColor(const glm::vec3 & diffuse, const glm::vec3 & specular) : _diffuse(diffuse), _specular(specular)
 	{
 	}
 
-	VLightSource::VLightSource(const glm::vec3 & ambient, const glm::vec3 & diffuse, const glm::vec3 & specular) : _color(ambient, diffuse, specular)
+	VLightSource::VLightSource(const glm::vec3 & diffuse, const glm::vec3 & specular) : _color(diffuse, specular)
 	{
 		
 	}
@@ -50,7 +50,7 @@ namespace Vel
 
 
 
-	VPointLight::VPointLight(const glm::vec3 & position, const glm::vec3 & ambient, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(ambient, diffuse, specular)
+	VPointLight::VPointLight(const glm::vec3 & position, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(diffuse, specular)
 	{
 		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 1024,1024 }); //TODO get rid of hard code
 		SetPosition(position);
@@ -105,7 +105,7 @@ namespace Vel
 		_lightSpaceMatrix = _lightProj * _lightView;
 	}
 
-	VDirectionalLight::VDirectionalLight(const glm::vec3 & direction, const glm::vec3 & ambient, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(ambient, diffuse, specular), _direction(direction)
+	VDirectionalLight::VDirectionalLight(const glm::vec3 & direction, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(diffuse, specular), _direction(direction)
 	{
 	}
 
