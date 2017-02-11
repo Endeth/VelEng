@@ -24,7 +24,7 @@ namespace Vel
 		InitCamera();
 
 		glEnable(GL_DEPTH_TEST);
-		//glEnable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
 		glDepthFunc(GL_LEQUAL);
 
 		auto err = glGetError(); //1280 err

@@ -79,8 +79,6 @@ glm::vec3 originalLight2Pos{ 0.0f,4.25f, 8.5f };
 
 void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)
 {
-	//glEnable(GL_CULL_FACE); //TODO fix faces direction
-	//glCullFace(GL_BACK);
 	VLightSource::VLightColor pointLight1Color{ glm::vec3{ 2.0f,2.0f,2.0f }, glm::vec3{ 2.0f,2.0f,2.0f } };
 	VLightSource::VLightColor pointLight2Color{ glm::vec3{ 0.7f,0.0f,0.0f }, glm::vec3{ 0.7f,0.0f,0.0f } };
 	VLightSource::VLightColor directionalLightColor{ glm::vec3{ 0.6f, 0.6f, 0.6f}, glm::vec3{ 0.6f, 0.6f, 0.6f }, };

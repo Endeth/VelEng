@@ -32,22 +32,22 @@ namespace Vel
 
 		_indices.reserve(36);
 		_indices.push_back(0); _indices.push_back(1); _indices.push_back(2);
-		_indices.push_back(1); _indices.push_back(2); _indices.push_back(3);
+		_indices.push_back(1); _indices.push_back(3); _indices.push_back(2);
 
 		_indices.push_back(3); _indices.push_back(1); _indices.push_back(7);
-		_indices.push_back(1); _indices.push_back(7); _indices.push_back(5);
+		_indices.push_back(1); _indices.push_back(5); _indices.push_back(7);
 
-		_indices.push_back(3); _indices.push_back(2); _indices.push_back(7);
+		_indices.push_back(3); _indices.push_back(7); _indices.push_back(2);
 		_indices.push_back(6); _indices.push_back(2); _indices.push_back(7);
 
 		_indices.push_back(0); _indices.push_back(2); _indices.push_back(6);
-		_indices.push_back(4); _indices.push_back(6); _indices.push_back(0);
+		_indices.push_back(4); _indices.push_back(0); _indices.push_back(6);
 
-		_indices.push_back(7); _indices.push_back(6); _indices.push_back(5);
+		_indices.push_back(7); _indices.push_back(5); _indices.push_back(6);
 		_indices.push_back(6); _indices.push_back(5); _indices.push_back(4);
 
 		_indices.push_back(1); _indices.push_back(0); _indices.push_back(5);
-		_indices.push_back(0); _indices.push_back(5); _indices.push_back(4);
+		_indices.push_back(0); _indices.push_back(4); _indices.push_back(5);
 
 		LoadIntoGPU();
 		_isLoaded = true;
@@ -58,11 +58,13 @@ namespace Vel
 			_vertices.reserve(36);
 			// Positions                      // Normals                       // Texture Coords
 			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 0.0f,  0.0f}));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f, -0.5f }, glm::vec3{ 0.0f,  0.0f, -1.0f }, glm::vec2{ 1.0f,  1.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 1.0f,  0.0f}));
+
+
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 1.0f,  1.0f}));
-			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 1.0f,  1.0f}));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f }, glm::vec3{ 0.0f,  0.0f, -1.0f }, glm::vec2{ 0.0f,  0.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f, -0.5f}, glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 0.0f,  1.0f}));
-			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f},  glm::vec3{ 0.0f,  0.0f, -1.0f},  glm::vec2{ 0.0f,  0.0f}));
 
 			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f,  0.5f }, glm::vec3{ 0.0f,  0.0f,  1.0f }, glm::vec2{ 0.0f,  0.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f,  0.5f},  glm::vec3{ 0.0f,  0.0f,  1.0f },   glm::vec2{ 1.0f,  0.0f }));
@@ -79,11 +81,11 @@ namespace Vel
 			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f,  0.5f }, glm::vec3{ -1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
 
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f, -0.5f }, glm::vec3{ 1.0f,  0.0f,  0.0f }, glm::vec2{ 0.0f,  1.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f, -0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  1.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f, -0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
-			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f, -0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f }, glm::vec3{ 1.0f,  0.0f,  0.0f }, glm::vec2{ 1.0f,  0.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f,  0.5f }, glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 0.0f,  0.0f }));
-			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 1.0f,  0.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
 
 			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f },  glm::vec3{ 0.0f, -1.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f, -0.5f, -0.5f },  glm::vec3{ 0.0f, -1.0f,  0.0f },   glm::vec2{ 1.0f,  1.0f }));
@@ -93,11 +95,11 @@ namespace Vel
 			_vertices.push_back(Vertex(glm::vec3{ -0.5f, -0.5f, -0.5f }, glm::vec3{ 0.0f, -1.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
 
 			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f, -0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },  glm::vec2{ 0.0f,  1.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f }, glm::vec3{ 0.0f,  1.0f,  0.0f }, glm::vec2{ 1.0f,  0.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f, -0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },  glm::vec2{ 1.0f,  1.0f }));
-			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },   glm::vec2{ 1.0f,  0.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ 0.5f,  0.5f,  0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },  glm::vec2{ 1.0f,  0.0f }));
+			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f, -0.5f }, glm::vec3{ 0.0f,  1.0f,  0.0f }, glm::vec2{ 0.0f,  1.0f }));
 			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f,  0.5f }, glm::vec3{ 0.0f,  1.0f,  0.0f },  glm::vec2{ 0.0f,  0.0f }));
-			_vertices.push_back(Vertex(glm::vec3{ -0.5f,  0.5f, -0.5f },  glm::vec3{ 0.0f,  1.0f,  0.0f },   glm::vec2{ 0.0f,  1.0f }));
 	
 
 
@@ -202,7 +204,7 @@ namespace Vel
 
 		_indices.reserve(6);
 		_indices.push_back(0); _indices.push_back(1); _indices.push_back(2);
-		_indices.push_back(1); _indices.push_back(2); _indices.push_back(3);
+		_indices.push_back(1); _indices.push_back(3); _indices.push_back(2);
 
 		LoadIntoGPU();
 		_isLoaded = true;
@@ -211,8 +213,8 @@ namespace Vel
 	{
 		_vertices.reserve(6);
 		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 1.0f }));
-		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
 		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 0.0f }));
+		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
 
 		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
 		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 0.0f }));
