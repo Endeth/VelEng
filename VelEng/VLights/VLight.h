@@ -36,7 +36,7 @@ namespace Vel
 
 		/*	Sets uniforms in light using shader
 		Pass iterator from VSceneLights to uniformID when setting uniforms*/
-		virtual void SetLightUniforms(GLuint program, GLuint uniformID) = 0;
+		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) = 0;
 		//Sets uniforms in shadow map generating shader
 		virtual void SetShadowUniforms();
 
@@ -64,7 +64,7 @@ namespace Vel
 		VPointLight(const glm::vec3& position, const VLightColor& colors);
 		
 
-		virtual void SetLightUniforms(GLuint program, GLuint uniformID) override;
+		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) override;
 		virtual void SetShadowUniforms() override;
 
 		//sets position and recalculates shadow transforms matrices - might want to set those apart
@@ -88,15 +88,20 @@ namespace Vel
 		VDirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
 		VDirectionalLight(const glm::vec3& direction, const VLightColor& colors);
 
-		virtual void SetLightUniforms(GLuint program, GLuint uniformID) override;
+		virtual void SetLPassLightUniforms(GLuint program);
 		virtual void SetShadowUniforms() override;
 
 		//sets direction and recalculates shadow transforms matrices - might want to set those apart
 		void SetDirection(const glm::vec3 &dir);
 		const glm::vec3& GetDirection() const { return _direction; }
+
+		void SetCameraPosition(const glm::vec3 &pos);
 	protected:
 		glm::vec3 _direction;
 	private:
+		glm::vec3 _camPosition;
+		glm::vec3 _shadowCastingPosition;
+		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) override {}; //not needed
 		void UpdateShadowTransforms(); //TODO - implement directional light following camera
 	};
 
@@ -106,7 +111,7 @@ namespace Vel
 		VSpotLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
 		VSpotLight(const glm::vec3& direction, const VLightColor& colors);
 
-		virtual void SetLightUniforms(GLuint program, GLuint uniformID) override;
+		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) override;
 		virtual void SetShadowUniforms() override;
 
 		//sets direction and recalculates shadow transforms matrices - might want to set those apart
@@ -128,20 +133,29 @@ namespace Vel
 		maybe light sorting? then calculating first X lights, same principle with shadows?
 	*/
 	public:
-		//Draws MAX 4 shadow maps
-		void DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models); 
+
 		void CleanUpLights() {}; //TODO
 		void AddLight(const std::shared_ptr<VLightSource>& lightSource);
+		void CreateDirectionalLight(const glm::vec3 &dir, const VLightSource::VLightColor &color);
+		void CreateDirectionalLight(std::unique_ptr<VDirectionalLight> &&light);
+
+		//creates shadowmap where camera position is center
+		void DrawDirectionalLightShadowMap(const glm::vec3 &cameraPosition);
+		//Draws MAX 4 shadow maps
+		void DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models);
 
 		/*Activates first 4 (or less if there aren't that many textures) unit textures
 		from GL_TEXTURE4 to GL_TEXTURE7 and binds appropriate textures*/
-		void ActivateShadowMap();
+		void ActivateShadowMaps();
 
 		//requires active shader
-		void SetLightUniforms(GLuint lPassProgram);
+		void SetLPassLightUniforms(GLuint lPassProgram);
+		void SetAmbientLight(const glm::vec3 &amb) { _ambientLight = amb; }
+		void SetCameraPosition(const glm::vec3 &pos);
 	private:
-
+		glm::vec3 _cameraPosition; //TODO change to pointer
 		glm::vec3 _ambientLight{0.1,0.1,0.1};
+		std::unique_ptr<VDirectionalLight> _directionalLight;
 		std::list<std::shared_ptr<VLightSource>> _sceneLights;
 	};
 }

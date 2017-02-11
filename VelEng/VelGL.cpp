@@ -24,6 +24,7 @@ namespace Vel
 		InitCamera();
 
 		glEnable(GL_DEPTH_TEST);
+		//glEnable(GL_CULL_FACE);
 		glDepthFunc(GL_LEQUAL);
 
 		auto err = glGetError(); //1280 err
@@ -181,7 +182,7 @@ namespace Vel
 	//adjusts camera and vp matrices in shaders, then renders scenes
 	void Vel::VelEng::RenderFrame()
 	{	
-		auto vMat = _mainCamera->GetViewMatrix();
+		auto vMat = _mainCamera->GetViewMatrix(); //TODO adjust uniforms in signal
 		auto pMat = _mainCamera->GetProjectionMatrix();
 
 		auto gPassShd = VelEng::Instance()->GetShader("GPass");
@@ -192,9 +193,10 @@ namespace Vel
 
 		auto lpass = VelEng::Instance()->GetShader("LPass");
 		auto camPosition = VelEng::Instance()->_mainCamera->GetPosition();
+		_scenes["World"]->SetCameraPosition(camPosition);
 		lpass->Activate();
 		lpass->SetUniformsValue(Uniform<glm::vec3>{"viewPos", camPosition});
-		_scenes["World"]->SetLightUniforms(lpass->GetProgramID());
+		_scenes["World"]->SetLPassLightUniforms(lpass->GetProgramID());
 		lpass->Deactivate();
 
 

@@ -64,7 +64,7 @@ Vel::VDefferedRenderer::LightingPassQuad::LightingPassQuad()
 
 	_indices.reserve(6);
 	_indices.push_back(0); _indices.push_back(1); _indices.push_back(2);
-	_indices.push_back(1); _indices.push_back(2); _indices.push_back(3);
+	_indices.push_back(1); _indices.push_back(3); _indices.push_back(2);
 
 	LoadIntoGPU();
 }

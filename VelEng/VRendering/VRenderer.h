@@ -32,7 +32,7 @@ namespace Vel
 		void SetGPassShader(const ShaderPtr& shader){ _gPassShader = shader; }
 		void SetLPassShader(const ShaderPtr& shader);
 		void BindGBufferForWriting();
-		void BindShadowMapReading() { _lPassShader->Activate(); _scene->ActivateShadowMap(); } //DEBUG
+		void BindShadowMapReading() { _lPassShader->Activate(); _scene->ActivateShadowMaps(); } //DEBUG
 		void UnbindGBufferForWriting();
 	private:
 		void GeometryPass();

@@ -21,11 +21,13 @@ namespace Vel
 		void DrawShadows();
 		void AddModel(const ModelPtr &model);
 		void AddLightSource(const LightPtr &lightSource);
-		void SetLightUniforms(GLuint lPassProgram) { _sceneLighting->SetLightUniforms(lPassProgram); }
-		void ActivateShadowMap() { _sceneLighting->ActivateShadowMap(); } //DEBUG
+		void CreateDirectionalLight(const glm::vec3 &direction, const VLightSource::VLightColor &color);
+		void CreateDirectionalLight(std::unique_ptr<VDirectionalLight> &&light);
+		void SetLPassLightUniforms(GLuint lPassProgram) { _sceneLighting->SetLPassLightUniforms(lPassProgram); }
+		void SetCameraPosition(const glm::vec3 &pos) { _sceneLighting->SetCameraPosition(pos); }
+		void ActivateShadowMaps() { _sceneLighting->ActivateShadowMaps(); } //DEBUG
 
 	private:
-		void DrawSceneShadows();
 		std::vector<ModelPtr> _models; //TODO change to list maybe, add cleaning up
 		std::unique_ptr<VSceneLighting> _sceneLighting;
 	};

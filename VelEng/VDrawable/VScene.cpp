@@ -40,3 +40,13 @@ void Vel::VScene::AddLightSource(const LightPtr& lightSource)
 {
 	_sceneLighting->AddLight(lightSource);
 }
+
+void Vel::VScene::CreateDirectionalLight(const glm::vec3 & direction, const VLightSource::VLightColor & color)
+{
+	_sceneLighting->CreateDirectionalLight(direction, color);
+}
+
+void Vel::VScene::CreateDirectionalLight(std::unique_ptr<VDirectionalLight>&& light)
+{
+	_sceneLighting->CreateDirectionalLight(std::move(light));
+}
