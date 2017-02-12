@@ -34,7 +34,7 @@ namespace Vel
 		void ActivateShader() { _depthShader->Activate(); }
 		void DeactivateShader() { _depthShader->Deactivate(); }
 
-		/*	Sets uniforms in light using shader
+		/*Sets uniforms in light using shader
 		Pass iterator from VSceneLights to uniformID when setting uniforms*/
 		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) = 0;
 		//Sets uniforms in shadow map generating shader
@@ -52,7 +52,6 @@ namespace Vel
 	protected:
 		VLightColor _color;
 		ShaderPtr _depthShader;
-		//TODO template? same with framebuffers
 		ShadowMapFBOPtr _shadowMap;
 		glm::mat4 _lightSpaceMatrix;
 	};
@@ -70,6 +69,12 @@ namespace Vel
 		//sets position and recalculates shadow transforms matrices - might want to set those apart
 		void SetPosition(const glm::vec3 &pos);
 		const glm::vec3& GetPosition() const { return _position; }
+
+		virtual void SetTextureUnit(GLuint textureUnit) override { _shadowMap->SetTextureUnit(textureUnit); }
+		virtual void BindShadowMapForWriting() override { _shadowMap->BindFBOWriting(); }
+		virtual void UnbindShadowMapForWriting() override { _shadowMap->UnbindFBOWriting(); }
+		virtual void BindShadowMapForReading() override { _shadowMap->BindTexturesReading(); }
+		virtual void UnbindShadowMapForReading() override { _shadowMap->UnbindTexturesReading(); }
 		
 	protected:
 		glm::vec3 _position;
@@ -78,7 +83,8 @@ namespace Vel
 		GLfloat _quadratic;
 		
 	private:
-		//std::unique_ptr<VShadowMapCube> _shadowMap;
+		std::vector<glm::mat4> _shadowTransforms;
+		std::unique_ptr<VShadowMapCube> _shadowMap;
 		void UpdateShadowTransforms();
 	};
 

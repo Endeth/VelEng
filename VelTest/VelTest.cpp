@@ -70,39 +70,47 @@ void DefShaderSetUp()
 }
 
 std::shared_ptr<VPointLight> plight1; 
-std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
-std::shared_ptr<VPointLight> plight3;
-std::shared_ptr<VPointLight> plight4;
-std::shared_ptr<VPointLight> plight5; // no shadow for this one
-glm::vec3 originalLight1Pos{ 8.5f, 4.25f, 0.0f };
+//std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
+//std::shared_ptr<VPointLight> plight3;
+//std::shared_ptr<VPointLight> plight4;
+//std::shared_ptr<VPointLight> plight5; // no shadow for this one
+glm::vec3 originalLight1Pos{ 2.5f, 3.25f, 0.0f };
 glm::vec3 originalLight2Pos{ 0.0f,4.25f, 8.5f };
 
 void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)
 {
-	VLightSource::VLightColor pointLight1Color{ glm::vec3{ 2.0f,2.0f,2.0f }, glm::vec3{ 2.0f,2.0f,2.0f } };
+	VLightSource::VLightColor pointLight1Color{ glm::vec3{ 1.0f,1.0f,1.0f }, glm::vec3{ 1.0f,1.0f,1.0f } };
 	VLightSource::VLightColor pointLight2Color{ glm::vec3{ 0.7f,0.0f,0.0f }, glm::vec3{ 0.7f,0.0f,0.0f } };
-	VLightSource::VLightColor directionalLightColor{ glm::vec3{ 0.6f, 0.6f, 0.6f}, glm::vec3{ 0.6f, 0.6f, 0.6f }, };
-	glm::vec3 SunlightDirection{ 1.0, -1.0, 1.0 };
+	VLightSource::VLightColor directionalLightColor{ glm::vec3{ 0.2f, 0.25f, 0.45f}, glm::vec3{ 0.2f, 0.25f, 0.45f } };
+	glm::vec3 SunlightDirection{ 0.5, -0.5, 1.0 };
 	
 
 
 	plight1 = std::make_shared<VPointLight>(originalLight1Pos, pointLight1Color);
-	plight2 = std::make_shared<VPointLight>(originalLight2Pos, pointLight1Color);
+	//plight2 = std::make_shared<VPointLight>(originalLight2Pos, pointLight1Color);
 	//plight3 = std::make_shared<VPointLight>(originalLight1Pos, pointLight2Color);
-	//plight4 = std::make_shared<VPointLight>(originalLight2Pos, pointLight2Color);
+	//plight4 = std::make_shared<VPointLight>(originalLight2Pos, pointLight2Color); 
 	VelEng::Instance()->AddShaderProgram("ShadowMapping", "Resources\\Shaders\\Deffered\\ShadowMapping.vert", "Resources\\Shaders\\Deffered\\ShadowMapping.frag");
-	auto shdwshd = VelEng::Instance()->GetShader("ShadowMapping");
-	shdwshd->SetAttributes({ "vVertex", "vNormal", "vUV" });
-	shdwshd->Activate();
-	shdwshd->SetUniforms(std::vector<std::string>{ "lightSpaceMatrix", "M" });
-	shdwshd->Deactivate();
-	plight1->SetShader(shdwshd);
-	plight2->SetShader(shdwshd);
-	//plight3->SetShader(shdwshd);
-	//plight4->SetShader(shdwshd);
+	VelEng::Instance()->AddShaderProgram("ShadowMappingCube", "Resources\\Shaders\\Deffered\\ShadowsCube.vert", "Resources\\Shaders\\Deffered\\ShadowsCube.frag", "Resources\\Shaders\\Deffered\\ShadowsCube.geo");
+	auto shadowShader = VelEng::Instance()->GetShader("ShadowMapping");
+	shadowShader->SetAttributes({ "vVertex", "vNormal", "vUV" });
+	shadowShader->Activate();
+	shadowShader->SetUniforms(std::vector<std::string>{ "lightSpaceMatrix", "M" });
+	shadowShader->Deactivate();
+
+	auto shadowCubeShader = VelEng::Instance()->GetShader("ShadowMappingCube");
+	shadowCubeShader->SetAttributes({ "vVertex", "vNormal", "vUV" });
+	shadowCubeShader->Activate();
+	shadowCubeShader->SetUniforms({"M", "lightPos", "farPlane" });
+	shadowCubeShader->Deactivate();
+
+	plight1->SetShader(shadowCubeShader);
+	//plight2->SetShader(shadowCubeShader);
+	//plight3->SetShader(shadowCubeShader);
+	//plight4->SetShader(shadowCubeShader);
 
 	std::unique_ptr<VDirectionalLight> dLight = std::make_unique<VDirectionalLight>(SunlightDirection, directionalLightColor);
-	dLight->SetShader(shdwshd);
+	dLight->SetShader(shadowShader);
 	scene->CreateDirectionalLight(std::move(dLight));
 
 	scene->AddLightSource(plight1);
@@ -183,10 +191,10 @@ int main()
 	while (VelEng::Instance()->ShouldRun())
 	{
 		VelEng::Instance()->GetFrameClock().Tick();
-		auto posDiff1 = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()) * 5;
+		auto posDiff1 = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()) * 2;
 		auto posDiff2 = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()*2) * 5;
-		plight1->SetPosition({ originalLight1Pos.x, originalLight1Pos.y, originalLight1Pos.z + posDiff1});
-		plight2->SetPosition({ originalLight2Pos.x + posDiff2, originalLight2Pos.y, originalLight2Pos.z});
+		plight1->SetPosition({ originalLight1Pos.x, originalLight1Pos.y + posDiff1, originalLight1Pos.z});
+		//plight2->SetPosition({ originalLight2Pos.x + posDiff2, originalLight2Pos.y, originalLight2Pos.z});
 		//plight3->SetPosition({ originalPos1.x, originalPos1.y, originalPos1.z - posDiff1 });
 		//plight4->SetPosition({ originalLight2Pos.x - posDiff2, originalLight2Pos.y, originalPos2.z });
 		VelEng::Instance()->HandleInput();

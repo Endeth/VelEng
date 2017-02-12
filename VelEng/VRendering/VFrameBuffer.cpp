@@ -147,14 +147,16 @@ namespace Vel
 		AddDepthTextureAttachment();
 		glDrawBuffer(GL_NONE);
 		glReadBuffer(GL_NONE);
+		CheckStatus();
 		UnbindFBOWriting();
 	}
 
 	void VShadowMapCube::AddDepthTextureAttachment()
 	{
+		_texturesCount = 4;
 		_depthAttachment = std::make_shared<VDepthTextureCube>(_size);
 		_depthAttachment->SetTextureUnit(GL_TEXTURE0 + _texturesCount);
-		_depthAttachment->AttachToFBO();
+		_depthAttachment->AttachToFBO(GL_DEPTH_ATTACHMENT);
 		_texturesCount++;
 	}
 
@@ -168,6 +170,11 @@ namespace Vel
 	{
 		_depthAttachment->ActivateTextureUnit();
 		_depthAttachment->UnbindTexture();
+	}
+
+	void VShadowMapCube::SetTextureUnit(GLuint textureUnit)
+	{
+		_depthAttachment->SetTextureUnit(textureUnit);
 	}
 
 }

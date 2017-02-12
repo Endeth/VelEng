@@ -75,7 +75,7 @@ namespace Vel
 
 	VFramebufferTextureCube::VFramebufferTextureCube(const glm::ivec2 & size)
 	{
-		_size = size;
+		_size = size; 
 		SetupTextureInfo();
 		BindTexture();
 		SetTextureParameters();
@@ -83,7 +83,7 @@ namespace Vel
 
 	void VFramebufferTextureCube::AttachToFBO(GLuint attachment)
 	{
-		glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, _textureType, _texture, 0);
+		glFramebufferTexture(GL_FRAMEBUFFER, attachment, _texture, 0);
 	}
 
 	void VFramebufferTextureCube::SetupTextureInfo()
@@ -100,6 +100,7 @@ namespace Vel
 
 		glTexParameteri(_textureType, GL_TEXTURE_WRAP_S, _wrapping);
 		glTexParameteri(_textureType, GL_TEXTURE_WRAP_T, _wrapping);
+		glTexParameteri(_textureType, GL_TEXTURE_WRAP_R, _wrapping);
 
 		GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
 		glTexParameterfv(_textureType, GL_TEXTURE_BORDER_COLOR, borderColor);
@@ -119,7 +120,7 @@ namespace Vel
 	void VDepthTextureCube::CreateTexture()
 	{
 		for (GLuint i = 0; i < 6; ++i)
-			glTexImage2D(_textureType + i, 0, GL_DEPTH_COMPONENT,
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
 				_size.x, _size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 

@@ -69,6 +69,7 @@ namespace Vel
 		VShadowMapCube(const glm::ivec2& size = glm::ivec2(512, 512));
 		virtual void BindTexturesReading() override;
 		virtual void UnbindTexturesReading() override;
+		void SetTextureUnit(GLuint textureUnit);
 	protected:
 		virtual void AddDepthTextureAttachment() override;
 		std::shared_ptr<VDepthTextureCube> _depthAttachment;

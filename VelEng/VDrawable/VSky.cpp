@@ -2,7 +2,7 @@
 #include "VSky.h"
 namespace Vel
 {
-	VSkybox::VSkybox(std::shared_ptr<VTextureCube> texture)
+	VSkybox::VSkybox(const std::shared_ptr<VTextureCube> &texture)
 	{
 		_skyTex = texture;
 		LoadMesh();

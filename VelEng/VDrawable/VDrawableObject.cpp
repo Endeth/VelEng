@@ -44,7 +44,7 @@ namespace Vel
 		BindAdditionalDrawingOptions();
 		glBindVertexArray(_vaoID);
 
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLES, 0, _vertices.size());
 
 		glBindVertexArray(0);
 		UnbindAdditionalDrawingOptions();

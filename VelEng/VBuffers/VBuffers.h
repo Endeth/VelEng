@@ -24,12 +24,6 @@ namespace Vel
 		{
 			glBindBuffer(_bufferType, 0);
 		}
-
-		const GLuint GetLocation (GLushort BufferNumber = 0) const
-		{
-			return *_bufferID[BufferNumber];
-		}
-
 		virtual void FillBuffer(BufferDataPtr Data, GLushort BufferNumber = 0)
 		{
 			glBindBuffer(_bufferType, _buffersID[BufferNumber]);
@@ -37,7 +31,7 @@ namespace Vel
 		}
 		virtual void FillBuffer(GLsizei NumberOfElements, BufferDataPtr Data, GLushort BufferNumber = 0)
 		{
-			_buffersSize *= NumberOfElements;
+			_buffersSize = NumberOfElements * sizeof(Vertex);
 			glBindBuffer(_bufferType, _buffersID[BufferNumber]);
 			glBufferData(_bufferType, _buffersSize, Data, _bufferUsage);
 		}

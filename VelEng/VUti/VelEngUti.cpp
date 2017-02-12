@@ -3,7 +3,7 @@
 #include <algorithm>
 
 
-Vel::VMouse::VMouse(int x, int y) : _mouseReset(true)
+Vel::VMouse::VMouse(int x, int y) : _mouseReset(false)
 {
 	_oldPosition = glm::ivec2{ x, y };
 	_currentPosition = glm::ivec2{ x, y };
