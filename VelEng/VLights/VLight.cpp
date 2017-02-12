@@ -109,7 +109,7 @@ namespace Vel
 		GLfloat far = 25.0f;
 		GLfloat near = 1.0f;
 
-		auto shadowProj = glm::perspective(90.0f, aspect, near, far);
+		auto shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
 		_shadowTransforms[0] = (shadowProj * glm::lookAt(_position, _position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
 		_shadowTransforms[1] = (shadowProj * glm::lookAt(_position, _position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
 		_shadowTransforms[2] = (shadowProj * glm::lookAt(_position, _position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));

@@ -74,12 +74,12 @@ std::shared_ptr<VPointLight> plight1;
 //std::shared_ptr<VPointLight> plight3;
 //std::shared_ptr<VPointLight> plight4;
 //std::shared_ptr<VPointLight> plight5; // no shadow for this one
-glm::vec3 originalLight1Pos{ 2.5f, 3.25f, 0.0f };
+glm::vec3 originalLight1Pos{ 7.0f, 4.25f, 0.0f };
 glm::vec3 originalLight2Pos{ 0.0f,4.25f, 8.5f };
 
 void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)
 {
-	VLightSource::VLightColor pointLight1Color{ glm::vec3{ 1.0f,1.0f,1.0f }, glm::vec3{ 1.0f,1.0f,1.0f } };
+	VLightSource::VLightColor pointLight1Color{ glm::vec3{ 2.0f,2.0f,2.0f }, glm::vec3{ 2.0f,2.0f,2.0f } };
 	VLightSource::VLightColor pointLight2Color{ glm::vec3{ 0.7f,0.0f,0.0f }, glm::vec3{ 0.7f,0.0f,0.0f } };
 	VLightSource::VLightColor directionalLightColor{ glm::vec3{ 0.2f, 0.25f, 0.45f}, glm::vec3{ 0.2f, 0.25f, 0.45f } };
 	glm::vec3 SunlightDirection{ 0.5, -0.5, 1.0 };
@@ -193,7 +193,7 @@ int main()
 		VelEng::Instance()->GetFrameClock().Tick();
 		auto posDiff1 = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()) * 2;
 		auto posDiff2 = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()*2) * 5;
-		plight1->SetPosition({ originalLight1Pos.x, originalLight1Pos.y + posDiff1, originalLight1Pos.z});
+		plight1->SetPosition({ originalLight1Pos.x, originalLight1Pos.y, originalLight1Pos.z + posDiff1 });
 		//plight2->SetPosition({ originalLight2Pos.x + posDiff2, originalLight2Pos.y, originalLight2Pos.z});
 		//plight3->SetPosition({ originalPos1.x, originalPos1.y, originalPos1.z - posDiff1 });
 		//plight4->SetPosition({ originalLight2Pos.x - posDiff2, originalLight2Pos.y, originalPos2.z });
