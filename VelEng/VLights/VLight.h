@@ -49,11 +49,13 @@ namespace Vel
 		void SetShader(const ShaderPtr& shader) { _depthShader = shader; }
 		const VLightColor& GetColor() const { return _color; }
 		const ShaderPtr& GetShader() const { return _depthShader; }
+		const glm::ivec2& GetShadowResolution() const { return _shadowResolution; }
 	protected:
 		VLightColor _color;
 		ShaderPtr _depthShader;
 		ShadowMapFBOPtr _shadowMap;
 		glm::mat4 _lightSpaceMatrix;
+		glm::ivec2 _shadowResolution;
 	};
 
 	class VPointLight : public VLightSource
@@ -111,6 +113,7 @@ namespace Vel
 		void UpdateShadowTransforms(); //TODO - implement directional light following camera
 	};
 
+	//not yet implemented
 	class VSpotLight : public VLightSource
 	{
 	public:

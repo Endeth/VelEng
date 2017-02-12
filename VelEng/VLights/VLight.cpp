@@ -52,7 +52,8 @@ namespace Vel
 
 	VPointLight::VPointLight(const glm::vec3 & position, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(diffuse, specular), _shadowTransforms(6)
 	{
-		_shadowMap = std::make_unique<VShadowMapCube>(glm::vec2{ 1024,1024 }); //TODO get rid of hard code
+		_shadowResolution = glm::vec2{ 1024,1024 };
+		_shadowMap = std::make_unique<VShadowMapCube>(_shadowResolution);
 		SetPosition(position);
 		_constant = 1.0f;
 		_linear = 0.09f; //TODO attenuation might come handy in engine
@@ -61,7 +62,8 @@ namespace Vel
 
 	VPointLight::VPointLight(const glm::vec3 & position, const VLightColor & colors) : VLightSource(colors), _shadowTransforms(6)
 	{
-		_shadowMap = std::make_unique<VShadowMapCube>(glm::vec2{ 1024,1024 });
+		_shadowResolution = glm::vec2{ 1024,1024 };
+		_shadowMap = std::make_unique<VShadowMapCube>(_shadowResolution);
 		SetPosition(position);
 		_constant = 1.0f;
 		_linear = 0.09f;
@@ -120,13 +122,15 @@ namespace Vel
 
 	VDirectionalLight::VDirectionalLight(const glm::vec3 & direction, const glm::vec3 & diffuse, const glm::vec3 & specular) : VLightSource(diffuse, specular)
 	{
-		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 2048,2048 }); //TODO get rid of hard code
+		_shadowResolution = glm::vec2{ 2048,2048 };
+		_shadowMap = std::make_unique<VShadowMap2D>(_shadowResolution);
 		SetDirection(direction);
 	}
 
 	VDirectionalLight::VDirectionalLight(const glm::vec3 & direction, const VLightColor & colors) : VLightSource(colors)
 	{
-		_shadowMap = std::make_unique<VShadowMap2D>(glm::vec2{ 2048,2048 }); //TODO get rid of hard code
+		_shadowResolution = glm::vec2{ 2048,2048 };
+		_shadowMap = std::make_unique<VShadowMap2D>(_shadowResolution);
 		SetDirection(direction);
 	}
 	void VDirectionalLight::SetLPassLightUniforms(GLuint program)
@@ -164,7 +168,8 @@ namespace Vel
 	void VSceneLighting::DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models) //TODO erase repeating code
 	{
 		glCullFace(GL_FRONT);
-		glViewport(0, 0, 2048, 2048); //TODO set to directional light shader resolution
+		auto dirRes = _directionalLight->GetShadowResolution();
+		glViewport(0, 0, dirRes.x, dirRes.y); //TODO set to directional light shader resolution
 		_directionalLight->BindShadowMapForWriting();
 		glClear(GL_DEPTH_BUFFER_BIT);
 		_directionalLight->ActivateShader();
@@ -178,13 +183,14 @@ namespace Vel
 		_directionalLight->DeactivateShader();
 		_directionalLight->UnbindShadowMapForWriting();
 
-		glViewport(0, 0, 1024, 1024);
+		
 		int counter = 0;
 		for(auto &lightSource : _sceneLights)
 		{
 			if (counter < 4)
 			{
-				//glViewport(0, 0, 1024, 1024); //TODO set to each lights shaders resolution
+				auto res = lightSource->GetShadowResolution();
+				glViewport(0, 0, res.x, res.y);
 				lightSource->BindShadowMapForWriting();
 				glClear(GL_DEPTH_BUFFER_BIT);
 
