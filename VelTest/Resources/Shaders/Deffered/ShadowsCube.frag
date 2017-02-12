@@ -7,12 +7,11 @@ uniform float farPlane;
 
 void main()
 {
-	    // get distance between fragment and light source
     float lightDistance = length(FragPos.xyz - lightPos);
     
-    // map to [0;1] range by dividing by farPlane - 25 hard coded
+    // map to [0;1] range by dividing by far plane
     lightDistance = lightDistance / farPlane;
     
-    gl_FragDepth = 1.0;
-}
+    gl_FragDepth = lightDistance;
+}  
 

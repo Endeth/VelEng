@@ -16,7 +16,7 @@ struct PointLight
     vec3 Position;
     vec3 ColorDiff;
 	vec3 ColorSpec;
-    mat4 lightSpaceMatrix;
+	float FarPlane;
 	float Constant;
     float Linear;
     float Quadratic;
@@ -38,7 +38,7 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gDepth;
 
-const int NR_LIGHTS = 16;
+const int NR_LIGHTS = 64;
 uniform DirectionalLight dirLight;
 
 uniform int PointLightsCount;
@@ -49,10 +49,10 @@ uniform PointLight pointLights[NR_LIGHTS];
 
 uniform vec3 viewPos;
 
-uniform sampler2D shadowMap0;
-uniform sampler2D shadowMap1;
-uniform sampler2D shadowMap2;
-uniform sampler2D shadowMap3;
+uniform samplerCube  shadowMap0;
+uniform samplerCube  shadowMap1;
+uniform samplerCube  shadowMap2;
+uniform samplerCube  shadowMap3;
 uniform sampler2D dirLightShadowMap;
 
 uniform vec3 ambientLight;
@@ -63,11 +63,11 @@ float ShadowCalculation(int lIte);
 vec3 CalcDirLight(vec3 viewDir);
 vec3 CalcPointLights(vec3 viedDir);
 
-vec3 Diffuse = texture(gDiffSpec, verUV).rgb;
-float Specular = texture(gDiffSpec, verUV).a;
-vec3 FragPos = texture(gPosition, verUV).rgb;
-vec3 Normal = texture(gNormal, verUV).rgb;
-float Depth = texture(gDepth, verUV).r;
+const vec3 Diffuse = texture(gDiffSpec, verUV).rgb;
+const float Specular = texture(gDiffSpec, verUV).a;
+const vec3 FragPos = texture(gPosition, verUV).rgb;
+const vec3 Normal = texture(gNormal, verUV).rgb;
+const float Depth = texture(gDepth, verUV).r;
 
 void main()
 {
@@ -78,10 +78,11 @@ void main()
 	}
 	else
 	{
-		vec3 lighting  = Diffuse * ambientLight; // hard-coded ambient component
+		vec3 lighting  = Diffuse * ambientLight;
 		vec3 viewDir  = normalize(viewPos - FragPos);
 		lighting += CalcDirLight(viewDir);
 		lighting += CalcPointLights(viewDir);
+		vec3 shd = texture(shadowMap0, FragPos).rrr; //debug 
 		FragColor = vec4(lighting, 1.0);
 	}
 }
@@ -110,7 +111,8 @@ vec3 CalcDirLight(vec3 viewDir)
         for(int y = -1; y <= 1; ++y)
         {
             float pcfDepth =  texture(dirLightShadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
-            shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
+            shadow += currentDepth > pcfDepth  ? 1.0 : 0.0;
+			//shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;  //if acne would be present, although generates peter panning
         }    
     }
 	shadow /= 9.0;
@@ -132,7 +134,7 @@ vec3 CalcPointLights(vec3 viewDir)
 	{
 		// Diffuse
 		vec3 lightDir = normalize(pointLights[lightIte].Position - FragPos);
-		vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * pointLights[lightIte].ColorDiff;
+		vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * pointLights[lightIte].ColorDiff; // SOMETHING HERE
 		
 		// Specular
 		vec3 halfwayDir = normalize(lightDir + viewDir);  
@@ -157,55 +159,39 @@ vec3 CalcPointLights(vec3 viewDir)
 	return lighting;
 }
 
-float ShadowCalcDepth(vec3 projCoordinates, vec2 offset, int ite) //returns depth for
-{
-	vec2 texelSize;
-	if(ite == 0)
-	{
-		texelSize = 1.0 / textureSize(shadowMap0, 0);
-		return texture(shadowMap0, projCoordinates.xy + offset * texelSize).r;
-	}
-	if(ite == 1)
-	{
-		texelSize = 1.0 / textureSize(shadowMap1, 0);
-		return texture(shadowMap1, projCoordinates.xy + offset * texelSize).r;
-	}
-	if(ite == 2)
-	{
-		texelSize = 1.0 / textureSize(shadowMap2, 0);
-		return texture(shadowMap2, projCoordinates.xy + offset * texelSize).r;
-	}
-	if(ite == 3)
-	{
-		texelSize = 1.0 / textureSize(shadowMap3, 0);
-		return texture(shadowMap3, projCoordinates.xy + offset * texelSize).r;
-	}
-}
+vec3 gridSamplingDisk[20] = vec3[]
+(
+   vec3(1, 1, 1), vec3(1, -1, 1), vec3(-1, -1, 1), vec3(-1, 1, 1), 
+   vec3(1, 1, -1), vec3(1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+   vec3(1, 1, 0), vec3(1, -1, 0), vec3(-1, -1, 0), vec3(-1, 1, 0),
+   vec3(1, 0, 1), vec3(-1, 0, 1), vec3(1, 0, -1), vec3(-1, 0, -1),
+   vec3(0, 1, 1), vec3(0, -1, 1), vec3(0, -1, -1), vec3(0, 1, -1)
+);
+
+
 
 float ShadowCalculation(int lIte)
 {
-	vec4 fragPosLightSpace = pointLights[lIte].lightSpaceMatrix * vec4(FragPos, 1.0);
-	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-	projCoords = projCoords * 0.5 + 0.5;
-	float currentDepth = projCoords.z;
 	
-    vec3 lightDir = normalize(pointLights[lIte].Position - FragPos);
-    float bias = max(0.05 * (1.0 - dot(Normal, lightDir)), 0.005);
+	vec3 fragToLight = FragPos - pointLights[lIte].Position;
+	float currentDepth = length(fragToLight);
+	
+    //vec3 lightDir = normalize(pointLights[lIte].Position - FragPos);
+    //float bias = max(0.05 * (1.0 - dot(Normal, lightDir)), 0.005);
 	float shadow = 0.0;
-    
-	//PCF
-    for(int x = -1; x <= 1; ++x)
-    {
-        for(int y = -1; y <= 1; ++y)
-        {
-            float pcfDepth =  ShadowCalcDepth(projCoords, vec2(x, y), lIte); // no need to recalc texelSize each time
-            shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
-        }    
-    }
-    shadow /= 9.0;
+    int samples = 20;
+	float viewDistance = length(viewPos - FragPos);
+    float diskRadius = (1.0 + (viewDistance / pointLights[lIte].FarPlane)) / 25.0;
 	
-	if(projCoords.z > 1.0)
-        shadow = 0.0;
+	//PCF
+    for(int i = 0; i < samples; ++i)
+    {
+        float closestDepth = texture(shadowMap0, fragToLight + gridSamplingDisk[i] * diskRadius).r;
+        closestDepth *= pointLights[lIte].FarPlane;   // Undo mapping [0;1]
+        if(currentDepth > closestDepth)
+            shadow += 1.0;
+    }
+    shadow /= float(samples);
         
     return shadow;
 }
