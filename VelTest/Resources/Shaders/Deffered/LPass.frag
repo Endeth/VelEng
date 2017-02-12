@@ -49,10 +49,8 @@ uniform PointLight pointLights[NR_LIGHTS];
 
 uniform vec3 viewPos;
 
-uniform samplerCube  shadowMap0;
-uniform samplerCube  shadowMap1;
-uniform samplerCube  shadowMap2;
-uniform samplerCube  shadowMap3;
+const int NR_POINT_SHADOWS = 4;
+uniform samplerCube  pointShadowMap[NR_POINT_SHADOWS];
 uniform sampler2D dirLightShadowMap;
 
 uniform vec3 ambientLight;
@@ -82,7 +80,6 @@ void main()
 		vec3 viewDir  = normalize(viewPos - FragPos);
 		lighting += CalcDirLight(viewDir);
 		lighting += CalcPointLights(viewDir);
-		vec3 shd = texture(shadowMap0, FragPos).rrr; //debug 
 		FragColor = vec4(lighting, 1.0);
 	}
 }
@@ -134,7 +131,7 @@ vec3 CalcPointLights(vec3 viewDir)
 	{
 		// Diffuse
 		vec3 lightDir = normalize(pointLights[lightIte].Position - FragPos);
-		vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * pointLights[lightIte].ColorDiff; // SOMETHING HERE
+		vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * pointLights[lightIte].ColorDiff;
 		
 		// Specular
 		vec3 halfwayDir = normalize(lightDir + viewDir);  
@@ -146,7 +143,7 @@ vec3 CalcPointLights(vec3 viewDir)
 		float attenuation = 1.0 / (1.0 + pointLights[lightIte].Linear * distance + pointLights[lightIte].Quadratic * distance * distance);
 		diffuse *= attenuation;
 		specular *= attenuation;
-		if(lightIte < 4) //Shadows only for the first 4 lights 
+		if(lightIte < NR_POINT_SHADOWS) //Shadows only for the first 4 lights 
 		{
 			float shadow = ShadowCalculation(lightIte); //Choosing right shadowmap
 			lighting += ((diffuse + specular) *(1.0 - shadow));
@@ -176,8 +173,8 @@ float ShadowCalculation(int lIte)
 	vec3 fragToLight = FragPos - pointLights[lIte].Position;
 	float currentDepth = length(fragToLight);
 	
-    //vec3 lightDir = normalize(pointLights[lIte].Position - FragPos);
-    //float bias = max(0.05 * (1.0 - dot(Normal, lightDir)), 0.005);
+    //vec3 lightDir = normalize(pointLights[lIte].Position - FragPos); //NO BIAS NEEDED?
+    //float bias = max(0.05 * (1.0 - dot(Normal, lightDir)), 0.005); //NO BIAS NEEDED?
 	float shadow = 0.0;
     int samples = 20;
 	float viewDistance = length(viewPos - FragPos);
@@ -186,7 +183,7 @@ float ShadowCalculation(int lIte)
 	//PCF
     for(int i = 0; i < samples; ++i)
     {
-        float closestDepth = texture(shadowMap0, fragToLight + gridSamplingDisk[i] * diskRadius).r;
+        float closestDepth = texture(pointShadowMap[lIte], fragToLight + gridSamplingDisk[i] * diskRadius).r;
         closestDepth *= pointLights[lIte].FarPlane;   // Undo mapping [0;1]
         if(currentDepth > closestDepth)
             shadow += 1.0;
@@ -194,4 +191,6 @@ float ShadowCalculation(int lIte)
     shadow /= float(samples);
         
     return shadow;
+	
 }
+
