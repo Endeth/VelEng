@@ -135,12 +135,12 @@ namespace Vel
 		_uniformLocationList[Uniform] = glGetUniformLocation(_program, uni);
 	}
 
-	GLuint VGLSLShader::GetAttribute(const string& Attribute)
+	GLint VGLSLShader::GetAttribute(const string& Attribute)
 	{
 		return _attributeList[Attribute];
 	}
 
-	GLuint VGLSLShader::GetUniform(const string& Uniform)
+	GLint VGLSLShader::GetUniform(const string& Uniform)
 	{
 		return _uniformLocationList[Uniform];
 	}

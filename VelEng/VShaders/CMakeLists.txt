@@ -6,5 +6,6 @@ set(SOURCE
 set(HEADERS
    ${HEADERS}
    ${CMAKE_CURRENT_SOURCE_DIR}/VGLSLShader.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/VShaderLocations.h
    PARENT_SCOPE
 )

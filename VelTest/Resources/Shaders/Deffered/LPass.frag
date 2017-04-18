@@ -1,7 +1,6 @@
 #version 450 core
 
-in vec2 verUV;
-out vec4 FragColor;
+//LIGHT SOURCES DEFINITIONS
 
 struct DirectionalLight
 {
@@ -33,15 +32,22 @@ struct SpotLight //not implemented yet
 	float OuterCutOff;
 };
 
+//ATTRIBUTES
+
+in vec2 verUV;
+out vec4 FragColor;
+
+//UNIFORMS
+
 uniform sampler2D gDiffSpec; //GBUFFER DATA
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gDepth;
 
-const int NR_LIGHTS = 64;
 uniform DirectionalLight dirLight;
 
-uniform int PointLightsCount;
+//uniform int PointLightsCount;
+const int NR_LIGHTS = 64;
 uniform PointLight pointLights[NR_LIGHTS];
 
 //uniform int SpotLightsCount;
@@ -54,6 +60,10 @@ uniform samplerCube  pointShadowMap[NR_POINT_SHADOWS];
 uniform sampler2D dirLightShadowMap;
 
 uniform vec3 ambientLight;
+
+
+
+//----------------------------------------------------------------------------------------
 
 float ShadowCalcDepth(vec3 projCoordinates, vec2 offset, int ite);
 float ShadowCalculation(int lIte);

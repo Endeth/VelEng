@@ -6,6 +6,7 @@
 
 namespace Vel
 {
+	//TODO rewrite this
 	class VTexture
 	{
 	public:

@@ -168,7 +168,7 @@ namespace Vel
 	//first forward rendering of skybox, then deffered rendering of rest
 	void VelEng::RenderScenes()
 	{
-		_renderer->BindGBufferForWriting();
+		_renderer->BindGBufferForWriting(); //TODO separate from deferred
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		_scenes["Sky"]->DrawScene();
 		_renderer->UnbindGBufferForWriting();
@@ -187,14 +187,14 @@ namespace Vel
 		auto vMat = _mainCamera->GetViewMatrix(); //TODO adjust uniforms in signal
 		auto pMat = _mainCamera->GetProjectionMatrix();
 
-		auto gPassShd = VelEng::Instance()->GetShader("GPass");
+		auto gPassShd = GetShader("GPass"); //TODO separate from deferred. Shaders inf renderer?
 		gPassShd->Activate();
 		gPassShd->SetUniformsValue(Uniform<glm::mat4>{ "V", vMat });
 		gPassShd->SetUniformsValue(Uniform<glm::mat4>{ "P", pMat });
 		gPassShd->Deactivate();
 
-		auto lpass = VelEng::Instance()->GetShader("LPass");
-		auto camPosition = VelEng::Instance()->_mainCamera->GetPosition();
+		auto lpass = GetShader("LPass");
+		auto camPosition = _mainCamera->GetPosition();
 		_scenes["World"]->SetCameraPosition(camPosition);
 		lpass->Activate();
 		lpass->SetUniformsValue(Uniform<glm::vec3>{"viewPos", camPosition});
@@ -203,7 +203,7 @@ namespace Vel
 
 
 
-		auto skybox = VelEng::Instance()->GetShader("SkyboxShader");
+		auto skybox = GetShader("SkyboxShader");
 		skybox->Activate();
 		skybox->SetUniformsValue(Uniform<glm::mat4>{ "V", vMat });
 		skybox->SetUniformsValue(Uniform<glm::mat4>{ "P", pMat });

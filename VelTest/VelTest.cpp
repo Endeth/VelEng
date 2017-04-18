@@ -136,8 +136,11 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 	}
 }
 
+
 int main()
 {
+
+
 	VelEng::Instance()->CreateScene("World");
 	VelEng::Instance()->CreateScene("Sky");
 

@@ -2,11 +2,11 @@
 
 layout(location = 0) in vec3 vVertex;
 
-out vec3 verUV;
+layout(location = 0) uniform mat4 M;
+layout(location = 1) uniform mat4 V;
+layout(location = 2) uniform mat4 P;
 
-uniform mat4 M;
-uniform mat4 V;
-uniform mat4 P;
+out vec3 verUV;
 
 void main()
 {

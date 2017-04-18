@@ -32,7 +32,7 @@ namespace Vel
 		glm::ivec2 _oldPosition;
 		glm::ivec2 _diff;
 
-		float _mouseSpeed;
+		GLfloat _mouseSpeed;
 		bool _mouseReset;
 	};
 
@@ -52,17 +52,17 @@ namespace Vel
 	{
 	public:
 		void Tick();
-		const double GetTime() const { return _currentTime; }
-		const double GetSimulationTime() const { return _tick; }
-		const double GetFrameRate() const { return _frameRate; }
-		const double GetTimeDifferance() const { return _currentTime - _prevTime; }
+		const GLfloat GetTime() const { return _currentTime; }
+		const GLfloat GetSimulationTime() const { return _tick; }
+		const GLfloat GetFrameRate() const { return _frameRate; }
+		const GLfloat GetTimeDifferance() const { return _currentTime - _prevTime; }
 		void CapFPS();
 	private:
 		const double CalculateRenderTime();
 
-		double _prevTime{ 0.0 };
-		double _tick{ 0.0 };
-		double _currentTime{ 0.0 };
-		double _frameRate{ 1.0 / 60.0 };
+		GLfloat _prevTime{ 0.0 };
+		GLfloat _tick{ 0.0 };
+		GLfloat _currentTime{ 0.0 };
+		GLfloat _frameRate{ 1.0f / 60.0f };
 	};
 }
