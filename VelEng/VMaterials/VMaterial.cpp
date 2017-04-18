@@ -8,7 +8,7 @@ namespace Vel
 
 	
 
-	VMaterial::VMaterial(const VTexturePtr& diffuse, const VTexturePtr& specular, GLfloat & shininess)
+	Material::Material(const VTexturePtr& diffuse, const VTexturePtr& specular, GLfloat & shininess)
 	{
 		_diffuse = diffuse;
 		_specular = specular;
@@ -16,13 +16,13 @@ namespace Vel
 		SetTexturesUnits();
 	}
 
-	void VMaterial::SetTexturesUnits()
+	void Material::SetTexturesUnits()
 	{
 		_diffuse->SetTextureUnit(GL_TEXTURE0);
 		_specular->SetTextureUnit(GL_TEXTURE1);
 	}
 
-	void VMaterial::BindMaterial()
+	void Material::BindMaterial()
 	{
 		_diffuse->ActivateTextureUnit();
 		_diffuse->BindTexture();
@@ -30,7 +30,7 @@ namespace Vel
 		_specular->BindTexture();
 	}
 
-	void VMaterial::UnbindMaterial()
+	void Material::UnbindMaterial()
 	{
 		_diffuse->ActivateTextureUnit();
 		_diffuse->UnbindTexture();
@@ -38,22 +38,22 @@ namespace Vel
 		_specular->UnbindTexture();
 	}
 
-	VEmissiveMaterial::VEmissiveMaterial(const VTexturePtr& diffuse, const VTexturePtr& specular, const VTexturePtr& emission, GLfloat & shininess) : VMaterial(diffuse, specular, shininess)
+	EmissiveMaterial::EmissiveMaterial(const VTexturePtr& diffuse, const VTexturePtr& specular, const VTexturePtr& emission, GLfloat & shininess) : Material(diffuse, specular, shininess)
 	{
 		_emission = emission;
 		_emission->SetTextureUnit(GL_TEXTURE2);
 	}
 
-	void VEmissiveMaterial::BindMaterial()
+	void EmissiveMaterial::BindMaterial()
 	{
-		VMaterial::BindMaterial();
+		Material::BindMaterial();
 		_emission->ActivateTextureUnit();
 		_emission->BindTexture();
 	}
 
-	void VEmissiveMaterial::UnbindMaterial()
+	void EmissiveMaterial::UnbindMaterial()
 	{
-		VMaterial::UnbindMaterial();
+		Material::UnbindMaterial();
 		_emission->ActivateTextureUnit();
 		_emission->UnbindTexture();
 	}

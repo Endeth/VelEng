@@ -5,19 +5,19 @@
 namespace Vel
 {
 
-	glm::vec3 VBaseCamera::UP = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 BaseCamera::UP = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	VBaseCamera::VBaseCamera() : _position(glm::vec3{0.0,3.0,0.0}), _yaw(0.0f), _pitch(0.0f), _roll(0.0f)
+	BaseCamera::BaseCamera() : _position(glm::vec3{0.0,3.0,0.0}), _yaw(0.0f), _pitch(0.0f), _roll(0.0f)
 	{
 		_zNear = 0.1f;
 		_zFar = 1000.0f;
 	}
 
-	VBaseCamera::~VBaseCamera()
+	BaseCamera::~BaseCamera()
 	{
 	}
 
-	void VBaseCamera::SetupProjection(const float radFOVY, const float aspectRatio, const float nearD, const float farD)
+	void BaseCamera::SetupProjection(const float radFOVY, const float aspectRatio, const float nearD, const float farD)
 	{
 		_projection = glm::perspective(radFOVY, aspectRatio, nearD, farD);
 		_zNear = nearD;
@@ -26,12 +26,12 @@ namespace Vel
 		_aspectRatio = aspectRatio;
 	}
 
-	void VBaseCamera::SetupProjection(const int degFOVY, const float aspectRatio, const float nearD, const float farD)
+	void BaseCamera::SetupProjection(const int degFOVY, const float aspectRatio, const float nearD, const float farD)
 	{
 		SetupProjection(glm::radians(float(degFOVY)), aspectRatio, nearD, farD);
 	}
 
-	void VBaseCamera::Rotate(const float yaw, const float pitch, const float roll)
+	void BaseCamera::Rotate(const float yaw, const float pitch, const float roll)
 	{
 		_yaw = glm::radians(yaw);
 		_pitch = glm::radians(pitch);
@@ -39,48 +39,48 @@ namespace Vel
 		Update();
 	}
 
-	const glm::mat4& VBaseCamera::GetViewMatrix() const
+	const glm::mat4& BaseCamera::GetViewMatrix() const
 	{
 		return _view;
 	}
 
-	const glm::mat4& VBaseCamera::GetProjectionMatrix() const
+	const glm::mat4& BaseCamera::GetProjectionMatrix() const
 	{
 		return _projection;
 	}
 
-	void VBaseCamera::SetPosition(const glm::vec3 & pos)
+	void BaseCamera::SetPosition(const glm::vec3 & pos)
 	{
 		_position = pos;
 	}
 
-	const glm::vec3 VBaseCamera::GetPosition() const
+	const glm::vec3 BaseCamera::GetPosition() const
 	{
 		return _position;
 	}
 
-	void VBaseCamera::SetFOV(const float FOV)
+	void BaseCamera::SetFOV(const float FOV)
 	{
 		_fov = FOV;
 		_projection = glm::perspective(FOV, _aspectRatio, _zNear, _zFar);
 	}
 
-	const float VBaseCamera::GetFOV() const
+	const float BaseCamera::GetFOV() const
 	{
 		return _fov;
 	}
 
-	const float VBaseCamera::GetAspectRatio() const
+	const float BaseCamera::GetAspectRatio() const
 	{
 		return _aspectRatio;
 	}
 
-	const glm::vec3 VBaseCamera::GetDirectionVector() const
+	const glm::vec3 BaseCamera::GetDirectionVector() const
 	{
 		return glm::normalize(_look);
 	}
 
-	void VBaseCamera::CalcFrustumPlanes()
+	void BaseCamera::CalcFrustumPlanes()
 	{
 		glm::vec3 cN = _position + _look * _zNear;
 		glm::vec3 cF = _position + _look * _zFar;
@@ -113,7 +113,7 @@ namespace Vel
 		_clipingPlanes[5] = VPlane::FromPoints(FarPts[3], FarPts[0], FarPts[1]);
 	}
 
-	bool VBaseCamera::IsPointInFrustum(const glm::vec3 & point)
+	bool BaseCamera::IsPointInFrustum(const glm::vec3 & point)
 	{
 		for (int i = 0; i < 6; i++)
 			if (_clipingPlanes[i].GetDistance(point) < 0)
@@ -121,7 +121,7 @@ namespace Vel
 		return true;
 	}
 
-	bool VBaseCamera::IsSphereInFrustum(const glm::vec3 & center, const float radius)
+	bool BaseCamera::IsSphereInFrustum(const glm::vec3 & center, const float radius)
 	{
 		for (int i = 0; i < 6; i++)
 		{
@@ -132,7 +132,7 @@ namespace Vel
 		return true;
 	}
 
-	bool VBaseCamera::IsBoxInFrustum(const glm::vec3 & min, const glm::vec3 & max)
+	bool BaseCamera::IsBoxInFrustum(const glm::vec3 & min, const glm::vec3 & max)
 	{
 		glm::vec3 p;
 		//glm::vec3 n;
@@ -163,7 +163,7 @@ namespace Vel
 		return true;
 	}
 
-	void VBaseCamera::GetFrustumPlanes(glm::vec4 planes[6])
+	void BaseCamera::GetFrustumPlanes(glm::vec4 planes[6])
 	{
 		for (int i = 0; i < 6; i++)
 			planes[i] = glm::vec4(_clipingPlanes[i].Normal, _clipingPlanes[i].D);
@@ -171,17 +171,17 @@ namespace Vel
 
 
 
-	VFreeCamera::VFreeCamera()
+	FreeCamera::FreeCamera()
 	{
 		_translation = glm::vec3(0);
 		_speed = 0.1f;
 	}
 
-	VFreeCamera::~VFreeCamera()
+	FreeCamera::~FreeCamera()
 	{
 	}
 
-	void VFreeCamera::Update()
+	void FreeCamera::Update()
 	{
 		glm::mat4 R = glm::yawPitchRoll(_yaw, _pitch, _roll);
 		_position += _translation;
@@ -195,41 +195,41 @@ namespace Vel
 		_translation = { 0.0, 0.0, 0.0 }; //TODO smooth movement
 	}
 
-	void VFreeCamera::Walk(const float dT)
+	void FreeCamera::Walk(const float dT)
 	{
 		_translation = (_look * _speed * dT);
 		Update();
 	}
 
-	void VFreeCamera::Strafe(const float dT)
+	void FreeCamera::Strafe(const float dT)
 	{
 		_translation = (_right * _speed * dT);
 		Update();
 	}
 
-	void VFreeCamera::Lift(const float dT)
+	void FreeCamera::Lift(const float dT)
 	{
 		_translation = (_up * _speed * dT);
 		Update();
 	}
 
-	void VFreeCamera::SetTranslation(const glm::vec3 & t)
+	void FreeCamera::SetTranslation(const glm::vec3 & t)
 	{
 		_translation = t;
 		Update();
 	}
 
-	glm::vec3 VFreeCamera::GetTranslation() const
+	glm::vec3 FreeCamera::GetTranslation() const
 	{
 		return _translation;
 	}
 
-	void VFreeCamera::SetSpeed(const float speed)
+	void FreeCamera::SetSpeed(const float speed)
 	{
 		_speed = speed;
 	}
 
-	const float VFreeCamera::GetSpeed() const
+	const float FreeCamera::GetSpeed() const
 	{
 		return _speed;
 	}

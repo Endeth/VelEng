@@ -7,12 +7,12 @@
 
 namespace Vel
 {
-	class VWindow
+	class Window
 	{
 	public:
-		VWindow();
-		VWindow(const VWindowInfo& info);
-		~VWindow();
+		Window();
+		Window(const WindowInfo& info);
+		~Window();
 		void SetAsContext() { glfwMakeContextCurrent(_window); }
 		const glm::uvec2& GetSize() const 
 		{ 
@@ -22,7 +22,7 @@ namespace Vel
 	private:
 		void InitWindow();
 
-		VWindowInfo _info;
+		WindowInfo _info;
 		GLFWwindow* _window;
 	};
 }

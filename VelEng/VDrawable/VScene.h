@@ -8,27 +8,27 @@
 
 namespace Vel
 {
-	class VScene
+	class Scene
 	{
-		using ShaderPtr = std::shared_ptr<VGLSLShader>;
-		using ModelPtr = std::shared_ptr<VModel>;
-		using LightPtr = std::shared_ptr<VLightSource>;
+		using ShaderPtr = std::shared_ptr<Shader>;
+		using ModelPtr = std::shared_ptr<Model>;
+		using LightPtr = std::shared_ptr<LightSource>;
 
 	public:
-		VScene();
+		Scene();
 		void DrawScene();
 		void DrawSceneWithImposedShader(const ShaderPtr& shader);
 		void DrawShadows();
 		void AddModel(const ModelPtr &model);
 		void AddLightSource(const LightPtr &lightSource);
-		void CreateDirectionalLight(const glm::vec3 &direction, const VLightSource::VLightColor &color);
-		void CreateDirectionalLight(std::unique_ptr<VDirectionalLight> &&light);
+		void CreateDirectionalLight(const glm::vec3 &direction, const LightSource::LightColor &color);
+		void CreateDirectionalLight(std::unique_ptr<DirectionalLight> &&light);
 		void SetLPassLightUniforms(GLuint lPassProgram) { _sceneLighting->SetLPassLightUniforms(lPassProgram); }
 		void SetCameraPosition(const glm::vec3 &pos) { _sceneLighting->SetCameraPosition(pos); }
 		void ActivateShadowMaps() { _sceneLighting->ActivateShadowMaps(); } //DEBUG
 
 	private:
 		std::vector<ModelPtr> _models; //TODO change to list maybe, add cleaning up
-		std::unique_ptr<VSceneLighting> _sceneLighting;
+		std::unique_ptr<SceneLighting> _sceneLighting;
 	};
 }

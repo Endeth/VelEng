@@ -4,18 +4,18 @@ namespace Vel
 {
 	using namespace std;
 
-	VBasicDrawableObject::VBasicDrawableObject()
+	BasicDrawableObject::BasicDrawableObject()
 	{
 		glGenVertexArrays(1, &_vaoID);
 	}
 
-	VBasicDrawableObject::~VBasicDrawableObject()
+	BasicDrawableObject::~BasicDrawableObject()
 	{
 
 		glDeleteVertexArrays(1, &_vaoID);
 	}
 
-	void VBasicDrawableObject::Draw()
+	void BasicDrawableObject::Draw()
 	{
 		_shader->Activate();
 		BindAdditionalDrawingOptions();
@@ -28,7 +28,7 @@ namespace Vel
 		_shader->Deactivate();
 	}
 
-	void VBasicDrawableObject::DrawWithImposedShader()
+	void BasicDrawableObject::DrawWithImposedShader()
 	{
 		BindAdditionalDrawingOptions();
 		glBindVertexArray(_vaoID);
@@ -39,7 +39,7 @@ namespace Vel
 		UnbindAdditionalDrawingOptions();
 	}
 
-	void VBasicDrawableObject::DrawVerticesWithImposedShader()
+	void BasicDrawableObject::DrawVerticesWithImposedShader()
 	{
 		BindAdditionalDrawingOptions();
 		glBindVertexArray(_vaoID);

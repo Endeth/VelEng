@@ -14,15 +14,15 @@
 namespace Vel
 {
 
-	class VMesh : public VBasicDrawableObject
+	class Mesh : public BasicDrawableObject
 	{
 	public:
-		VMesh();
-		virtual ~VMesh();
+		Mesh();
+		virtual ~Mesh();
 		
 		void LoadMesh(const char* filename = " ");
 		void LoadVerticesOnly();
-		void SetMaterial(const std::shared_ptr<VMaterial>& mat);
+		void SetMaterial(const std::shared_ptr<Material>& mat);
 		void DeleteVertices();
 
 		virtual void LoadIntoGPU();
@@ -38,16 +38,16 @@ namespace Vel
 		virtual void BindAdditionalDrawingOptions() override;
 		virtual void UnbindAdditionalDrawingOptions() override;
 
-		VArrayBuffer _vboVertices;
-		VElementArrayBuffer _vboIndices;
-		std::shared_ptr<VMaterial> _material;
+		ArrayBuffer _vboVertices;
+		ElementArrayBuffer _vboIndices;
+		std::shared_ptr<Material> _material;
 		bool _isLoaded{ false };
 	};
 
-	class VPlaneMesh : public VMesh
+	class PlaneMesh : public Mesh
 	{
 	public:
-		VPlaneMesh();
+		PlaneMesh();
 		void LoadMesh(const char* filename = " ");
 		void LoadVerticesOnly();
 	};

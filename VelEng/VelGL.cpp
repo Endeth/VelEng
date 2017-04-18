@@ -6,7 +6,7 @@ namespace Vel
 {
 	using namespace std;
 
-	void ChangeRenderMode(std::shared_ptr<VGLSLShader> &shader, int mode)
+	void ChangeRenderMode(std::shared_ptr<Shader> &shader, int mode)
 	{
 		shader->Activate();
 		shader->SetUniformsValue(Uniform<int>{ "renderMode", mode});
@@ -59,7 +59,7 @@ namespace Vel
 	
 	bool VelEng::AddShaderProgram(const string & Name, const string & VertFilename, const string & FragFilename)
 	{
-		auto shader = _shaderPrograms.emplace(Name, make_shared<VGLSLShader>()).first->second;
+		auto shader = _shaderPrograms.emplace(Name, make_shared<Shader>()).first->second;
 		shader->LoadFromFile(GL_VERTEX_SHADER, VertFilename);
 		shader->LoadFromFile(GL_FRAGMENT_SHADER, FragFilename);
 		shader->CreateAndLinkProgram();
@@ -71,7 +71,7 @@ namespace Vel
 
 	bool VelEng::AddShaderProgram(const string & Name, const string & VertFilename, const string & FragFilename, const string & GeoFilename)
 	{
-		auto shader = _shaderPrograms.emplace(Name, make_shared<VGLSLShader>()).first->second;
+		auto shader = _shaderPrograms.emplace(Name, make_shared<Shader>()).first->second;
 		shader->LoadFromFile(GL_VERTEX_SHADER, VertFilename);
 		shader->LoadFromFile(GL_FRAGMENT_SHADER, FragFilename);
 		shader->LoadFromFile(GL_GEOMETRY_SHADER, GeoFilename);
@@ -80,22 +80,22 @@ namespace Vel
 		return true;
 	}
 
-	const shared_ptr<VGLSLShader>& VelEng::GetShader(const string & name)
+	const shared_ptr<Shader>& VelEng::GetShader(const string & name)
 	{
 		return _shaderPrograms[name];
 	}
 
 	void VelEng::CreateScene(const string& Name)
 	{
-		_scenes.emplace(Name, make_unique<Vel::VScene>());
+		_scenes.emplace(Name, make_unique<Vel::Scene>());
 	}
 
-	void VelEng::AddModelToScene(const string & sceneName, const shared_ptr<VModel>& modelPtr)
+	void VelEng::AddModelToScene(const string & sceneName, const shared_ptr<Model>& modelPtr)
 	{
 		_scenes[sceneName]->AddModel(modelPtr);
 	}
 
-	void VelEng::AddLightSourceToScene(const string & sceneName, const shared_ptr<VLightSource>& lightSourcePtr)
+	void VelEng::AddLightSourceToScene(const string & sceneName, const shared_ptr<LightSource>& lightSourcePtr)
 	{
 		_scenes[sceneName]->AddLightSource(lightSourcePtr);
 	}
@@ -236,13 +236,13 @@ namespace Vel
 
 	void VelEng::InitWindow()
 	{
-		_mainWindow = make_shared<VWindow>();
+		_mainWindow = make_shared<Window>();
 		auto size = _mainWindow->GetSize();
 		_mouse.SetCurrentPosition(size.x / 2, size.y / 2);
 	}
 	void VelEng::InitCamera()
 	{
-		_mainCamera = std::make_shared<VFreeCamera>();
+		_mainCamera = std::make_shared<FreeCamera>();
 		_mainCamera->SetupProjection(60, (GLfloat)(_mainWindow->GetSize().x / (GLfloat)_mainWindow->GetSize().y));
 		_mainCamera->Update();
 	}

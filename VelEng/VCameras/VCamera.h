@@ -8,11 +8,11 @@
 namespace Vel
 {
 
-	class VBaseCamera
+	class BaseCamera
 	{
 	public:
-		VBaseCamera();
-		virtual ~VBaseCamera();
+		BaseCamera();
+		virtual ~BaseCamera();
 
 		
 		virtual void Update() = 0;
@@ -58,11 +58,11 @@ namespace Vel
 		VPlane _clipingPlanes[6];
 	};
 
-	class VFreeCamera : public VBaseCamera
+	class FreeCamera : public BaseCamera
 	{
 	public:
-		VFreeCamera();
-		~VFreeCamera();
+		FreeCamera();
+		~FreeCamera();
 
 		virtual void Update() override;
 
@@ -81,7 +81,7 @@ namespace Vel
 		glm::vec3 _translation;
 	};
 
-	/*class VMirrorCamera : public VBaseCamera //not implemented right now, also - not needed right now
+	/*class VMirrorCamera : public BaseCamera //not implemented right now, also - not needed right now
 	{
 	public:
 		VMirrorCamera();

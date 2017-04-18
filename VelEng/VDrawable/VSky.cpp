@@ -2,13 +2,13 @@
 #include "VSky.h"
 namespace Vel
 {
-	VSkybox::VSkybox(const std::shared_ptr<VTextureCube> &texture)
+	Skybox::Skybox(const std::shared_ptr<TextureCube> &texture)
 	{
 		_skyTex = texture;
 		LoadMesh();
 	}
 
-	void VSkybox::SetVAO()
+	void Skybox::SetVAO()
 	{
 		auto stride = sizeof(Vertex);
 
@@ -25,12 +25,12 @@ namespace Vel
 		_vboIndices.UnbindBuffer();
 		_vboVertices.UnbindBuffer();
 	}
-	void VSkybox::BindAdditionalDrawingOptions()
+	void Skybox::BindAdditionalDrawingOptions()
 	{
 		_skyTex->ActivateTextureUnit();
 		_skyTex->BindTexture();
 	}
-	void VSkybox::UnbindAdditionalDrawingOptions()
+	void Skybox::UnbindAdditionalDrawingOptions()
 	{
 		_skyTex->UnbindTexture();
 	}

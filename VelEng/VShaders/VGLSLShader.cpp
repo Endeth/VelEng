@@ -6,7 +6,7 @@ namespace Vel
 {
 	using namespace std;
 
-	VGLSLShader::VGLSLShader()
+	Shader::Shader()
 	{
 		_totalShaders = 0;
 		_shaders[VERTEX_SHADER] = 0;
@@ -18,14 +18,14 @@ namespace Vel
 
 
 
-	VGLSLShader::~VGLSLShader()
+	Shader::~Shader()
 	{
 		_attributeList.clear();
 		_uniformLocationList.clear();
 		glDeleteProgram(_program);
 	}
 
-	void VGLSLShader::LoadFromString(GLenum Type, const string & Source)
+	void Shader::LoadFromString(GLenum Type, const string & Source)
 	{
 		GLuint shader = glCreateShader(Type);
 
@@ -47,7 +47,7 @@ namespace Vel
 		_shaders[_totalShaders++] = shader;
 	}
 
-	void VGLSLShader::LoadFromFile(GLenum Shader, const string & Filename)
+	void Shader::LoadFromFile(GLenum Shader, const string & Filename)
 	{
 		ifstream fp;
 		fp.open(Filename.c_str(), ios_base::in);
@@ -65,7 +65,7 @@ namespace Vel
 			cerr << "Error loading shader: " << Filename << endl;
 	}
 
-	void VGLSLShader::CreateAndLinkProgram()
+	void Shader::CreateAndLinkProgram()
 	{
 		_program = glCreateProgram();
 		if (_shaders[VERTEX_SHADER] != 0)
@@ -99,53 +99,53 @@ namespace Vel
 		glDeleteShader(_shaders[GEOMETRY_SHADER]);
 	}
 
-	void VGLSLShader::Activate()
+	void Shader::Activate()
 	{
 		glUseProgram(_program);
 	}
 
-	void VGLSLShader::Deactivate()
+	void Shader::Deactivate()
 	{
 		glUseProgram(0);
 	}
 
-	void VGLSLShader::SetAttributes(const vector<string> &Attributes)
+	void Shader::SetAttributes(const vector<string> &Attributes)
 	{
 		for (auto &Att : Attributes)
 		{
 			SetAttributes(Att);
 		}
 	}
-	void VGLSLShader::SetUniforms(const vector<string>& Uniforms)
+	void Shader::SetUniforms(const vector<string>& Uniforms)
 	{
 		for (auto &Uni : Uniforms)
 		{
 			SetUniforms(Uni);
 		}
 	}
-	void VGLSLShader::SetAttributes(const string & Attribute)
+	void Shader::SetAttributes(const string & Attribute)
 	{
 		auto att = Attribute.c_str();
 		_attributeList[Attribute] = glGetAttribLocation(_program, att);
 	}
 
-	void VGLSLShader::SetUniforms(const string & Uniform)
+	void Shader::SetUniforms(const string & Uniform)
 	{
 		auto uni = Uniform.c_str();
 		_uniformLocationList[Uniform] = glGetUniformLocation(_program, uni);
 	}
 
-	GLint VGLSLShader::GetAttribute(const string& Attribute)
+	GLint Shader::GetAttribute(const string& Attribute)
 	{
 		return _attributeList[Attribute];
 	}
 
-	GLint VGLSLShader::GetUniform(const string& Uniform)
+	GLint Shader::GetUniform(const string& Uniform)
 	{
 		return _uniformLocationList[Uniform];
 	}
 
-	void VGLSLShader::DeleteShaderProgram()
+	void Shader::DeleteShaderProgram()
 	{
 		glDeleteProgram(_program);
 	}

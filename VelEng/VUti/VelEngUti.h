@@ -9,10 +9,10 @@
 
 namespace Vel
 {
-	class VMouse
+	class Mouse
 	{
 	public:
-		VMouse(int x = 0, int y = 0);
+		Mouse(int x = 0, int y = 0);
 
 		const glm::ivec2& GetCurrentPosition() const { return _currentPosition; }
 		const glm::ivec2& GetOldPosition() const { return _oldPosition; }
@@ -36,7 +36,7 @@ namespace Vel
 		bool _mouseReset;
 	};
 
-	class VKeyboard
+	class Keyboard
 	{
 	public:
 		void KeyHandler(int key, int action, int mods);
@@ -48,7 +48,7 @@ namespace Vel
 		size_t _maxPressedKeys{ 4 };
 	};
 
-	class VFrameClock
+	class FrameClock
 	{
 	public:
 		void Tick();
@@ -58,7 +58,7 @@ namespace Vel
 		const GLfloat GetTimeDifferance() const { return _currentTime - _prevTime; }
 		void CapFPS();
 	private:
-		const double CalculateRenderTime();
+		const GLfloat CalculateRenderTime();
 
 		GLfloat _prevTime{ 0.0 };
 		GLfloat _tick{ 0.0 };

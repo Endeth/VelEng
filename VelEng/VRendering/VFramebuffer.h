@@ -10,13 +10,13 @@
 namespace Vel
 {
 	//flexible but requires manual work
-	class VFramebuffer
+	class Framebuffer
 	{
-		using TexturePtr = std::shared_ptr<VFramebufferTexture>;
-		using DepthTexturePtr = std::shared_ptr<VDepthTexture>;
+		using TexturePtr = std::shared_ptr<FramebufferTexture>;
+		using DepthTexturePtr = std::shared_ptr<DepthTexture>;
 	public:
-		VFramebuffer(const glm::ivec2& size);
-		virtual ~VFramebuffer();
+		Framebuffer(const glm::ivec2& size);
+		virtual ~Framebuffer();
 
 		virtual void BindFBOWriting();
 		virtual void BindTexturesReading();
@@ -43,35 +43,35 @@ namespace Vel
 	};
 
 	//construct and use for deferred rendering
-	class VGBufferFBO : public VFramebuffer
+	class GBufferFBO : public Framebuffer
 	{
 	public:
-		VGBufferFBO(const glm::ivec2& size);
-		virtual ~VGBufferFBO();
+		GBufferFBO(const glm::ivec2& size);
+		virtual ~GBufferFBO();
 	};
 
 	//construct and use for 2D only depth rendering
-	class VShadowMap2D : public VFramebuffer
+	class ShadowMap2D : public Framebuffer
 	{
 	public:
-		VShadowMap2D(const glm::ivec2& size = glm::ivec2(1024, 1024));
+		ShadowMap2D(const glm::ivec2& size = glm::ivec2(1024, 1024));
 		virtual void BindTexturesReading() override;
 		virtual void UnbindTexturesReading() override;
 		void SetTextureUnit(GLuint textureUnit);
-		virtual ~VShadowMap2D();
+		virtual ~ShadowMap2D();
 	private:
 	};
 
 	//construct and use for rendering depth cube
-	class VShadowMapCube : public VFramebuffer
+	class ShadowMapCube : public Framebuffer
 	{
 	public:
-		VShadowMapCube(const glm::ivec2& size = glm::ivec2(512, 512));
+		ShadowMapCube(const glm::ivec2& size = glm::ivec2(512, 512));
 		virtual void BindTexturesReading() override;
 		virtual void UnbindTexturesReading() override;
 		void SetTextureUnit(GLuint textureUnit);
 	protected:
 		virtual void AddDepthTextureAttachment() override;
-		std::shared_ptr<VDepthTextureCube> _depthAttachment;
+		std::shared_ptr<DepthTextureCube> _depthAttachment;
 	};
 }

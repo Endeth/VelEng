@@ -15,7 +15,7 @@ namespace Vel
 		void BindForReading() { _fbo.BindForReading(); }
 		void UnbindWriting() { _fbo.UnbindFBO(); }
 	private:
-		VGBufferFBO _fbo;
+		GBufferFBO _fbo;
 		
 	};*/
 }

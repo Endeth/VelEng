@@ -27,8 +27,8 @@ namespace Vel
 
 	class VelEng
 	{
-		using RendererPtr = std::shared_ptr<VDefferedRenderer>;
-		using ScenePtr = std::shared_ptr<VScene>;
+		using RendererPtr = std::shared_ptr<DefferedRenderer>;
+		using ScenePtr = std::shared_ptr<Scene>;
 	public:
 		static VelEng* Instance()
 		{
@@ -43,17 +43,17 @@ namespace Vel
 		bool AddShaderProgram(const std::string& name, const std::string& vertFilename, const std::string& fragFilename);
 		bool AddShaderProgram(const std::string& name, const std::string& vertFilename, const std::string& fragFilename, const std::string& geoFilename);
 
-		const std::shared_ptr<VGLSLShader>& GetShader(const std::string& name);
+		const std::shared_ptr<Shader>& GetShader(const std::string& name);
 		const glm::ivec2& GetMainWindowSize() const { return _mainWindow->GetSize(); }
-		std::shared_ptr<VFreeCamera>& GetMainCamera() { return _mainCamera; }
-		VMouse& GetMouse() { return _mouse; }
-		VKeyboard& GetKeyboard() { return _keyboard; }
-		VFrameClock& GetFrameClock() { return _frameClock; }
+		std::shared_ptr<FreeCamera>& GetMainCamera() { return _mainCamera; }
+		Mouse& GetMouse() { return _mouse; }
+		Keyboard& GetKeyboard() { return _keyboard; }
+		FrameClock& GetFrameClock() { return _frameClock; }
 
 		void CreateScene(const std::string& name);
 		ScenePtr& GetScene(const std::string& name) { return _scenes[name]; }
-		void AddModelToScene(const std::string & sceneName, const std::shared_ptr<VModel>& modelPtr);
-		void AddLightSourceToScene(const std::string & sceneName, const std::shared_ptr<VLightSource>& lightSourcePtr);
+		void AddModelToScene(const std::string & sceneName, const std::shared_ptr<Model>& modelPtr);
+		void AddLightSourceToScene(const std::string & sceneName, const std::shared_ptr<LightSource>& lightSourcePtr);
 		
 		void InitWindow();
 		void InitCamera();
@@ -68,18 +68,18 @@ namespace Vel
 		void GLFWInit();
 		void GlewInit();
 		
-		std::unordered_map<std::string, std::shared_ptr<VGLSLShader>> _shaderPrograms;
-		std::map<std::string, std::shared_ptr<VScene>> _scenes;
+		std::unordered_map<std::string, std::shared_ptr<Shader>> _shaderPrograms;
+		std::map<std::string, std::shared_ptr<Scene>> _scenes;
 
-		std::shared_ptr<VFreeCamera> _mainCamera;
-		std::shared_ptr<VWindow> _mainWindow;
+		std::shared_ptr<FreeCamera> _mainCamera;
+		std::shared_ptr<Window> _mainWindow;
 
 		static VelEng* _instance;
 
 		RendererPtr _renderer;
-		VFrameClock _frameClock;
-		VMouse _mouse;
-		VKeyboard _keyboard;
+		FrameClock _frameClock;
+		Mouse _mouse;
+		Keyboard _keyboard;
 		bool _shouldRun{ true };
 	};
 

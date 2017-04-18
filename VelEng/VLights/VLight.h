@@ -11,17 +11,17 @@
 
 namespace Vel
 {
-	class VLightSource //TODO make a generic class GEOMETRY OBJECT or something like that
+	class LightSource //TODO make a generic class GEOMETRY OBJECT or something like that
 	{
 	protected:
-		using ShaderPtr = std::shared_ptr<VGLSLShader>;
-		using ShadowMapFBOPtr = std::unique_ptr<VShadowMap2D>;
+		using ShaderPtr = std::shared_ptr<Shader>;
+		using ShadowMapFBOPtr = std::unique_ptr<ShadowMap2D>;
 	public:
-		class VLightColor
+		class LightColor
 		{
 
 		public:
-			VLightColor(const glm::vec3& diffuse, const glm::vec3& specular);
+			LightColor(const glm::vec3& diffuse, const glm::vec3& specular);
 			const glm::vec3& GetDiffuse() const { return _diffuse; }
 			const glm::vec3& GetSpecular() const { return _specular; }
 		private:
@@ -29,8 +29,8 @@ namespace Vel
 			glm::vec3 _specular;
 		};
 
-		VLightSource(const glm::vec3& diffuse, const glm::vec3& specular); 
-		VLightSource(const VLightColor& color);
+		LightSource(const glm::vec3& diffuse, const glm::vec3& specular); 
+		LightSource(const LightColor& color);
 		void ActivateShader() { _depthShader->Activate(); }
 		void DeactivateShader() { _depthShader->Deactivate(); }
 
@@ -47,22 +47,22 @@ namespace Vel
 		virtual void UnbindShadowMapForReading();
 
 		void SetShader(const ShaderPtr& shader) { _depthShader = shader; }
-		const VLightColor& GetColor() const { return _color; }
+		const LightColor& GetColor() const { return _color; }
 		const ShaderPtr& GetShader() const { return _depthShader; }
 		const glm::ivec2& GetShadowResolution() const { return _shadowResolution; }
 	protected:
-		VLightColor _color;
+		LightColor _color;
 		ShaderPtr _depthShader;
 		ShadowMapFBOPtr _shadowMap;
 		glm::mat4 _lightSpaceMatrix;
 		glm::ivec2 _shadowResolution;
 	};
 
-	class VPointLight : public VLightSource
+	class PointLight : public LightSource
 	{
 	public:
-		VPointLight(const glm::vec3& position, const glm::vec3& diffuse, const glm::vec3& specular); //no reason to keep ambient
-		VPointLight(const glm::vec3& position, const VLightColor& colors);
+		PointLight(const glm::vec3& position, const glm::vec3& diffuse, const glm::vec3& specular); //no reason to keep ambient
+		PointLight(const glm::vec3& position, const LightColor& colors);
 		
 
 		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) override;
@@ -86,15 +86,15 @@ namespace Vel
 		
 	private:
 		std::vector<glm::mat4> _shadowTransforms;
-		std::unique_ptr<VShadowMapCube> _shadowMap;
+		std::unique_ptr<ShadowMapCube> _shadowMap;
 		void UpdateShadowTransforms();
 	};
 
-	class VDirectionalLight : public VLightSource
+	class DirectionalLight : public LightSource
 	{
 	public:
-		VDirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
-		VDirectionalLight(const glm::vec3& direction, const VLightColor& colors);
+		DirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
+		DirectionalLight(const glm::vec3& direction, const LightColor& colors);
 
 		virtual void SetLPassLightUniforms(GLuint program);
 		virtual void SetShadowUniforms() override;
@@ -114,11 +114,11 @@ namespace Vel
 	};
 
 	//not yet implemented
-	class VSpotLight : public VLightSource
+	class SpotLight : public LightSource
 	{
 	public:
-		VSpotLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
-		VSpotLight(const glm::vec3& direction, const VLightColor& colors);
+		SpotLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
+		SpotLight(const glm::vec3& direction, const LightColor& colors);
 
 		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) override;
 		virtual void SetShadowUniforms() override;
@@ -136,7 +136,7 @@ namespace Vel
 		void UpdateShadowTransforms();
 	};
 
-	class VSceneLighting
+	class SceneLighting
 	{
 	/*
 		maybe light sorting? then calculating first X lights, same principle with shadows?
@@ -144,14 +144,14 @@ namespace Vel
 	public:
 
 		void CleanUpLights() {}; //TODO
-		void AddLight(const std::shared_ptr<VLightSource>& lightSource);
-		void CreateDirectionalLight(const glm::vec3 &dir, const VLightSource::VLightColor &color);
-		void CreateDirectionalLight(std::unique_ptr<VDirectionalLight> &&light);
+		void AddLight(const std::shared_ptr<LightSource>& lightSource);
+		void CreateDirectionalLight(const glm::vec3 &dir, const LightSource::LightColor &color);
+		void CreateDirectionalLight(std::unique_ptr<DirectionalLight> &&light);
 
 		//creates shadowmap where camera position is center
 		void DrawDirectionalLightShadowMap(const glm::vec3 &cameraPosition);
 		//Draws MAX 4 shadow maps
-		void DrawSceneShadows(const std::vector<std::shared_ptr<VModel>>& models);
+		void DrawSceneShadows(const std::vector<std::shared_ptr<Model>>& models);
 
 		/*Activates first 4 (or less if there aren't that many textures) unit textures
 		from GL_TEXTURE4 to GL_TEXTURE7 and binds appropriate textures*/
@@ -164,7 +164,7 @@ namespace Vel
 	private:
 		glm::vec3 _cameraPosition; //TODO change to pointer
 		glm::vec3 _ambientLight{0.1,0.1,0.1};
-		std::unique_ptr<VDirectionalLight> _directionalLight;
-		std::list<std::shared_ptr<VLightSource>> _sceneLights;
+		std::unique_ptr<DirectionalLight> _directionalLight;
+		std::list<std::shared_ptr<LightSource>> _sceneLights;
 	};
 }

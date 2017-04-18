@@ -7,18 +7,18 @@
 namespace Vel
 {
 	//TODO rewrite this
-	class VTexture
+	class Texture
 	{
 	public:
-		VTexture(const glm::ivec2& size);
-		VTexture(const std::string& path);
-		virtual ~VTexture();
+		Texture(const glm::ivec2& size);
+		Texture(const std::string& path);
+		virtual ~Texture();
 		void BindTexture();
 		void ActivateTextureUnit();
 		void UnbindTexture();
 		void SetTextureUnit(GLuint unit = GL_TEXTURE0) { _textureUnit = unit; }
 	protected:
-		VTexture();
+		Texture();
 		virtual void SetupTextureInfo();
 		virtual void SetTextureParameters();
 		virtual void LoadTexture(const std::string &Path);
@@ -33,13 +33,13 @@ namespace Vel
 		//TODO add internal format
 	};
 
-	class VTextureCube : public VTexture
+	class TextureCube : public Texture
 	{
 	public:
-		VTextureCube(const glm::ivec2& size);
-		VTextureCube(const std::string &Path);
+		TextureCube(const glm::ivec2& size);
+		TextureCube(const std::string &Path);
 	protected:
-		VTextureCube();
+		TextureCube();
 		virtual void CreateEmptyTexture() override;
 		virtual void SetupTextureInfo() override;
 		virtual void SetTextureParameters() override;

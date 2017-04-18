@@ -1,21 +1,21 @@
 #include "VWindow.h"
 
-Vel::VWindow::VWindow() : _info("Test", glm::ivec2{ 100,100 }, glm::ivec2{ 1366, 768 }, true)
+Vel::Window::Window() : _info("Test", glm::ivec2{ 100,100 }, glm::ivec2{ 1366, 768 }, true)
 {
 	InitWindow();
 }
 
-Vel::VWindow::VWindow(const VWindowInfo & info) : _info(info)
+Vel::Window::Window(const WindowInfo & info) : _info(info)
 {
 	InitWindow();
 }
 
-Vel::VWindow::~VWindow()
+Vel::Window::~Window()
 {
 	glfwDestroyWindow(_window);
 }
 
-void Vel::VWindow::InitWindow()
+void Vel::Window::InitWindow()
 {
 	glfwWindowHint(GLFW_RESIZABLE, _info.IsResizeable());
 

@@ -9,17 +9,17 @@
 
 namespace Vel
 {
-	class VBasicDrawableObject
+	class BasicDrawableObject
 	{
 	public:
-		VBasicDrawableObject();
-		virtual ~VBasicDrawableObject();
+		BasicDrawableObject();
+		virtual ~BasicDrawableObject();
 
 		void Draw();
 		void DrawWithImposedShader();
 		void DrawVerticesWithImposedShader(); //DEBUG
-		void SetShader(const std::shared_ptr<VGLSLShader>& Shd) { _shader = Shd; SetVAO(); };
-		const std::shared_ptr<VGLSLShader>& GetShader() const { return _shader; }
+		void SetShader(const std::shared_ptr<Shader>& Shd) { _shader = Shd; SetVAO(); };
+		const std::shared_ptr<Shader>& GetShader() const { return _shader; }
 
 		//virtual void SetUniformValue() = 0;
 		virtual void SetVAO() = 0;
@@ -39,6 +39,6 @@ namespace Vel
 		GLuint _vaoID;
 		GLenum _primitive;
 
-		std::shared_ptr<VGLSLShader> _shader;
+		std::shared_ptr<Shader> _shader;
 	};
 }

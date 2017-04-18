@@ -4,7 +4,7 @@
 
 namespace Vel
 {
-	VFramebufferTexture::VFramebufferTexture(const glm::ivec2& size)
+	FramebufferTexture::FramebufferTexture(const glm::ivec2& size)
 	{
 		_size = size;
 		SetupTextureInfo();
@@ -12,19 +12,19 @@ namespace Vel
 		SetTextureParameters();
 	}
 
-	void VFramebufferTexture::AttachToFBO(GLuint attachment)
+	void FramebufferTexture::AttachToFBO(GLuint attachment)
 	{
 		glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, _textureType, _texture, 0);
 	}
 
-	void VFramebufferTexture::SetupTextureInfo()
+	void FramebufferTexture::SetupTextureInfo()
 	{
 		_textureType = GL_TEXTURE_2D;
 		_wrapping = GL_CLAMP_TO_EDGE;
 		_filtering = GL_LINEAR;
 	}
 
-	void VFramebufferTexture::SetTextureParameters()
+	void FramebufferTexture::SetTextureParameters()
 	{
 		glTexParameteri(_textureType, GL_TEXTURE_MIN_FILTER, _filtering);
 		glTexParameteri(_textureType, GL_TEXTURE_MAG_FILTER, _filtering);
@@ -36,44 +36,44 @@ namespace Vel
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	}
 
-	VGeometryTexture::VGeometryTexture(const glm::ivec2 & size) : VFramebufferTexture(size)
+	GeometryTexture::GeometryTexture(const glm::ivec2 & size) : FramebufferTexture(size)
 	{
 		CreateTexture();
 		UnbindTexture();
 	}
 
-	void VGeometryTexture::CreateTexture()
+	void GeometryTexture::CreateTexture()
 	{
 		glTexImage2D(_textureType, 0, GL_RGB16F, _size.x, _size.y, 0, GL_RGB, GL_FLOAT, NULL);
 	}
 
-	VAlbedoTexture::VAlbedoTexture(const glm::ivec2 & size) : VFramebufferTexture(size)
+	AlbedoTexture::AlbedoTexture(const glm::ivec2 & size) : FramebufferTexture(size)
 	{
 		CreateTexture();
 		UnbindTexture();
 	}
-	void VAlbedoTexture::CreateTexture()
+	void AlbedoTexture::CreateTexture()
 	{
 		glTexImage2D(_textureType, 0, GL_RGBA32F, _size.x, _size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	}
 
-	void VDepthTexture::AttachToFBO(GLuint attachment)
+	void DepthTexture::AttachToFBO(GLuint attachment)
 	{
 		glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, _textureType, _texture, 0);
 	}
 
-	VDepthTexture::VDepthTexture(const glm::ivec2 & size) : VFramebufferTexture(size)
+	DepthTexture::DepthTexture(const glm::ivec2 & size) : FramebufferTexture(size)
 	{
 		CreateTexture();
 		UnbindTexture();
 	}
 
-	void VDepthTexture::CreateTexture()
+	void DepthTexture::CreateTexture()
 	{
 		glTexImage2D(_textureType, 0, GL_DEPTH_COMPONENT, _size.x, _size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 
-	VFramebufferTextureCube::VFramebufferTextureCube(const glm::ivec2 & size)
+	FramebufferTextureCube::FramebufferTextureCube(const glm::ivec2 & size)
 	{
 		_size = size; 
 		SetupTextureInfo();
@@ -81,19 +81,19 @@ namespace Vel
 		SetTextureParameters();
 	}
 
-	void VFramebufferTextureCube::AttachToFBO(GLuint attachment)
+	void FramebufferTextureCube::AttachToFBO(GLuint attachment)
 	{
 		glFramebufferTexture(GL_FRAMEBUFFER, attachment, _texture, 0);
 	}
 
-	void VFramebufferTextureCube::SetupTextureInfo()
+	void FramebufferTextureCube::SetupTextureInfo()
 	{
 		_textureType = GL_TEXTURE_CUBE_MAP;
 		_wrapping = GL_CLAMP_TO_EDGE;
 		_filtering = GL_NEAREST;
 	}
 
-	void VFramebufferTextureCube::SetTextureParameters()
+	void FramebufferTextureCube::SetTextureParameters()
 	{
 		glTexParameteri(_textureType, GL_TEXTURE_MIN_FILTER, _filtering);
 		glTexParameteri(_textureType, GL_TEXTURE_MAG_FILTER, _filtering);
@@ -106,18 +106,18 @@ namespace Vel
 		glTexParameterfv(_textureType, GL_TEXTURE_BORDER_COLOR, borderColor);
 	}
 
-	VDepthTextureCube::VDepthTextureCube(const glm::ivec2 & size) : VFramebufferTextureCube(size)
+	DepthTextureCube::DepthTextureCube(const glm::ivec2 & size) : FramebufferTextureCube(size)
 	{
 		CreateTexture();
 		UnbindTexture();
 	}
 
-	void VDepthTextureCube::AttachToFBO(GLuint attachment)
+	void DepthTextureCube::AttachToFBO(GLuint attachment)
 	{
-		VFramebufferTextureCube::AttachToFBO(attachment);
+		FramebufferTextureCube::AttachToFBO(attachment);
 	}
 
-	void VDepthTextureCube::CreateTexture()
+	void DepthTextureCube::CreateTexture()
 	{
 		for (GLuint i = 0; i < 6; ++i)
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,

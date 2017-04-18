@@ -3,55 +3,55 @@
 
 namespace Vel
 {
-	class VFramebufferTexture : public VTexture
+	class FramebufferTexture : public Texture
 	{
 	public:
 		void AttachToFBO(GLuint attachment);
 	protected:
-		VFramebufferTexture(const glm::ivec2& size);
+		FramebufferTexture(const glm::ivec2& size);
 		void SetupTextureInfo() override;
 		void SetTextureParameters() override;
 	};
 
-	class VGeometryTexture : public VFramebufferTexture
+	class GeometryTexture : public FramebufferTexture
 	{
 	public:
-		VGeometryTexture(const glm::ivec2& size);
+		GeometryTexture(const glm::ivec2& size);
 	private:
 		void CreateTexture();
 	};
 
-	class VAlbedoTexture : public VFramebufferTexture
+	class AlbedoTexture : public FramebufferTexture
 	{
 	public:
-		VAlbedoTexture(const glm::ivec2& size);
+		AlbedoTexture(const glm::ivec2& size);
 	private:
 		void CreateTexture();
 	};
 
-	class VDepthTexture : public VFramebufferTexture
+	class DepthTexture : public FramebufferTexture
 	{
 	public:
-		VDepthTexture(const glm::ivec2& size = glm::ivec2(512,512));
+		DepthTexture(const glm::ivec2& size = glm::ivec2(512,512));
 		void AttachToFBO(GLuint attachment = GL_DEPTH_ATTACHMENT);
 	private:
 		void CreateTexture();
 	};
 
-	class VFramebufferTextureCube : public VTextureCube //TODO textures SUCK need to rethink their abstraction
+	class FramebufferTextureCube : public TextureCube //TODO textures SUCK need to rethink their abstraction
 	{
 	public:
 		void AttachToFBO(GLuint attachment);
 	protected:
-		VFramebufferTextureCube(const glm::ivec2& size);
+		FramebufferTextureCube(const glm::ivec2& size);
 		void SetupTextureInfo() override;
 		void SetTextureParameters() override;
 	};
 
-	class VDepthTextureCube : public VFramebufferTextureCube
+	class DepthTextureCube : public FramebufferTextureCube
 	{
 	public:
-		VDepthTextureCube(const glm::ivec2& size = glm::ivec2(512, 512));
+		DepthTextureCube(const glm::ivec2& size = glm::ivec2(512, 512));
 		void AttachToFBO(GLuint attachment = GL_DEPTH_ATTACHMENT);
 	private:
 		void CreateTexture();

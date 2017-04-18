@@ -69,27 +69,27 @@ void DefShaderSetUp()
 
 }
 
-std::shared_ptr<VPointLight> plight1; 
-std::shared_ptr<VPointLight> plight2; // second light off until multiple lights can cast shadows
-//std::shared_ptr<VPointLight> plight3;
-//std::shared_ptr<VPointLight> plight4;
-//std::shared_ptr<VPointLight> plight5; // no shadow for this one
+std::shared_ptr<PointLight> plight1; 
+std::shared_ptr<PointLight> plight2; // second light off until multiple lights can cast shadows
+//std::shared_ptr<PointLight> plight3;
+//std::shared_ptr<PointLight> plight4;
+//std::shared_ptr<PointLight> plight5; // no shadow for this one
 glm::vec3 originalLight1Pos{ 7.0f, 4.25f, 0.0f };
 glm::vec3 originalLight2Pos{ 0.0f,4.25f, 0.0f };
 
-void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::shared_ptr<VMesh>& cubeMesh)
+void AddLightsAndCubesToScene(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Mesh>& cubeMesh)
 {
-	VLightSource::VLightColor pointLight1Color{ glm::vec3{ 2.0f,2.0f,2.0f }, glm::vec3{ 2.0f,2.0f,2.0f } };
-	VLightSource::VLightColor pointLight2Color{ glm::vec3{ 1.5f,0.0f,1.5f }, glm::vec3{ 1.5f,0.0f,1.5f } };
-	VLightSource::VLightColor directionalLightColor{ glm::vec3{ 0.2f, 0.25f, 0.45f}, glm::vec3{ 0.2f, 0.25f, 0.45f } };
+	LightSource::LightColor pointLight1Color{ glm::vec3{ 2.0f,2.0f,2.0f }, glm::vec3{ 2.0f,2.0f,2.0f } };
+	LightSource::LightColor pointLight2Color{ glm::vec3{ 1.5f,0.0f,1.5f }, glm::vec3{ 1.5f,0.0f,1.5f } };
+	LightSource::LightColor directionalLightColor{ glm::vec3{ 0.2f, 0.25f, 0.45f}, glm::vec3{ 0.2f, 0.25f, 0.45f } };
 	glm::vec3 SunlightDirection{ 0.5, -0.5, 1.0 };
 	
 
 
-	plight1 = std::make_shared<VPointLight>(originalLight1Pos, pointLight1Color);
-	plight2 = std::make_shared<VPointLight>(originalLight2Pos, pointLight2Color);
-	//plight3 = std::make_shared<VPointLight>(originalLight1Pos, pointLight2Color);
-	//plight4 = std::make_shared<VPointLight>(originalLight2Pos, pointLight2Color); 
+	plight1 = std::make_shared<PointLight>(originalLight1Pos, pointLight1Color);
+	plight2 = std::make_shared<PointLight>(originalLight2Pos, pointLight2Color);
+	//plight3 = std::make_shared<PointLight>(originalLight1Pos, pointLight2Color);
+	//plight4 = std::make_shared<PointLight>(originalLight2Pos, pointLight2Color); 
 	VelEng::Instance()->AddShaderProgram("ShadowMapping", "Resources\\Shaders\\Deffered\\ShadowMapping.vert", "Resources\\Shaders\\Deffered\\ShadowMapping.frag");
 	VelEng::Instance()->AddShaderProgram("ShadowMappingCube", "Resources\\Shaders\\Deffered\\ShadowsCube.vert", "Resources\\Shaders\\Deffered\\ShadowsCube.frag", "Resources\\Shaders\\Deffered\\ShadowsCube.geo");
 	auto shadowShader = VelEng::Instance()->GetShader("ShadowMapping");
@@ -109,7 +109,7 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 	//plight3->SetShader(shadowCubeShader);
 	//plight4->SetShader(shadowCubeShader);
 
-	std::unique_ptr<VDirectionalLight> dLight = std::make_unique<VDirectionalLight>(SunlightDirection, directionalLightColor);
+	std::unique_ptr<DirectionalLight> dLight = std::make_unique<DirectionalLight>(SunlightDirection, directionalLightColor);
 	dLight->SetShader(shadowShader);
 	scene->CreateDirectionalLight(std::move(dLight));
 
@@ -118,10 +118,10 @@ void AddLightsAndCubesToScene(const std::shared_ptr<VScene>& scene, const std::s
 	//scene->AddLightSource(plight3);
 	//scene->AddLightSource(plight4);
 
-	std::vector<std::shared_ptr<VModel>> cubes(25);
+	std::vector<std::shared_ptr<Model>> cubes(25);
 	for (auto& model : cubes)
 	{
-		model = std::make_shared<VModel>();
+		model = std::make_shared<Model>();
 		VelEng::Instance()->AddModelToScene("World", model);
 		model->AddMesh(cubeMesh);
 	}
@@ -152,13 +152,13 @@ int main()
 	auto lPShader = VelEng::Instance()->GetShader("LPass");
 
 
-	VelEng::Instance()->SetRenderer(std::make_shared<VDefferedRenderer>(windowSize, gPShader, lPShader));
+	VelEng::Instance()->SetRenderer(std::make_shared<DefferedRenderer>(windowSize, gPShader, lPShader));
 
 	
-	std::shared_ptr<VModel> modelPlane = std::make_shared<VModel>();
-	std::shared_ptr<VModel> skyboxModel = std::make_shared<VModel>();
+	std::shared_ptr<Model> modelPlane = std::make_shared<Model>();
+	std::shared_ptr<Model> skyboxModel = std::make_shared<Model>();
 
-	//Vel::VDirectionalLight dirLightSource(SunlightDirection, glm::vec3{ 0.3, 0.3, 0.3 }, glm::vec3{ 0.6, 0.4, 0.5 }, glm::vec3{ 1.0, 1.0, 1.0 });
+	//Vel::DirectionalLight dirLightSource(SunlightDirection, glm::vec3{ 0.3, 0.3, 0.3 }, glm::vec3{ 0.6, 0.4, 0.5 }, glm::vec3{ 1.0, 1.0, 1.0 });
 
 	VelEng::Instance()->AddModelToScene("Sky", skyboxModel);
 	VelEng::Instance()->AddModelToScene("World", modelPlane);
@@ -166,13 +166,13 @@ int main()
 	
 
 	GLfloat shin = 32.0f;
-	auto diffuseTex = std::make_shared<VTexture>("Resources\\Images\\BoxDiffuse.png");
-	auto specularTex = std::make_shared<VTexture>("Resources\\Images\\BoxSpecular.png");
-	std::shared_ptr<VMaterial> materialTest = std::make_shared<VMaterial>(diffuseTex, specularTex, shin);
+	auto diffuseTex = std::make_shared<Texture>("Resources\\Images\\BoxDiffuse.png");
+	auto specularTex = std::make_shared<Texture>("Resources\\Images\\BoxSpecular.png");
+	std::shared_ptr<Material> materialTest = std::make_shared<Material>(diffuseTex, specularTex, shin);
 
-	std::shared_ptr<VMesh> cubeMeshTest = std::make_shared<VMesh>();
-	std::shared_ptr<VMesh> planeMeshTest = std::make_shared<VPlaneMesh>();
-	std::shared_ptr<VMesh> skyboxMesh = std::make_shared<VSkybox>(std::make_shared<VTextureCube>("Resources\\Skybox"));
+	std::shared_ptr<Mesh> cubeMeshTest = std::make_shared<Mesh>();
+	std::shared_ptr<Mesh> planeMeshTest = std::make_shared<PlaneMesh>();
+	std::shared_ptr<Mesh> skyboxMesh = std::make_shared<Skybox>(std::make_shared<TextureCube>("Resources\\Skybox"));
 
 	cubeMeshTest->SetShader(VelEng::Instance()->GetShader("BasicShader"));
 	planeMeshTest->SetShader(VelEng::Instance()->GetShader("BasicShader"));

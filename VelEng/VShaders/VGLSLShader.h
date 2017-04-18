@@ -34,11 +34,11 @@ namespace Vel
 		using UniformType = glm::mat4;
 	};
 	//TODO rewrite this
-	class VGLSLShader
+	class Shader
 	{
 	public:
-		VGLSLShader();
-		~VGLSLShader();
+		Shader();
+		~Shader();
 		void LoadFromString(GLenum Type, const std::string& Source);
 		void LoadFromFile(GLenum Shader, const std::string& Filename);
 		void CreateAndLinkProgram();

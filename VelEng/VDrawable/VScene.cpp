@@ -1,12 +1,12 @@
 
 #include "VScene.h"
 
-Vel::VScene::VScene()
+Vel::Scene::Scene()
 {
-	_sceneLighting = std::make_unique<VSceneLighting>();
+	_sceneLighting = std::make_unique<SceneLighting>();
 }
 
-void Vel::VScene::DrawScene()
+void Vel::Scene::DrawScene()
 {
 	for (auto &Model : _models)
 	{
@@ -14,7 +14,7 @@ void Vel::VScene::DrawScene()
 	}
 }
 
-void Vel::VScene::DrawSceneWithImposedShader(const ShaderPtr& shader)
+void Vel::Scene::DrawSceneWithImposedShader(const ShaderPtr& shader)
 {
 	shader->Activate();
 
@@ -26,27 +26,27 @@ void Vel::VScene::DrawSceneWithImposedShader(const ShaderPtr& shader)
 	shader->Deactivate();
 }
 
-void Vel::VScene::DrawShadows()
+void Vel::Scene::DrawShadows()
 {
 	_sceneLighting->DrawSceneShadows(_models);
 }
 
-void Vel::VScene::AddModel(const ModelPtr& model)
+void Vel::Scene::AddModel(const ModelPtr& model)
 {
 	_models.push_back(model);
 }
 
-void Vel::VScene::AddLightSource(const LightPtr& lightSource)
+void Vel::Scene::AddLightSource(const LightPtr& lightSource)
 {
 	_sceneLighting->AddLight(lightSource);
 }
 
-void Vel::VScene::CreateDirectionalLight(const glm::vec3 & direction, const VLightSource::VLightColor & color)
+void Vel::Scene::CreateDirectionalLight(const glm::vec3 & direction, const LightSource::LightColor & color)
 {
 	_sceneLighting->CreateDirectionalLight(direction, color);
 }
 
-void Vel::VScene::CreateDirectionalLight(std::unique_ptr<VDirectionalLight>&& light)
+void Vel::Scene::CreateDirectionalLight(std::unique_ptr<DirectionalLight>&& light)
 {
 	_sceneLighting->CreateDirectionalLight(std::move(light));
 }

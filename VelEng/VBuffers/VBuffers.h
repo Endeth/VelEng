@@ -8,10 +8,10 @@
 namespace Vel
 {
 	template <typename BufferDataPtr>
-	class VBuffer
+	class Buffer
 	{
 	public:
-		virtual ~VBuffer()
+		virtual ~Buffer()
 	{	
 			glDeleteBuffers(_buffersCount, _buffersID);
 			delete[] _buffersID;
@@ -37,13 +37,13 @@ namespace Vel
 		}
 
 	protected:
-		VBuffer(GLushort BuffersCount = 1)
+		Buffer(GLushort BuffersCount = 1)
 		{
 			_buffersCount = BuffersCount;
 			_buffersID = new GLuint[_buffersCount];
 			glGenBuffers(_buffersCount, _buffersID);
 		}
-		VBuffer(GLsizei NumberOfElements, GLushort BuffersCount = 1)
+		Buffer(GLsizei NumberOfElements, GLushort BuffersCount = 1)
 		{
 			_buffersCount = BuffersCount;
 			_buffersSize = NumberOfElements;
@@ -59,16 +59,16 @@ namespace Vel
 
 	};
 
-	class VArrayBuffer : public VBuffer<Vertex*>
+	class ArrayBuffer : public Buffer<Vertex*>
 	{
 	public:
-		VArrayBuffer(GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : VBuffer(BuffersCount)
+		ArrayBuffer(GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : Buffer(BuffersCount)
 		{
 			_bufferType = GL_ARRAY_BUFFER;
 			_bufferUsage = BufferUsage;
 			_buffersSize = sizeof(Vertex);
 		}
-		VArrayBuffer(GLsizei NumberOfElements, GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : VBuffer(NumberOfElements, BuffersCount)
+		ArrayBuffer(GLsizei NumberOfElements, GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : Buffer(NumberOfElements, BuffersCount)
 		{
 			_bufferType = GL_ARRAY_BUFFER;
 			_bufferUsage = BufferUsage;
@@ -76,16 +76,16 @@ namespace Vel
 		}
 	};
 
-	class VElementArrayBuffer : public VBuffer<GLuint*>
+	class ElementArrayBuffer : public Buffer<GLuint*>
 	{
 	public:
-		VElementArrayBuffer(GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : VBuffer(BuffersCount)
+		ElementArrayBuffer(GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : Buffer(BuffersCount)
 		{
 			_bufferType = GL_ELEMENT_ARRAY_BUFFER;
 			_bufferUsage = BufferUsage;
 			_buffersSize = sizeof(GLuint);
 		}
-		VElementArrayBuffer(GLsizei NumberOfElements, GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : VBuffer(NumberOfElements, BuffersCount)
+		ElementArrayBuffer(GLsizei NumberOfElements, GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : Buffer(NumberOfElements, BuffersCount)
 		{
 			_bufferType = GL_ELEMENT_ARRAY_BUFFER;
 			_bufferUsage = BufferUsage;

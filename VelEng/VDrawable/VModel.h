@@ -8,20 +8,20 @@
 
 namespace Vel
 {
-	class VModel
+	class Model
 	{
-		friend class VMesh;
-		using ShaderPtr = std::shared_ptr<VGLSLShader>;
-		using MeshPtr = std::shared_ptr<VMesh>;
+		friend class Mesh;
+		using ShaderPtr = std::shared_ptr<Shader>;
+		using MeshPtr = std::shared_ptr<Mesh>;
 	public:
-		VModel();
+		Model();
 		//Model (filepath)
 		//Model (model)
-		virtual ~VModel();
+		virtual ~Model();
 
 		void DrawModel();
 		void DrawModelWithImposedShader();
-		void AddMesh(const std::shared_ptr<VMesh> &mesh);
+		void AddMesh(const std::shared_ptr<Mesh> &mesh);
 
 		void SetModelMatrix(const glm::mat4 &matrix);
 		void SetModelMatrixUniform();
@@ -34,8 +34,8 @@ namespace Vel
 		void ModelMatrixRotation();
 
 	private:
-		std::vector<std::shared_ptr<VGLSLShader>> _shaders;
-		std::vector<std::shared_ptr<VMesh>> _meshes;
+		std::vector<std::shared_ptr<Shader>> _shaders;
+		std::vector<std::shared_ptr<Mesh>> _meshes;
 		glm::mat4 _modelMatrix;
 	};
 }

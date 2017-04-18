@@ -3,22 +3,22 @@
 
 namespace Vel
 {
-	VFramebuffer::VFramebuffer(const glm::ivec2& size) : _size(size)
+	Framebuffer::Framebuffer(const glm::ivec2& size) : _size(size)
 	{
 		glGenFramebuffers(1, &_fboID);
 	}
 
-	VFramebuffer::~VFramebuffer()
+	Framebuffer::~Framebuffer()
 	{
 		glDeleteFramebuffers(1, &_fboID);
 	}
 
-	void VFramebuffer::BindFBOWriting()
+	void Framebuffer::BindFBOWriting()
 	{
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fboID);
 	}
 
-	void VFramebuffer::BindTexturesReading()
+	void Framebuffer::BindTexturesReading()
 	{
 		for (auto &tex : _colorTextures)
 		{
@@ -32,12 +32,12 @@ namespace Vel
 		}
 	}
 
-	void VFramebuffer::UnbindFBOWriting()
+	void Framebuffer::UnbindFBOWriting()
 	{
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	}
 
-	void VFramebuffer::UnbindTexturesReading()
+	void Framebuffer::UnbindTexturesReading()
 	{
 		for (auto &tex : _colorTextures)
 		{
@@ -51,7 +51,7 @@ namespace Vel
 		}
 	}
 
-	bool VFramebuffer::CheckStatus()
+	bool Framebuffer::CheckStatus()
 	{
 		auto Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (Status != GL_FRAMEBUFFER_COMPLETE) 
@@ -62,7 +62,7 @@ namespace Vel
 		return true;
 	}
 
-	void VFramebuffer::AddColorAttachment(const TexturePtr & texture)
+	void Framebuffer::AddColorAttachment(const TexturePtr & texture)
 	{
 		_colorTextures.push_back(texture);
 		texture->SetTextureUnit(GL_TEXTURE0 + _texturesCount);
@@ -72,25 +72,25 @@ namespace Vel
 	}
 
 	//fixed precision
-	void VFramebuffer::AddDepthTextureAttachment()
+	void Framebuffer::AddDepthTextureAttachment()
 	{
-		_depthAttachment = std::make_shared<VDepthTexture>(_size);
+		_depthAttachment = std::make_shared<DepthTexture>(_size);
 		_depthAttachment->SetTextureUnit(GL_TEXTURE0 + _texturesCount);
 		_depthAttachment->AttachToFBO();
 		_texturesCount++;
 	}
 
 	// does nothing right now
-	void VFramebuffer::AddDepthRenderbufferAttachment() //TODO
+	void Framebuffer::AddDepthRenderbufferAttachment() //TODO
 	{
 	}
 
-	VGBufferFBO::VGBufferFBO(const glm::ivec2 & size) : VFramebuffer(size)
+	GBufferFBO::GBufferFBO(const glm::ivec2 & size) : Framebuffer(size)
 	{
 		BindFBOWriting();
-		AddColorAttachment(std::make_shared<VAlbedoTexture>(_size));
-		AddColorAttachment(std::make_shared<VGeometryTexture>(_size));
-		AddColorAttachment(std::make_shared<VGeometryTexture>(_size));
+		AddColorAttachment(std::make_shared<AlbedoTexture>(_size));
+		AddColorAttachment(std::make_shared<GeometryTexture>(_size));
+		AddColorAttachment(std::make_shared<GeometryTexture>(_size));
 		AddDepthTextureAttachment();
 
 		GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0,
@@ -104,11 +104,11 @@ namespace Vel
 		UnbindFBOWriting();
 	}
 
-	VGBufferFBO::~VGBufferFBO()
+	GBufferFBO::~GBufferFBO()
 	{
 	}
 
-	VShadowMap2D::VShadowMap2D(const glm::ivec2& size) : VFramebuffer(size)
+	ShadowMap2D::ShadowMap2D(const glm::ivec2& size) : Framebuffer(size)
 	{
 		_texturesCount = 4; //TODO erase this nasty hack
 		BindFBOWriting();
@@ -118,30 +118,30 @@ namespace Vel
 		UnbindFBOWriting();
 	}
 
-	void VShadowMap2D::BindTexturesReading()
+	void ShadowMap2D::BindTexturesReading()
 	{
 		_depthAttachment->ActivateTextureUnit();
 		_depthAttachment->BindTexture();
 	}
 
-	void VShadowMap2D::UnbindTexturesReading()
+	void ShadowMap2D::UnbindTexturesReading()
 	{
 		_depthAttachment->ActivateTextureUnit();
 		_depthAttachment->UnbindTexture();
 	}
 
-	void VShadowMap2D::SetTextureUnit(GLuint textureUnit)
+	void ShadowMap2D::SetTextureUnit(GLuint textureUnit)
 	{
 		_depthAttachment->SetTextureUnit(textureUnit);
 	}
 
-	VShadowMap2D::~VShadowMap2D()
+	ShadowMap2D::~ShadowMap2D()
 	{
 
 	}
 
 
-	VShadowMapCube::VShadowMapCube(const glm::ivec2 & size) : VFramebuffer(size)
+	ShadowMapCube::ShadowMapCube(const glm::ivec2 & size) : Framebuffer(size)
 	{
 		BindFBOWriting();
 		AddDepthTextureAttachment();
@@ -151,28 +151,28 @@ namespace Vel
 		UnbindFBOWriting();
 	}
 
-	void VShadowMapCube::AddDepthTextureAttachment()
+	void ShadowMapCube::AddDepthTextureAttachment()
 	{
 		_texturesCount = 4;
-		_depthAttachment = std::make_shared<VDepthTextureCube>(_size);
+		_depthAttachment = std::make_shared<DepthTextureCube>(_size);
 		_depthAttachment->SetTextureUnit(GL_TEXTURE0 + _texturesCount);
 		_depthAttachment->AttachToFBO(GL_DEPTH_ATTACHMENT);
 		_texturesCount++;
 	}
 
-	void VShadowMapCube::BindTexturesReading()
+	void ShadowMapCube::BindTexturesReading()
 	{
 		_depthAttachment->ActivateTextureUnit();
 		_depthAttachment->BindTexture();
 	}
 
-	void VShadowMapCube::UnbindTexturesReading()
+	void ShadowMapCube::UnbindTexturesReading()
 	{
 		_depthAttachment->ActivateTextureUnit();
 		_depthAttachment->UnbindTexture();
 	}
 
-	void VShadowMapCube::SetTextureUnit(GLuint textureUnit)
+	void ShadowMapCube::SetTextureUnit(GLuint textureUnit)
 	{
 		_depthAttachment->SetTextureUnit(textureUnit);
 	}

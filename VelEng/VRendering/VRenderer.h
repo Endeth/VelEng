@@ -9,25 +9,25 @@
 
 namespace Vel
 {
-	class VRenderer
+	class Renderer
 	{
 	protected:
-		using ScenePtr = std::shared_ptr<VScene>;
+		using ScenePtr = std::shared_ptr<Scene>;
 		ScenePtr _scene;
 	public:
-		VRenderer() {};
-		virtual ~VRenderer() {};
+		Renderer() {};
+		virtual ~Renderer() {};
 		virtual void Render() = 0;
 		void SetScene(const ScenePtr& scene) { _scene = scene; }
 
 		//lights?
 	};
 
-	class VDefferedRenderer : public VRenderer
+	class DefferedRenderer : public Renderer
 	{
-		using ShaderPtr = std::shared_ptr<VGLSLShader>;
+		using ShaderPtr = std::shared_ptr<Shader>;
 	public:
-		VDefferedRenderer(const glm::ivec2& resolution, const ShaderPtr &gPass, const ShaderPtr &lPass);
+		DefferedRenderer(const glm::ivec2& resolution, const ShaderPtr &gPass, const ShaderPtr &lPass);
 		virtual void Render() override;
 		void SetGPassShader(const ShaderPtr& shader){ _gPassShader = shader; }
 		void SetLPassShader(const ShaderPtr& shader);
@@ -37,19 +37,19 @@ namespace Vel
 	private:
 		void GeometryPass();
 		void LightingPass();
-		VGBufferFBO _gBuffer;
+		GBufferFBO _gBuffer;
 		ShaderPtr _gPassShader;
 		ShaderPtr _lPassShader;
 
-		class LightingPassQuad : public VBasicDrawableObject
+		class LightingPassQuad : public BasicDrawableObject
 		{
 		public:
 			LightingPassQuad();
 			void SetVAO();
 		private:
 			void LoadIntoGPU();
-			VArrayBuffer _vboVertices;
-			VElementArrayBuffer _vboIndices;
+			ArrayBuffer _vboVertices;
+			ElementArrayBuffer _vboIndices;
 		};
 		LightingPassQuad _quad;
 		

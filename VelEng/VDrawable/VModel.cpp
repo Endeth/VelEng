@@ -7,16 +7,16 @@ namespace Vel
 	using namespace std;
 
 
-	VModel::VModel()
+	Model::Model()
 	{
 	}
 
-	VModel::~VModel()
+	Model::~Model()
 	{
 	}
 
 	//draws meshes with their own shaders
-	void VModel::DrawModel()
+	void Model::DrawModel()
 	{
 		SetModelMatrixUniform();
 		for (auto &Mesh : _meshes)
@@ -26,7 +26,7 @@ namespace Vel
 	}
 
 	//draws meshes with a single given shader, eg. gPass
-	void VModel::DrawModelWithImposedShader()
+	void Model::DrawModelWithImposedShader()
 	{
 		for (auto &Mesh : _meshes)
 		{
@@ -35,20 +35,20 @@ namespace Vel
 		}
 	}
 
-	void VModel::AddMesh(const shared_ptr<VMesh> &mesh)
+	void Model::AddMesh(const shared_ptr<Mesh> &mesh)
 	{
 		_meshes.push_back(mesh);
 		_shaders.push_back(mesh->GetShader()); //TODO check for multiple instances of single shader
 	}
 
 	//sets internal model transformation matrix
-	void VModel::SetModelMatrix(const glm::mat4 & matrix)
+	void Model::SetModelMatrix(const glm::mat4 & matrix)
 	{
 		_modelMatrix = matrix;
 	}
 
 	//sets model matrix in all of meshes shaders
-	void VModel::SetModelMatrixUniform()
+	void Model::SetModelMatrixUniform()
 	{
 		for (auto &shader : _shaders)
 		{
@@ -59,22 +59,22 @@ namespace Vel
 	}
 
 	//sets model matrix in given shader
-	void VModel::SetModelMatrixUniform(const ShaderPtr & shader)
+	void Model::SetModelMatrixUniform(const ShaderPtr & shader)
 	{
 		shader->SetUniformsValue(Uniform<glm::mat4>{ "M", _modelMatrix });
 	}
 
-	void VModel::ModelMatrixTranslation(const glm::vec3& translation)
+	void Model::ModelMatrixTranslation(const glm::vec3& translation)
 	{
 		_modelMatrix = glm::translate(_modelMatrix, translation);
 	}
 
-	void VModel::ModelMatrixScale(const glm::vec3& scale)
+	void Model::ModelMatrixScale(const glm::vec3& scale)
 	{
 		_modelMatrix = glm::scale(_modelMatrix, scale);
 	}
 
-	void VModel::ModelMatrixRotation()
+	void Model::ModelMatrixRotation()
 	{
 		
 	}
