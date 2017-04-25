@@ -5,12 +5,12 @@ namespace Vel
 {
 	using namespace std;
 
-	VSignalClock::VSignalClock()
+	SignalClock::SignalClock()
 	{
 		_clockStart;
 	}
 
-	void VSignalClock::UpdateTime()
+	void SignalClock::UpdateTime()
 	{
 		OnTick(1.0f);
 	}

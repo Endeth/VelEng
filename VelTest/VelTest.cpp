@@ -8,7 +8,7 @@
 #include <functional>
 #include "../VelUti/VTime.h"
 //#include "json.hpp"
-
+//S£ONECZNIKI
 using namespace Vel;
 
 void BasicShaderSetUp()

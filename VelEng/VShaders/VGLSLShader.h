@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../VOpenGL/glew.h"
+#include "../VOpenGL/../VOpenGL/glew.h"
 #include "../VOpenGL/glm/glm.hpp"
 #include "../VOpenGL/glm/gtc/type_ptr.hpp"
 #include <iostream>

@@ -11,7 +11,6 @@ namespace Vel
 
 	BasicDrawableObject::~BasicDrawableObject()
 	{
-
 		glDeleteVertexArrays(1, &_vaoID);
 	}
 

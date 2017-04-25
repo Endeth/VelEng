@@ -1,6 +1,7 @@
 set(SOURCE ${SOURCE} ${CMAKE_CURRENT_SOURCE_DIR}/VelGL.cpp)
 set(HEADERS ${HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}/VelGL.h)
 
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VAssets)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VBuffers)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VCameras)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/VDrawable)
@@ -21,9 +22,5 @@ set(VelEngPath ${CMAKE_CURRENT_SOURCE_DIR})
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/VOpenGL/)
-
-include_directories(${OPENGL_INCLUDE_DIRS})
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/VOpenGL/SOIL)
 
 

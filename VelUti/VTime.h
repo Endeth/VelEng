@@ -16,10 +16,10 @@ namespace Vel
 		double _currentTime{ 0.0 };
 		double _frameRate{1.0/60.0};
 	};*/
-	class VSignalClock
+	class SignalClock
 	{
 	public:
-		VSignalClock();
+		SignalClock();
 
 		Signal<void(float)> OnTick;
 		void UpdateTime();
@@ -33,10 +33,10 @@ namespace Vel
 
 	};
 
-	class VTimer
+	class Timer
 	{
 	public:
-		VTimer() : _beg(Clock::now()) {}
+		Timer() : _beg(Clock::now()) {}
 		void Reset() { _beg = Clock::now(); }
 		double Elapsed() const
 		{

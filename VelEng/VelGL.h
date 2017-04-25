@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "VOpenGL/glew.h"
+#include "VOpenGL/../VOpenGL/glew.h"
 #include "VOpenGL/glfw3.h"
 
 #include "../VelUti/VTime.h"

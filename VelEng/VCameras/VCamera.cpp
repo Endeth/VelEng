@@ -1,6 +1,6 @@
 
 #include "VCamera.h"
-#include "glm/gtx/euler_angles.hpp"
+#include "../VOpenGL/glm/gtx/euler_angles.hpp"
 
 namespace Vel
 {

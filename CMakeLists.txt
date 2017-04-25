@@ -5,9 +5,11 @@ set (VelEngine_VERSION_MAJOR 0)
 set (VelEngine_VERSION_MINOR 1)
 
 option(USE_VELTEST "Adds executable test case" ON)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
+set(LIBRARIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-
+find_package(OpenGL REQUIRED)
 
 configure_file (
 	"${PROJECT_SOURCE_DIR}/VelEngineConfig.h.in"
