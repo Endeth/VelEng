@@ -9,12 +9,13 @@
 #include "../VelUti/VTime.h"
 #include "VelTestConfig.h"
 //#include "json.hpp"
-//S£ONECZNIKI
+
 using namespace Vel;
 
 void BasicShaderSetUp()
 {
-	VelEng::Instance()->AddShaderProgram("BasicShader", "Resources\\Shaders\\BasicVertex.vert", "Resources\\Shaders\\BasicFragment.frag");
+    const char* test = V_ASSETPATH("ttt");
+	VelEng::Instance()->AddShaderProgram("BasicShader", V_ASSETPATH("/Shaders/BasicVertex.vert"), V_ASSETPATH("/Shaders/BasicFragment.frag"));
 	auto BasicShdr = VelEng::Instance()->GetShader("BasicShader");
 	BasicShdr->SetAttributes({ "vVertex", "vNormal", "vUV" });
 	BasicShdr->SetUniforms({ "Time", "M", "V", "P", "viewPos" });
@@ -33,11 +34,11 @@ void BasicShaderSetUp()
 
 void DefShaderSetUp()
 {
-
+	
 	auto EngineInstance = VelEng::Instance();
-	EngineInstance->AddShaderProgram("SkyboxShader", "Resources\\Shaders\\Deffered\\Skybox.vert", "Resources\\Shaders\\Deffered\\Skybox.frag");
-	EngineInstance->AddShaderProgram("GPass", "Resources\\Shaders\\Deffered\\GPass.vert", "Resources\\Shaders\\Deffered\\GPass.frag");
-	EngineInstance->AddShaderProgram("LPass", "Resources\\Shaders\\Deffered\\LPass.vert", "Resources\\Shaders\\Deffered\\LPass.frag");
+	EngineInstance->AddShaderProgram("SkyboxShader", V_ASSETPATH("/Shaders/Deffered/Skybox.vert"), V_ASSETPATH("/Shaders/Deffered/Skybox.frag"));
+	EngineInstance->AddShaderProgram("GPass", V_ASSETPATH("/Shaders/Deffered/GPass.vert"), V_ASSETPATH("/Shaders/Deffered/GPass.frag"));
+	EngineInstance->AddShaderProgram("LPass", V_ASSETPATH("/Shaders/Deffered/LPass.vert"), V_ASSETPATH("/Shaders/Deffered/LPass.frag"));
 
 	auto SkyboxShader = VelEng::Instance()->GetShader("SkyboxShader");
 	auto GPassShader = VelEng::Instance()->GetShader("GPass");
@@ -91,8 +92,8 @@ void AddLightsAndCubesToScene(const std::shared_ptr<Scene>& scene, const std::sh
 	plight2 = std::make_shared<PointLight>(originalLight2Pos, pointLight2Color);
 	//plight3 = std::make_shared<PointLight>(originalLight1Pos, pointLight2Color);
 	//plight4 = std::make_shared<PointLight>(originalLight2Pos, pointLight2Color); 
-	VelEng::Instance()->AddShaderProgram("ShadowMapping", "Resources\\Shaders\\Deffered\\ShadowMapping.vert", "Resources\\Shaders\\Deffered\\ShadowMapping.frag");
-	VelEng::Instance()->AddShaderProgram("ShadowMappingCube", "Resources\\Shaders\\Deffered\\ShadowsCube.vert", "Resources\\Shaders\\Deffered\\ShadowsCube.frag", "Resources\\Shaders\\Deffered\\ShadowsCube.geo");
+	VelEng::Instance()->AddShaderProgram("ShadowMapping", V_ASSETPATH("/Shaders/Deffered/ShadowMapping.vert"), V_ASSETPATH("/Shaders/Deffered/ShadowMapping.frag"));
+	VelEng::Instance()->AddShaderProgram("ShadowMappingCube", V_ASSETPATH("/Shaders/Deffered/ShadowsCube.vert"), V_ASSETPATH("/Shaders/Deffered/ShadowsCube.frag"), V_ASSETPATH("/Shaders/Deffered/ShadowsCube.geo"));
 	auto shadowShader = VelEng::Instance()->GetShader("ShadowMapping");
 	shadowShader->SetAttributes({ "vVertex", "vNormal", "vUV" });
 	shadowShader->Activate();
@@ -167,13 +168,14 @@ int main()
 	
 
 	GLfloat shin = 32.0f;
-	auto diffuseTex = std::make_shared<Texture>("Resources\\Images\\BoxDiffuse.png");
-	auto specularTex = std::make_shared<Texture>("Resources\\Images\\BoxSpecular.png");
-	std::shared_ptr<Material> materialTest = std::make_shared<Material>(diffuseTex, specularTex, shin);
+	auto diffuseTex = std::make_shared<Texture>(V_ASSETPATH("/Images/BoxDiffuse.png"));
+    auto normalMapTex = std::make_shared<Texture>(V_ASSETPATH("/Images/BoxNormalMap.png"));
+	auto specularTex = std::make_shared<Texture>(V_ASSETPATH("/Images/BoxSpecular.png"));
+	std::shared_ptr<Material> materialTest = std::make_shared<Material>(diffuseTex, normalMapTex, specularTex, shin);
 
 	std::shared_ptr<Mesh> cubeMeshTest = std::make_shared<Mesh>();
 	std::shared_ptr<Mesh> planeMeshTest = std::make_shared<PlaneMesh>();
-	std::shared_ptr<Mesh> skyboxMesh = std::make_shared<Skybox>(std::make_shared<TextureCube>("Resources\\Skybox"));
+	std::shared_ptr<Mesh> skyboxMesh = std::make_shared<Skybox>(std::make_shared<TextureCube>(V_ASSETPATH("/Skybox")));
 
 	cubeMeshTest->SetShader(VelEng::Instance()->GetShader("BasicShader"));
 	planeMeshTest->SetShader(VelEng::Instance()->GetShader("BasicShader"));
@@ -195,6 +197,7 @@ int main()
 	while (VelEng::Instance()->ShouldRun())
 	{
 		VelEng::Instance()->GetFrameClock().Tick();
+
 		auto posDiff1 = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()) * 2;
 		auto xposDiff2 = glm::sin(VelEng::Instance()->GetFrameClock().GetTime()*2) * 3;
 		auto zposDiff2 = glm::cos(VelEng::Instance()->GetFrameClock().GetTime() * 2) * 3;
