@@ -1,0 +1,2 @@
+#define VelEngine_VERSION_MAJOR "${VelEngine_VERSION_MAJOR}"
+#define VelEngine_VERSION_MINOR "${VelEngine_VERSION_MINOR}"

@@ -12,12 +12,15 @@ set(LIBRARIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 find_package(OpenGL REQUIRED)
 
 configure_file (
-	"${PROJECT_SOURCE_DIR}/VelEngineConfig.h.in"
-	"${PROJECT_BINARY_DIR}/VelEngineConfig.h"
+	"${PROJECT_SOURCE_DIR}/VelEng/VelEngConfig.h.in"
+	"${PROJECT_BINARY_DIR}/VelEng/Config/VelEngConfig.h"
 )
  
+include_directories(${PROJECT_BINARY_DIR}/VelEng/Config)
+
 add_subdirectory(VelEng)
 add_subdirectory(VelUti)
 if(USE_VELTEST)
 	add_subdirectory(VelTest)
+	set(VELTEST_RESPATH ${VELTEST_RESPATH} "${CMAKE_SOURCE_DIR}/VelTest/Resources/")
 endif()

@@ -21,6 +21,7 @@
 #include "VRendering/VFramebuffer.h"
 #include "VLights/VLight.h"
 
+#include "VelEngConfig.h"
 
 namespace Vel
 {

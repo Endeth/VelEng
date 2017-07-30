@@ -7,6 +7,7 @@
 #include "../VelEng/VMaterials/VMaterial.h"
 #include <functional>
 #include "../VelUti/VTime.h"
+#include "VelTestConfig.h"
 //#include "json.hpp"
 //S£ONECZNIKI
 using namespace Vel;
