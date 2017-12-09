@@ -16,8 +16,6 @@ namespace Vel
 		_uniformLocationList.clear();
 	}
 
-
-
 	Shader::~Shader()
 	{
 		_attributeList.clear();

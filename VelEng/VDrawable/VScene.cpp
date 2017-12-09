@@ -1,52 +1,57 @@
-
 #include "VScene.h"
 
-Vel::Scene::Scene()
-{
-	_sceneLighting = std::make_unique<SceneLighting>();
-}
+using namespace std;
 
-void Vel::Scene::DrawScene()
-{
-	for (auto &Model : _models)
-	{
-		Model->DrawModel();
-	}
-}
 
-void Vel::Scene::DrawSceneWithImposedShader(const ShaderPtr& shader)
+namespace Vel
 {
-	shader->Activate();
+    Scene::Scene()
+    {
+        _sceneLighting = make_unique<SceneLighting>();
+    }
 
-	for (auto &Model : _models)
-	{
-		Model->SetModelMatrixUniform(shader);
-		Model->DrawModelWithImposedShader();
-	}
-	shader->Deactivate();
-}
+    void Scene::DrawScene()
+    {
+        for (auto &Model : _models)
+        {
+            Model->DrawModel();
+        }
+    }
 
-void Vel::Scene::DrawShadows()
-{
-	_sceneLighting->DrawSceneShadows(_models);
-}
+    void Scene::DrawSceneWithImposedShader(const ShaderPtr& shader)
+    {
+        shader->Activate();
 
-void Vel::Scene::AddModel(const ModelPtr& model)
-{
-	_models.push_back(model);
-}
+        for (auto &Model : _models)
+        {
+            Model->SetModelMatrixUniform(shader);
+            Model->DrawModelWithImposedShader();
+        }
+        shader->Deactivate();
+    }
 
-void Vel::Scene::AddLightSource(const LightPtr& lightSource)
-{
-	_sceneLighting->AddLight(lightSource);
-}
+    void Scene::DrawShadows()
+    {
+        _sceneLighting->DrawSceneShadows(_models);
+    }
 
-void Vel::Scene::CreateDirectionalLight(const glm::vec3 & direction, const LightSource::LightColor & color)
-{
-	_sceneLighting->CreateDirectionalLight(direction, color);
-}
+    void Scene::AddModel(const ModelPtr& model)
+    {
+        _models.push_back(model);
+    }
 
-void Vel::Scene::CreateDirectionalLight(std::unique_ptr<DirectionalLight>&& light)
-{
-	_sceneLighting->CreateDirectionalLight(std::move(light));
+    void Scene::AddLightSource(const LightPtr& lightSource)
+    {
+        _sceneLighting->AddLight(lightSource);
+    }
+
+    void Scene::CreateDirectionalLight(const glm::vec3 & direction, const LightSource::LightColor & color)
+    {
+        _sceneLighting->CreateDirectionalLight(direction, color);
+    }
+
+    void Scene::CreateDirectionalLight(unique_ptr<DirectionalLight>&& light)
+    {
+        _sceneLighting->CreateDirectionalLight(move(light));
+    }
 }

@@ -62,9 +62,6 @@ uniform sampler2D dirLightShadowMap;
 uniform vec3 ambientLight;
 
 
-
-//----------------------------------------------------------------------------------------
-
 float ShadowCalcDepth(vec3 projCoordinates, vec2 offset, int ite);
 float ShadowCalculation(int lIte);
 

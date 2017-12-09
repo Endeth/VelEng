@@ -28,7 +28,7 @@ namespace Vel
 		void ActivateShadowMaps() { _sceneLighting->ActivateShadowMaps(); } //DEBUG
 
 	private:
-		std::vector<ModelPtr> _models; //TODO change to list maybe, add cleaning up
+		std::vector<ModelPtr> _models; //TODO change to batches
 		std::unique_ptr<SceneLighting> _sceneLighting;
 	};
 }
