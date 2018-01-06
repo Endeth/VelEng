@@ -133,14 +133,14 @@ namespace Vel
 
 		_vboVertices.BindBuffer();
 
-		glEnableVertexAttribArray(_shader->GetAttribute("vVertex"));
-		glVertexAttribPointer(_shader->GetAttribute("vVertex"), 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, position));
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, position));
 
-		glEnableVertexAttribArray(_shader->GetAttribute("vNormal"));
-		glVertexAttribPointer(_shader->GetAttribute("vNormal"), 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, normal));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, normal));
 
-		glEnableVertexAttribArray(_shader->GetAttribute("vUV"));
-		glVertexAttribPointer(_shader->GetAttribute("vUV"), 2, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, UV));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, UV));
 
 		_vboIndices.BindBuffer();
 
@@ -157,14 +157,14 @@ namespace Vel
 
 		_vboVertices.BindBuffer();
 
-		glEnableVertexAttribArray(_shader->GetAttribute("vVertex"));
-		glVertexAttribPointer(_shader->GetAttribute("vVertex"), 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, position));
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, position));
 
-		glEnableVertexAttribArray(_shader->GetAttribute("vNormal"));
-		glVertexAttribPointer(_shader->GetAttribute("vNormal"), 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, normal));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, normal));
 
-		glEnableVertexAttribArray(_shader->GetAttribute("vUV"));
-		glVertexAttribPointer(_shader->GetAttribute("vUV"), 2, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, UV));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (const GLvoid*)offsetof(Vertex, UV));
 
 		glBindVertexArray(0);
 	}
