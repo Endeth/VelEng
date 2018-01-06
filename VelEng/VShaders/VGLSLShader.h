@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../VOpenGL/../VOpenGL/glew.h"
-#include "../VOpenGL/glm/glm.hpp"
-#include "../VOpenGL/glm/gtc/type_ptr.hpp"
 #include <iostream>
 #include <string>
 #include <map>
 #include <vector>
+
+#include "external/glm/glm.hpp"
+#include "external/glm/gtc/type_ptr.hpp"
 
 namespace Vel
 {

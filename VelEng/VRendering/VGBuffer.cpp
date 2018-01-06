@@ -1,5 +1,4 @@
-
-#include "VGBuffer.h"
+#include "vGBuffer.h"
 
 /*void Vel::VGBuffer::Init(GLuint width, GLuint height)
 {

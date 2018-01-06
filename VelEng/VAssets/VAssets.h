@@ -1,12 +1,11 @@
 #pragma once
 
-#include "../VOpenGL/glew.h"
-#include "../VOpenGL/glm/glm.hpp"
-#include "../VGeo/VGeo.h"
-#include "../VDrawable/VScene.h"
-#include "../VDrawable/VModel.h"
-
 #include <memory>
+
+#include "external/glm/glm.hpp"
+#include "vGeo/vGeo.h"
+#include "vDrawable/vScene.h"
+#include "vDrawable/vModel.h"
 
 namespace Vel
 {

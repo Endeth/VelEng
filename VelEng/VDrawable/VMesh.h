@@ -1,15 +1,15 @@
 #pragma once
+
 #include <vector>
 #include <memory>
 
-#include "../VOpenGL/glew.h"
-#include "../VOpenGL/glm/glm.hpp"
-#include "../VShaders/VGLSLShader.h"
-#include "../VGeo/VGeo.h"
-#include "../VBuffers/VBuffers.h"
-#include "../VDrawable/VDrawableObject.h"
-#include "../VTextures/VTexture.h"
-#include "../VMaterials/VMaterial.h"
+#include "external/glm/glm.hpp"
+#include "vShaders/vGLSLShader.h"
+#include "vGeo/vGeo.h"
+#include "vBuffers/vBuffers.h"
+#include "vDrawable/vDrawableObject.h"
+#include "vTextures/vTexture.h"
+#include "vMaterials/vMaterial.h"
 
 namespace Vel
 {

@@ -1,5 +1,5 @@
 #pragma once
 
-#include "VVertices.h"
-#include "VPlane.h"
-#include "VLine.h"
+#include "vVertices.h"
+#include "vPlane.h"
+#include "vLine.h"

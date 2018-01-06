@@ -1,6 +1,6 @@
+#include "external/SOIL/SOIL.h"
 
-#include "VFBOTextures.h"
-#include "SOIL/SOIL.h"
+#include "vFBOTextures.h"
 
 namespace Vel
 {

@@ -1,11 +1,11 @@
 #pragma once
 
 #include <vector>
-#include "../VOpenGL/glew.h"
-#include "../VOpenGL/glm/common.hpp"
-#include "../VShaders/VGLSLShader.h"
-#include "../VGeo/VGeo.h"
 #include <memory>
+
+#include "external/glm/common.hpp"
+#include "vShaders/vGLSLShader.h"
+#include "vGeo/vGeo.h"
 
 namespace Vel
 {

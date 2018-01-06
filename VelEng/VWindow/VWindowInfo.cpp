@@ -1,4 +1,4 @@
-#include "VWindowInfo.h"
+#include "vWindowInfo.h"
 
 using namespace std;
 

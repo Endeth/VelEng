@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 namespace Vel
 {
     Scene::Scene()

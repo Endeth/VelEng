@@ -1,5 +1,4 @@
-
-#include "VLight.h"
+#include "vLight.h"
 
 using namespace std;
 

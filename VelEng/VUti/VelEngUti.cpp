@@ -1,7 +1,6 @@
-
-#include "VelEngUti.h"
 #include <algorithm>
 
+#include "VelEngUti.h"
 
 Vel::Mouse::Mouse(int x, int y) : _mouseReset(false)
 {

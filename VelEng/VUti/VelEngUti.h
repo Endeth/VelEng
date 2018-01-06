@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../VOpenGL/glew.h"
-#include "../VOpenGL/glfw3.h"
-#include "../VOpenGL/glm/glm.hpp"
 #include <vector>
 #include <thread>
 #include <chrono>
+
+#include "external/glfw/glfw3.h"
+#include "external/glm/glm.hpp"
 
 namespace Vel
 {

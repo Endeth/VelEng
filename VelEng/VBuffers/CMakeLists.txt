@@ -1,10 +1,10 @@
 set(SOURCE
    ${SOURCE}
-   ${CMAKE_CURRENT_SOURCE_DIR}/VBuffers.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vBuffers.cpp
    PARENT_SCOPE
 )
 set(HEADERS
    ${HEADERS}
-   ${CMAKE_CURRENT_SOURCE_DIR}/VBuffers.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vBuffers.h
    PARENT_SCOPE
 )

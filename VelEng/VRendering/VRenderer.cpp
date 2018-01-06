@@ -1,5 +1,4 @@
-
-#include "VRenderer.h"
+#include "vRenderer.h"
 
 Vel::DefferedRenderer::DefferedRenderer(const glm::ivec2& resolution, const ShaderPtr &gPass, const ShaderPtr &lPass) : _gBuffer(resolution), _gPassShader(gPass), _lPassShader(lPass)
 {

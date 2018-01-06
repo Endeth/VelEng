@@ -1,6 +1,4 @@
-
-#include "../VOpenGL/glew.h"
-#include "VMaterial.h"
+#include "vMaterial.h"
 
 namespace Vel
 {

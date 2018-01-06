@@ -1,6 +1,5 @@
-
-#include "VModel.h"
-#include "../VOpenGL/glm/gtc/matrix_transform.hpp"
+#include "external/glm/gtc/matrix_transform.hpp"
+#include "vModel.h"
 
 namespace Vel
 {

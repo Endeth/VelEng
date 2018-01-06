@@ -1,5 +1,6 @@
 #pragma once
-#include "VTexture.h"
+
+#include "vTexture.h"
 
 namespace Vel
 {

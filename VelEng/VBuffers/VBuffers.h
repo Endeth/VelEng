@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../VOpenGL/glew.h"
-#include "../VGeo/VVertices.h"
 #include <memory>
 #include <vector>
+
+#include "vGeo/vVertices.h"
 
 namespace Vel
 {

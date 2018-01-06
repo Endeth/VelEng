@@ -1,10 +1,11 @@
 #pragma once
 
-#include "VModel.h"
-#include "../VShaders/VGLSLShader.h"
-#include "../VLights/VLight.h"
 #include <memory>
 #include <vector>
+
+#include "vModel.h"
+#include "vShaders/vGLSLShader.h"
+#include "vLights/vLight.h"
 
 namespace Vel
 {

@@ -1,9 +1,8 @@
 #pragma once
 
+#include "external/glm/glm.hpp"
+#include "vFramebuffer.h"
 
-#include "../VOpenGL/glew.h"
-#include "../VOpenGL/glm/glm.hpp"
-#include "VFramebuffer.h"
 namespace Vel
 {
 	/*class VGBuffer

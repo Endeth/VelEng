@@ -1,9 +1,8 @@
-
-#include "VAssets.h"
-#include "../VOpenGL/assimp/mesh.h"
-#include "../VOpenGL/assimp/scene.h"
-#include "../VOpenGL/assimp/postprocess.h"
-#include "../VOpenGL/assimp/Importer.hpp"
+#include "external/assimp/mesh.h"
+#include "external/assimp/scene.h"
+#include "external/assimp/postprocess.h"
+#include "external/assimp/Importer.hpp"
+#include "vAssets.h"
 
 namespace Vel
 {

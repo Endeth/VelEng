@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../VOpenGL/glew.h"
-#include "../VOpenGL/glm/glm.hpp"
-#include "VMesh.h"
 #include <memory>
 #include <vector>
+
+#include "external/glm/glm.hpp"
+#include "VMesh.h"
 
 namespace Vel
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../VOpenGL/glm/glm.hpp"
+#include "external/glm/glm.hpp"
 
 namespace Vel
 {

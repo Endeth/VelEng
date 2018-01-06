@@ -1,6 +1,6 @@
+#include <iostream>
 
 #include "VelGL.h"
-#include <iostream>
 
 namespace Vel
 {
@@ -20,7 +20,6 @@ namespace Vel
 
 		GLFWInit();
 		InitWindow();
-		GlewInit();
 		InitCamera();
 
 		glEnable(GL_DEPTH_TEST);
@@ -222,16 +221,6 @@ namespace Vel
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	}
-
-	void VelEng::GlewInit()
-	{
-		glewExperimental = GL_TRUE;
-		GLenum Err = glewInit();
-		if (GLEW_OK != Err)
-		{
-			cerr << "Error: " << glewGetErrorString(Err) << endl;
-		}
 	}
 
 	void VelEng::InitWindow()

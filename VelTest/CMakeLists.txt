@@ -6,6 +6,7 @@ target_link_libraries(VelTest
 	${LIBRARIES_DIR}/glfw3dll.lib
 	${LIBRARIES_DIR}/assimp.lib
 	${LIBRARIES_DIR}/glew32.lib
+	${LIBRARIED_DIR}/vulkan-1.lib
 	${OPENGL_LIBRARIES}
 )
 

@@ -1,5 +1,5 @@
+#include "vSky.h"
 
-#include "VSky.h"
 namespace Vel
 {
 	Skybox::Skybox(const std::shared_ptr<TextureCube> &texture)

@@ -1,4 +1,4 @@
-#include "VWindow.h"
+#include "vWindow.h"
 
 Vel::Window::Window() : _info("Test", glm::ivec2{ 100,100 }, glm::ivec2{ 1366, 768 }, true)
 {

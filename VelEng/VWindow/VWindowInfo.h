@@ -1,9 +1,9 @@
 #pragma once
+
 #include <string>
 
-#include "../VOpenGL/glew.h"
-#include "../VOpenGL/glfw3.h"
-#include "../VOpenGL/glm/glm.hpp"
+#include "external/glfw/glfw3.h"
+#include "external/glm/glm.hpp"
 
 class WindowInfo
 {

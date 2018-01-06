@@ -1,5 +1,5 @@
+#include "vPlane.h"
 
-#include "VPlane.h"
 namespace Vel
 {
 	const GLfloat EPSILON = 0.0001f;

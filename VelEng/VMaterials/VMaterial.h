@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "../VOpenGL/glm/glm.hpp"
-#include "../VTextures/VTexture.h"
+#include "external/glm/glm.hpp"
+#include "vTextures/vTexture.h"
 
 namespace Vel
 {

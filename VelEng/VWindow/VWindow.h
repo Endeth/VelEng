@@ -1,9 +1,8 @@
 #pragma once
 
-#include "../VOpenGL/glew.h"
-#include "../VOpenGL/glfw3.h"
-#include "../VOpenGL/glm/glm.hpp"
-#include "VWindowInfo.h"
+#include "external/glfw/glfw3.h"
+#include "external/glm/glm.hpp"
+#include "vWindowInfo.h"
 
 namespace Vel
 {
