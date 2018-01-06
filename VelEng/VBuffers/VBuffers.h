@@ -24,12 +24,12 @@ namespace Vel
 		{
 			glBindBuffer(_bufferType, 0);
 		}
-		virtual void FillBuffer(BufferDataPtr Data, GLushort BufferNumber = 0)
+		void FillBuffer(BufferDataPtr Data, GLushort BufferNumber = 0)
 		{
 			glBindBuffer(_bufferType, _buffersID[BufferNumber]);
 			glBufferData(_bufferType, _buffersSize, Data, _bufferUsage);
 		}
-		virtual void FillBuffer(GLsizei NumberOfElements, BufferDataPtr Data, GLushort BufferNumber = 0)
+		void FillBuffer(GLsizei NumberOfElements, BufferDataPtr Data, GLushort BufferNumber = 0)
 		{
 			_buffersSize = NumberOfElements * sizeof(Vertex);
 			glBindBuffer(_bufferType, _buffersID[BufferNumber]);
