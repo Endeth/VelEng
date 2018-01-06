@@ -62,14 +62,15 @@ void DefShaderSetUp()
 	SkyboxShader->SetAttributes("vVertex");
 	SkyboxShader->SetUniforms({ "M", "V", "P" });
 	GPassShader->SetAttributes({ "vVertex", "vNormal", "vUV" });
-	GPassShader->SetUniforms({ "M", "V", "P", "diffuse", "specular" });
+	GPassShader->SetUniforms({ "M", "V", "P", "diffuse", "normalMap", "specular" });
 
 	LPassShader->SetAttributes(std::vector<std::string>{ "vVertex", "vUV"});
 	LPassShader->SetUniforms({ "gDiffSpec", "gPosition", "gNormal", "gDepth", "viewPos", "ambientLight", "lightSpaceMatrix" });
 	LPassShader->SetUniforms({ "pointShadowMap[0]",  "pointShadowMap[1]",  "pointShadowMap[2]",  "pointShadowMap[3]", "dirLightShadowMap" });
 	GPassShader->Activate();
 	GPassShader->SetUniformsValue(Uniform<int>{ "diffuse", 0});
-	GPassShader->SetUniformsValue(Uniform<int>{ "specular", 1});
+	GPassShader->SetUniformsValue(Uniform<int>{ "normalMap", 1});
+    GPassShader->SetUniformsValue(Uniform<int>{ "specular", 2});
 	GPassShader->Deactivate();
 
 	LPassShader->Activate();
