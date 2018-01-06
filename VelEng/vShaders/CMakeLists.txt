@@ -1,0 +1,11 @@
+set(SOURCE
+   ${SOURCE}
+   ${CMAKE_CURRENT_SOURCE_DIR}/vGLSLShader.cpp
+   PARENT_SCOPE
+)
+set(HEADERS
+   ${HEADERS}
+   ${CMAKE_CURRENT_SOURCE_DIR}/vGLSLShader.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vShaderLocations.h
+   PARENT_SCOPE
+)

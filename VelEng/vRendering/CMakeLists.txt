@@ -1,0 +1,14 @@
+set(SOURCE
+   ${SOURCE}
+   ${CMAKE_CURRENT_SOURCE_DIR}/vFrameBuffer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vGBuffer.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vRenderer.cpp
+   PARENT_SCOPE
+)
+set(HEADERS
+   ${HEADERS}
+   ${CMAKE_CURRENT_SOURCE_DIR}/vFrameBuffer.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vGBuffer.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vRenderer.h
+   PARENT_SCOPE
+)

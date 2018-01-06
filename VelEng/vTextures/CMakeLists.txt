@@ -1,0 +1,12 @@
+set(SOURCE
+   ${SOURCE}
+   ${CMAKE_CURRENT_SOURCE_DIR}/vFBOTextures.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vTexture.cpp
+   PARENT_SCOPE
+)
+set(HEADERS
+   ${HEADERS}
+   ${CMAKE_CURRENT_SOURCE_DIR}/vFBOTextures.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vTexture.h
+   PARENT_SCOPE
+)
