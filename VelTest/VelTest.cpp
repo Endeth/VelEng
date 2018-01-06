@@ -8,9 +8,24 @@
 #include <functional>
 #include "../VelUti/VTime.h"
 #include "VelTestConfig.h"
+
+#include <Windows.h>
 //#include "json.hpp"
 
 using namespace Vel;
+
+void setVSync( bool sync )
+{
+    // Function pointer for the wgl extention function we need to enable/disable
+    // vsync
+    typedef BOOL( APIENTRY *PFNWGLSWAPINTERVALPROC )(int);
+    PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = 0;
+    wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress( "wglSwapIntervalEXT" );
+
+    if ( wglSwapIntervalEXT )
+        wglSwapIntervalEXT( sync );
+
+}
 
 void BasicShaderSetUp()
 {
@@ -141,8 +156,6 @@ void AddLightsAndCubesToScene(const std::shared_ptr<Scene>& scene, const std::sh
 
 int main()
 {
-
-
 	VelEng::Instance()->CreateScene("World");
 	VelEng::Instance()->CreateScene("Sky");
 
@@ -192,7 +205,8 @@ int main()
 	modelPlane->AddMesh(planeMeshTest);
 	modelPlane->ModelMatrixTranslation(glm::vec3{ 0, -0.51, 0 });
 	modelPlane->ModelMatrixScale(glm::vec3{ 10.0, 1.0, 10.0 });
-	
+
+    setVSync( false );
 
 	while (VelEng::Instance()->ShouldRun())
 	{
@@ -207,7 +221,7 @@ int main()
 		//plight4->SetPosition({ originalLight2Pos.x - posDiff2, originalLight2Pos.y, originalPos2.z });
 		VelEng::Instance()->HandleInput();
 		VelEng::Instance()->RenderFrame();
-		VelEng::Instance()->GetFrameClock().CapFPS();
+		//VelEng::Instance()->GetFrameClock().CapFPS(); //TODO
 	}
 
     return 0;
