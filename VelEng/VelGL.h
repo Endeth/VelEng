@@ -20,6 +20,7 @@
 #include "VRendering/VRenderer.h"
 #include "VRendering/VFramebuffer.h"
 #include "VLights/VLight.h"
+#include "VAssets/VAssets.h"
 
 #include "VelEngConfig.h"
 
@@ -38,7 +39,7 @@ namespace Vel
 			return _instance;
 		}
 		VelEng(const VelEng&) = delete;
-		
+
 		const bool ShouldRun() const { return _shouldRun; }
 		void SetRenderer(const RendererPtr& renderer) { _renderer = renderer; }
 		bool AddShaderProgram(const std::string& name, const std::string& vertFilename, const std::string& fragFilename);
@@ -62,26 +63,28 @@ namespace Vel
 		void HandleInput();
 		void RenderScenes();
 		void RenderFrame();
-	
+
 	private:
+        static VelEng* _instance;
 		VelEng();
 
 		void GLFWInit();
 		void GlewInit();
-		
+
 		std::unordered_map<std::string, std::shared_ptr<Shader>> _shaderPrograms;
 		std::map<std::string, std::shared_ptr<Scene>> _scenes;
 
 		std::shared_ptr<FreeCamera> _mainCamera;
 		std::shared_ptr<Window> _mainWindow;
 
-		static VelEng* _instance;
+        AssetsManager _assetsMgr;
 
 		RendererPtr _renderer;
-		FrameClock _frameClock;
+		FrameClock _frameClock; //TODO - different clock for logic?
+        //InputrMgr - TODO implement
 		Mouse _mouse;
 		Keyboard _keyboard;
-		bool _shouldRun{ true };
+		bool _shouldRun{ true }; //TODO something different
 	};
 
 }
