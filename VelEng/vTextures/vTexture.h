@@ -16,7 +16,7 @@ namespace Vel
 		void BindTexture();
 		void ActivateTextureUnit();
 		void UnbindTexture();
-		void SetTextureUnit(GLuint unit = GL_TEXTURE0) { _textureUnit = unit; }
+		void SetTextureUnit(uint32_t unit = 0) { _textureUnit = unit; }
 	protected:
 		Texture();
 		virtual void SetupTextureInfo();
@@ -25,11 +25,11 @@ namespace Vel
 		virtual void CreateEmptyTexture();
 
 		glm::ivec2 _size;
-		GLuint _texture;
-		GLuint _wrapping;
-		GLuint _filtering;
-		GLuint _textureType;
-		GLuint _textureUnit; 
+		uint32_t _texture;
+		uint32_t _wrapping;
+		uint32_t _filtering;
+		uint32_t _textureType;
+		uint32_t _textureUnit; 
 		//TODO add internal format
 	};
 

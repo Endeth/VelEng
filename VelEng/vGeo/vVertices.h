@@ -6,7 +6,6 @@ namespace Vel
 {
 	struct Vertex
 	{
-		Vertex() {};
 		Vertex(const glm::vec3 &pos, const  glm::vec3 &norm, const glm::vec2 &uvCoor = glm::vec2{ 0.0f, 0.0f })
 		{
 			position = pos;
@@ -20,7 +19,6 @@ namespace Vel
 
 	struct VertexUV
 	{
-		VertexUV() {};
 		VertexUV(const glm::vec3 &pos, const  glm::vec2 &uvCoor = glm::vec2{ 0.0f, 0.0f })
 		{
 			position = pos;

@@ -49,18 +49,18 @@ namespace Vel
 	//sets model matrix in all of meshes shaders
 	void Model::SetModelMatrixUniform()
 	{
-		for (auto &shader : _shaders)
+		/*for (auto &shader : _shaders)
 		{
 			shader->Activate();
 			shader->SetUniformsValue(Uniform<glm::mat4>{ "M", _modelMatrix });
 			shader->Deactivate();
-		}
+		}*/
 	}
 
 	//sets model matrix in given shader
 	void Model::SetModelMatrixUniform(const ShaderPtr & shader)
 	{
-		shader->SetUniformsValue(Uniform<glm::mat4>{ "M", _modelMatrix });
+		//shader->SetUniformsValue(Uniform<glm::mat4>{ "M", _modelMatrix });
 	}
 
 	void Model::ModelMatrixTranslation(const glm::vec3& translation)

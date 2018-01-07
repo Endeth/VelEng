@@ -24,7 +24,7 @@ namespace Vel
 		void AddLightSource(const LightPtr &lightSource);
 		void CreateDirectionalLight(const glm::vec3 &direction, const LightSource::LightColor &color);
 		void CreateDirectionalLight(std::unique_ptr<DirectionalLight> &&light);
-		void SetLPassLightUniforms(GLuint lPassProgram) { _sceneLighting->SetLPassLightUniforms(lPassProgram); }
+		void SetLPassLightUniforms(uint32_t lPassProgram) { _sceneLighting->SetLPassLightUniforms(lPassProgram); }
 		void SetCameraPosition(const glm::vec3 &pos) { _sceneLighting->SetCameraPosition(pos); }
 		void ActivateShadowMaps() { _sceneLighting->ActivateShadowMaps(); } //DEBUG
 

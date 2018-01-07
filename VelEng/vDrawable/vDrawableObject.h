@@ -35,9 +35,9 @@ namespace Vel
 		virtual void UnbindAdditionalDrawingOptions() {};
 
 		std::vector<Vertex> _vertices;
-		std::vector<GLuint> _indices;
-		GLuint _vaoID;
-		GLenum _primitive;
+		std::vector<uint32_t> _indices;
+		uint32_t _vaoID;
+		uint32_t _primitive;
 
 		std::shared_ptr<Shader> _shader;
 	};

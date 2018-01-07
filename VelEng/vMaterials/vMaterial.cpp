@@ -5,7 +5,7 @@ namespace Vel
 
     //TODO make basic material? only diffuse
 
-	Material::Material(const VTexturePtr& diffuse, const VTexturePtr& normalMap, const VTexturePtr& specular, GLfloat & shininess)
+	Material::Material(const VTexturePtr& diffuse, const VTexturePtr& normalMap, const VTexturePtr& specular, float & shininess)
 	{
 		_diffuse = diffuse;
         _normalMap = normalMap;
@@ -16,9 +16,9 @@ namespace Vel
 
 	void Material::SetTexturesUnits()
 	{
-		_diffuse->SetTextureUnit(GL_TEXTURE0);
+		/*_diffuse->SetTextureUnit(GL_TEXTURE0);
 		_normalMap->SetTextureUnit(GL_TEXTURE1);
-		_specular->SetTextureUnit(GL_TEXTURE2);
+		_specular->SetTextureUnit(GL_TEXTURE2);*/
 	}
 
 	void Material::BindMaterial()
@@ -41,10 +41,10 @@ namespace Vel
 		_specular->UnbindTexture();
 	}
 
-	EmissiveMaterial::EmissiveMaterial(const VTexturePtr& diffuse, const VTexturePtr& normalMap, const VTexturePtr& specular, const VTexturePtr& emission, GLfloat & shininess) : Material(diffuse, normalMap, specular, shininess) //TODO Normals and shininess not needed
+	EmissiveMaterial::EmissiveMaterial(const VTexturePtr& diffuse, const VTexturePtr& normalMap, const VTexturePtr& specular, const VTexturePtr& emission, float & shininess) : Material(diffuse, normalMap, specular, shininess) //TODO Normals and shininess not needed
 	{
-		_emission = emission;
-		_emission->SetTextureUnit(GL_TEXTURE3);
+		/*_emission = emission;
+		_emission->SetTextureUnit(GL_TEXTURE3);*/
 	}
 
 	void EmissiveMaterial::BindMaterial()

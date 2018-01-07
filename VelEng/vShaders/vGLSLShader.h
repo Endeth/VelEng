@@ -13,24 +13,24 @@ namespace Vel
 	template <typename UniformTypePointer>
 	struct Uniform
 	{
-		Uniform(const std::string& uniformName, UniformTypePointer value, GLuint count = 1) : UniformName(uniformName), Value(value), Count(count)
+		Uniform(const std::string& uniformName, UniformTypePointer value, uint32_t count = 1) : UniformName(uniformName), Value(value), Count(count)
 		{
 		}
 		std::string UniformName;
-		GLuint Count;
+		uint32_t Count;
 		UniformTypePointer Value;
 		using UniformType = UniformTypePointer;
 	};
 	template <>
 	struct Uniform<glm::mat4>
 	{
-		Uniform(const std::string& uniformName, const glm::mat4 &value, GLuint count = 1, GLboolean transpose = GL_FALSE) : UniformName(uniformName), Value(value), Count(count), Transpose(transpose)
+		Uniform(const std::string& uniformName, const glm::mat4 &value, uint32_t count = 1, bool transpose = false) : UniformName(uniformName), Value(value), Count(count), Transpose(transpose)
 		{
 		}
 		std::string UniformName;
-		GLuint Count;
+		uint32_t Count;
 		glm::mat4 Value;
-		GLboolean Transpose;
+		bool Transpose;
 		using UniformType = glm::mat4;
 	};
 	//TODO rewrite this
@@ -39,8 +39,8 @@ namespace Vel
 	public:
 		Shader();
 		~Shader();
-		void LoadFromString(GLenum Type, const std::string& Source);
-		void LoadFromFile(GLenum Shader, const std::string& Filename);
+		void LoadFromString(uint32_t Type, const std::string& Source);
+		void LoadFromFile(uint32_t Shader, const std::string& Filename);
 		void CreateAndLinkProgram();
 
 		void Activate();
@@ -51,9 +51,7 @@ namespace Vel
 		void SetAttributes(const std::string& Attribute);
 		void SetUniforms(const std::string& Uniform);
 
-		GLint GetAttribute(const std::string& Attribute); //TODO constexpr?
-		GLint GetUniform(const std::string& Uniform);
-		GLuint GetProgramID() { return _program; }
+		uint32_t GetProgramID() { return _program; }
 		void DeleteShaderProgram();
 
 		template <typename T, typename... UniVal>
@@ -69,21 +67,17 @@ namespace Vel
 		}
 
 	private:
-		void SetUniformValue(Uniform<GLfloat>& V)
+		void SetUniformValue(Uniform<float>& V)
 		{
-			glProgramUniform1f(_program, GetUniform(V.UniformName), V.Value);
 		}
 		void SetUniformValue(Uniform<int>& V)
 		{
-			glProgramUniform1i(_program, GetUniform(V.UniformName), V.Value);
 		}
 		void SetUniformValue(Uniform<glm::vec3>& V)
 		{
-			glProgramUniform3f(_program, GetUniform(V.UniformName), V.Value.x, V.Value.y, V.Value.z);
 		}
 		void SetUniformValue(Uniform<glm::mat4>& V)
 		{
-			glProgramUniformMatrix4fv(_program, GetUniform(V.UniformName), V.Count, V.Transpose, glm::value_ptr(V.Value));
 		}
 
 		enum ShaderType
@@ -92,10 +86,10 @@ namespace Vel
 			FRAGMENT_SHADER,
 			GEOMETRY_SHADER
 		};
-		GLuint _program;
+		uint32_t _program;
 		int _totalShaders;
-		GLuint _shaders[3];
-		std::map<std::string, GLint> _attributeList;
-		std::map<std::string, GLint> _uniformLocationList;
+		bool _shaders[3];
+		std::map<std::string, uint16_t> _attributeList;
+		std::map<std::string, uint16_t> _uniformLocationList;
 	};
 }

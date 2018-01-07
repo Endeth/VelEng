@@ -8,6 +8,7 @@
 
 #include "../VelUti/VTime.h"
 
+#include "external/vulkan/vulkan.h"
 #include "vShaders/vGLSLShader.h"
 #include "vWindow/vWindow.h"
 #include "vUti/VelEngUti.h"
@@ -31,6 +32,10 @@ namespace Vel
 		using RendererPtr = std::shared_ptr<DefferedRenderer>;
 		using ScenePtr = std::shared_ptr<Scene>;
 	public:
+        struct Settings //TODO
+        {
+
+        };
 		static VelEng* Instance()
 		{
 			if (!_instance)
@@ -39,42 +44,46 @@ namespace Vel
 		}
 		VelEng(const VelEng&) = delete;
 
+        void Init(const Settings &set);
+
 		const bool ShouldRun() const { return _shouldRun; }
 		void SetRenderer(const RendererPtr& renderer) { _renderer = renderer; }
 		bool AddShaderProgram(const std::string& name, const std::string& vertFilename, const std::string& fragFilename);
 		bool AddShaderProgram(const std::string& name, const std::string& vertFilename, const std::string& fragFilename, const std::string& geoFilename);
 
 		const std::shared_ptr<Shader>& GetShader(const std::string& name);
-		const glm::ivec2& GetMainWindowSize() const { return _mainWindow->GetSize(); }
-		std::shared_ptr<FreeCamera>& GetMainCamera() { return _mainCamera; }
-		Mouse& GetMouse() { return _mouse; }
-		Keyboard& GetKeyboard() { return _keyboard; }
-		FrameClock& GetFrameClock() { return _frameClock; }
 
 		void CreateScene(const std::string& name);
 		ScenePtr& GetScene(const std::string& name) { return _scenes[name]; }
 		void AddModelToScene(const std::string & sceneName, const std::shared_ptr<Model>& modelPtr);
 		void AddLightSourceToScene(const std::string & sceneName, const std::shared_ptr<LightSource>& lightSourcePtr);
-		
-		void InitWindow();
-		void InitCamera();
+
 
 		void HandleInput();
 		void RenderScenes();
 		void RenderFrame();
 
+
+        const glm::ivec2& GetMainWindowSize() const { return _mainWindow->GetSize(); }
+        std::shared_ptr<FreeCamera>& GetMainCamera() { return _mainCamera; }
+        Mouse& GetMouse() { return _mouse; }
+        Keyboard& GetKeyboard() { return _keyboard; }
+        FrameClock& GetFrameClock() { return _frameClock; }
+
 	private:
         static VelEng* _instance;
 		VelEng();
 
-		void GLFWInit();
-        void VulkanInit();
+        void InitVulkan();
+        void InitWindow();
+        void InitCamera();
+		void InitGLFW();
 
 		std::unordered_map<std::string, std::shared_ptr<Shader>> _shaderPrograms;
 		std::map<std::string, std::shared_ptr<Scene>> _scenes;
 
 		std::shared_ptr<FreeCamera> _mainCamera;
-		std::shared_ptr<Window> _mainWindow;
+		std::unique_ptr<Window> _mainWindow;
 
         AssetsManager _assetsMgr;
 

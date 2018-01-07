@@ -76,7 +76,7 @@ void Vel::FrameClock::Tick()
 	_tick += _frameRate;
 }
 
-const GLfloat Vel::FrameClock::CalculateRenderTime()
+const float Vel::FrameClock::CalculateRenderTime()
 {
 	_prevTime = _currentTime;
 	_currentTime = glfwGetTime();

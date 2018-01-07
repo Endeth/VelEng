@@ -2,7 +2,7 @@
 
 namespace Vel
 {
-	const GLfloat EPSILON = 0.0001f;
+	const float EPSILON = 0.0001f;
 
 	VPlane::VPlane()
 	{
@@ -29,7 +29,7 @@ namespace Vel
 		return temp;
 	}
 
-	GLfloat VPlane::GetDistance(const glm::vec3 & P)
+	float VPlane::GetDistance(const glm::vec3 & P)
 	{
 		return glm::dot(Normal, P) + D;
 	}

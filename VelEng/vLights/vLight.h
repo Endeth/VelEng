@@ -36,11 +36,11 @@ namespace Vel
 
 		/*Sets uniforms in light using shader
 		Pass iterator from VSceneLights to uniformID when setting uniforms*/
-		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) = 0;
+		virtual void SetLPassLightUniforms(uint32_t program, uint32_t uniformID) = 0;
 		//Sets uniforms in shadow map generating shader
 		virtual void SetShadowUniforms();
 
-		virtual void SetTextureUnit(GLuint textureUnit);
+		virtual void SetTextureUnit(uint32_t textureUnit);
 		virtual void BindShadowMapForWriting();
 		virtual void UnbindShadowMapForWriting(); 
 		virtual void BindShadowMapForReading();
@@ -65,14 +65,14 @@ namespace Vel
 		PointLight(const glm::vec3& position, const LightColor& colors);
 		
 
-		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) override;
+		virtual void SetLPassLightUniforms(uint32_t program, uint32_t uniformID) override;
 		virtual void SetShadowUniforms() override;
 
 		//sets position and recalculates shadow transforms matrices - might want to set those apart
 		void SetPosition(const glm::vec3 &pos);
 		const glm::vec3& GetPosition() const { return _position; }
 
-		virtual void SetTextureUnit(GLuint textureUnit) override { _shadowMap->SetTextureUnit(textureUnit); }
+		virtual void SetTextureUnit(uint32_t textureUnit) override { _shadowMap->SetTextureUnit(textureUnit); }
 		virtual void BindShadowMapForWriting() override { _shadowMap->BindFBOWriting(); }
 		virtual void UnbindShadowMapForWriting() override { _shadowMap->UnbindFBOWriting(); }
 		virtual void BindShadowMapForReading() override { _shadowMap->BindTexturesReading(); }
@@ -80,9 +80,9 @@ namespace Vel
 		
 	protected:
 		glm::vec3 _position;
-		GLfloat _constant;
-		GLfloat _linear;
-		GLfloat _quadratic;
+		float _constant;
+		float _linear;
+		float _quadratic;
 		
 	private:
 		std::vector<glm::mat4> _shadowTransforms;
@@ -96,7 +96,7 @@ namespace Vel
 		DirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
 		DirectionalLight(const glm::vec3& direction, const LightColor& colors);
 
-		virtual void SetLPassLightUniforms(GLuint program);
+		virtual void SetLPassLightUniforms(uint32_t program);
 		virtual void SetShadowUniforms() override;
 
 		//sets direction and recalculates shadow transforms matrices - might want to set those apart
@@ -109,7 +109,7 @@ namespace Vel
 	private:
 		glm::vec3 _camPosition;
 		glm::vec3 _shadowCastingPosition;
-		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) override {}; //not needed
+		virtual void SetLPassLightUniforms(uint32_t program, uint32_t uniformID) override {}; //not needed
 		void UpdateShadowTransforms(); //TODO - implement directional light following camera
 	};
 
@@ -120,7 +120,7 @@ namespace Vel
 		SpotLight(const glm::vec3& direction, const glm::vec3& diffuse, const glm::vec3& specular);
 		SpotLight(const glm::vec3& direction, const LightColor& colors);
 
-		virtual void SetLPassLightUniforms(GLuint program, GLuint uniformID) override;
+		virtual void SetLPassLightUniforms(uint32_t program, uint32_t uniformID) override;
 		virtual void SetShadowUniforms() override;
 
 		//sets direction and recalculates shadow transforms matrices - might want to set those apart
@@ -129,9 +129,9 @@ namespace Vel
 	protected:
 		glm::vec3 _position;
 		glm::vec3 _direction;
-		GLfloat _constant;
-		GLfloat _linear;
-		GLfloat _quadratic;
+		float _constant;
+		float _linear;
+		float _quadratic;
 	private:
 		void UpdateShadowTransforms();
 	};
@@ -158,7 +158,7 @@ namespace Vel
 		void ActivateShadowMaps();
 
 		//requires active shader
-		void SetLPassLightUniforms(GLuint lPassProgram);
+		void SetLPassLightUniforms(uint32_t lPassProgram);
 		void SetAmbientLight(const glm::vec3 &amb) { _ambientLight = amb; }
 		void SetCameraPosition(const glm::vec3 &pos);
 	private:

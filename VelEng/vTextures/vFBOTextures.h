@@ -7,7 +7,7 @@ namespace Vel
 	class FramebufferTexture : public Texture
 	{
 	public:
-		void AttachToFBO(GLuint attachment);
+		void AttachToFBO(uint32_t attachment);
 	protected:
 		FramebufferTexture(const glm::ivec2& size);
 		void SetupTextureInfo() override;
@@ -34,7 +34,7 @@ namespace Vel
 	{
 	public:
 		DepthTexture(const glm::ivec2& size = glm::ivec2(512,512));
-		void AttachToFBO(GLuint attachment = GL_DEPTH_ATTACHMENT);
+		void AttachToFBO(uint32_t attachment = 0);
 	private:
 		void CreateTexture();
 	};
@@ -42,7 +42,7 @@ namespace Vel
 	class FramebufferTextureCube : public TextureCube //TODO textures SUCK need to rethink their abstraction
 	{
 	public:
-		void AttachToFBO(GLuint attachment);
+		void AttachToFBO(uint32_t attachment);
 	protected:
 		FramebufferTextureCube(const glm::ivec2& size);
 		void SetupTextureInfo() override;
@@ -53,7 +53,7 @@ namespace Vel
 	{
 	public:
 		DepthTextureCube(const glm::ivec2& size = glm::ivec2(512, 512));
-		void AttachToFBO(GLuint attachment = GL_DEPTH_ATTACHMENT);
+		void AttachToFBO(uint32_t attachment = 0);
 	private:
 		void CreateTexture();
 	};

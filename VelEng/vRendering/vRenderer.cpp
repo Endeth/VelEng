@@ -42,19 +42,19 @@ void Vel::DefferedRenderer::GeometryPass()
 //additionaly clears default framebuffer
 void Vel::DefferedRenderer::LightingPass()
 {
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	/*glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	_lPassShader->Activate();
 	_gBuffer.BindTexturesReading();
 	_quad.DrawWithImposedShader();
 
 	_gBuffer.UnbindTexturesReading();
-	_lPassShader->Deactivate();
+	_lPassShader->Deactivate();*/
 }
 
 Vel::DefferedRenderer::LightingPassQuad::LightingPassQuad()
 {
-	_primitive = GL_TRIANGLES;
+	/*_primitive = GL_TRIANGLES;
 	_vertices.reserve(4);
 	_vertices.push_back(Vertex(glm::vec3{ -1.0f,  1.0f, 0.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
 	_vertices.push_back(Vertex(glm::vec3{ -1.0f, -1.0f, 0.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec2{ 0.0f, 0.0f }));
@@ -63,14 +63,14 @@ Vel::DefferedRenderer::LightingPassQuad::LightingPassQuad()
 
 	_indices.reserve(6);
 	_indices.push_back(0); _indices.push_back(1); _indices.push_back(2);
-	_indices.push_back(1); _indices.push_back(3); _indices.push_back(2);
+	_indices.push_back(1); _indices.push_back(3); _indices.push_back(2);*/
 
 	LoadIntoGPU();
 }
 
 void Vel::DefferedRenderer::LightingPassQuad::SetVAO()
 {
-	auto stride = sizeof(Vertex);
+	/*auto stride = sizeof(Vertex);
 
 	glBindVertexArray(_vaoID);
 	_vboVertices.BindBuffer();
@@ -85,11 +85,11 @@ void Vel::DefferedRenderer::LightingPassQuad::SetVAO()
 
 	glBindVertexArray(0);
 	_vboIndices.UnbindBuffer();
-	_vboVertices.UnbindBuffer();
+	_vboVertices.UnbindBuffer();*/
 }
 
 void Vel::DefferedRenderer::LightingPassQuad::LoadIntoGPU()
 {
-	_vboVertices.FillBuffer(_vertices.size(), &_vertices[0]);
-	_vboIndices.FillBuffer(_indices.size(), &_indices[0]);
+	//_vboVertices.FillBuffer(_vertices.size(), &_vertices[0]);
+	//_vboIndices.FillBuffer(_indices.size(), &_indices[0]);
 }

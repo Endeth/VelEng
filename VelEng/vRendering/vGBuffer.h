@@ -9,7 +9,7 @@ namespace Vel
 	{
 	public:
 		VGBuffer();
-		void Init(GLuint width, GLuint height);
+		void Init(uint32_t width, uint32_t height);
 		void BindForWriting() { _fbo.BindForWriting(); }
 		void BindForReading() { _fbo.BindForReading(); }
 		void UnbindWriting() { _fbo.UnbindFBO(); }

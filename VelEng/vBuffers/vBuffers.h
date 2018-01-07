@@ -12,84 +12,56 @@ namespace Vel
 	{
 	public:
 		virtual ~Buffer()
-	{	
-			glDeleteBuffers(_buffersCount, _buffersID);
-			delete[] _buffersID;
+        {	
 		}
-		void BindBuffer(GLushort BufferNumber = 0)
+		void BindBuffer(uint16_t BufferNumber = 0)
 		{
-			glBindBuffer(_bufferType, _buffersID[BufferNumber]);
 		}
 		void UnbindBuffer()
 		{
-			glBindBuffer(_bufferType, 0);
 		}
-		void FillBuffer(BufferDataPtr Data, GLushort BufferNumber = 0)
+		void FillBuffer(BufferDataPtr Data, uint16_t BufferNumber = 0)
 		{
-			glBindBuffer(_bufferType, _buffersID[BufferNumber]);
-			glBufferData(_bufferType, _buffersSize, Data, _bufferUsage);
 		}
-		void FillBuffer(GLsizei NumberOfElements, BufferDataPtr Data, GLushort BufferNumber = 0)
+		void FillBuffer(int32_t NumberOfElements, BufferDataPtr Data, uint16_t BufferNumber = 0)
 		{
-			_buffersSize = NumberOfElements * sizeof(Vertex);
-			glBindBuffer(_bufferType, _buffersID[BufferNumber]);
-			glBufferData(_bufferType, _buffersSize, Data, _bufferUsage);
 		}
 
 	protected:
-		Buffer(GLushort BuffersCount = 1)
+		Buffer(uint16_t BuffersCount = 1)
 		{
-			_buffersCount = BuffersCount;
-			_buffersID = new GLuint[_buffersCount];
-			glGenBuffers(_buffersCount, _buffersID);
 		}
-		Buffer(GLsizei NumberOfElements, GLushort BuffersCount = 1)
+		Buffer(int32_t NumberOfElements, uint16_t BuffersCount = 1)
 		{
-			_buffersCount = BuffersCount;
-			_buffersSize = NumberOfElements;
-			_buffersID = new GLuint[_buffersCount];
-			glGenBuffers(_buffersCount, _buffersID);
 		}
 
-		GLuint *_buffersID;
-		GLushort _buffersCount;
-		GLenum _bufferType;
-		GLenum _bufferUsage;
-		GLsizei _buffersSize;
+		uint32_t *_buffersID;
+		uint16_t _buffersCount;
+		uint32_t _bufferType;
+		uint32_t _bufferUsage;
+		int32_t _buffersSize;
 
 	};
 
 	class ArrayBuffer : public Buffer<Vertex*>
 	{
 	public:
-		ArrayBuffer(GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : Buffer(BuffersCount)
+		ArrayBuffer(uint16_t BuffersCount = 1, uint32_t BufferUsage = 0) : Buffer(BuffersCount)
 		{
-			_bufferType = GL_ARRAY_BUFFER;
-			_bufferUsage = BufferUsage;
-			_buffersSize = sizeof(Vertex);
 		}
-		ArrayBuffer(GLsizei NumberOfElements, GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : Buffer(NumberOfElements, BuffersCount)
+		ArrayBuffer(int32_t NumberOfElements, uint16_t BuffersCount = 1, uint32_t BufferUsage = 0) : Buffer(NumberOfElements, BuffersCount)
 		{
-			_bufferType = GL_ARRAY_BUFFER;
-			_bufferUsage = BufferUsage;
-			_buffersSize *= sizeof(Vertex);
 		}
 	};
 
-	class ElementArrayBuffer : public Buffer<GLuint*>
+	class ElementArrayBuffer : public Buffer<uint32_t*>
 	{
 	public:
-		ElementArrayBuffer(GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : Buffer(BuffersCount)
+		ElementArrayBuffer(uint16_t BuffersCount = 1, uint32_t BufferUsage = 0) : Buffer(BuffersCount)
 		{
-			_bufferType = GL_ELEMENT_ARRAY_BUFFER;
-			_bufferUsage = BufferUsage;
-			_buffersSize = sizeof(GLuint);
 		}
-		ElementArrayBuffer(GLsizei NumberOfElements, GLushort BuffersCount = 1, GLenum BufferUsage = GL_STATIC_DRAW) : Buffer(NumberOfElements, BuffersCount)
+		ElementArrayBuffer(int32_t NumberOfElements, uint16_t BuffersCount = 1, uint32_t BufferUsage = 0) : Buffer(NumberOfElements, BuffersCount)
 		{
-			_bufferType = GL_ELEMENT_ARRAY_BUFFER;
-			_bufferUsage = BufferUsage;
-			_buffersSize *= sizeof(GLuint);
 		}
 	};
 }

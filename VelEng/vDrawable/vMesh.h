@@ -27,7 +27,7 @@ namespace Vel
 
 		virtual void LoadIntoGPU();
 
-		const GLsizei GetIndicesCount() const { return _indices.size(); }
+		const int32_t GetIndicesCount() const { return _indices.size(); }
 		
 
 	protected:

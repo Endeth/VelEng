@@ -89,9 +89,9 @@ namespace Vel
 
 		void SetPosition(const glm::vec3 &position);
 		void SetPosition(const glm::vec3 &reflectedCameraPosition, const VPlane &reflectionPlane);
-		void SetupProjection(const glm::vec3 &mirrorPosition, GLfloat mirrorWidth, GLfloat mirrorHeight);
+		void SetupProjection(const glm::vec3 &mirrorPosition, float mirrorWidth, float mirrorHeight);
 	private:
-		void SetFOV(const glm::vec3 &mirrorPosition, GLfloat mirrorWidth, GLfloat mirrorHeight);
+		void SetFOV(const glm::vec3 &mirrorPosition, float mirrorWidth, float mirrorHeight);
 	};*/
 
 }

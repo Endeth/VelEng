@@ -10,8 +10,8 @@ namespace Vel
 		enum GPass
 		{
 			vVertex = 0,
-			vNormal = 0,
-			vUV = 0
+			vNormal = 1,
+			vUV = 2
 		};
 		enum LPass
 		{
@@ -21,14 +21,14 @@ namespace Vel
 		enum ShadowMapping
 		{
 			vVertex = 0,
-			vNormal = 0,
-			vUV = 0
+			vNormal = 1,
+			vUV = 2
 		};
 		enum ShadowsCube
 		{
 			vVertex = 0,
-			vNormal = 0,
-			vUV = 0
+			vNormal = 1,
+			vUV = 2
 		};
 		enum Skybox
 		{

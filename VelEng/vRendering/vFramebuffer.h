@@ -28,7 +28,7 @@ namespace Vel
 		virtual void AddDepthTextureAttachment();
 		virtual void AddDepthRenderbufferAttachment();
 	protected:
-		GLuint _fboID{ 0 };
+		uint32_t _fboID{ 0 };
 		int _texturesCount{ 0 };
 		int _colorAttachments{ 0 };
 		bool _attachedDepth{ false };
@@ -37,7 +37,7 @@ namespace Vel
 
 		std::vector<TexturePtr> _colorTextures;
 		DepthTexturePtr _depthAttachment;
-		GLuint _rboID;
+		uint32_t _rboID;
 		//StencilTexturePtr _stencilAttachment;
 	};
 
@@ -56,7 +56,7 @@ namespace Vel
 		ShadowMap2D(const glm::ivec2& size = glm::ivec2(1024, 1024));
 		virtual void BindTexturesReading() override;
 		virtual void UnbindTexturesReading() override;
-		void SetTextureUnit(GLuint textureUnit);
+		void SetTextureUnit(uint32_t textureUnit);
 		virtual ~ShadowMap2D();
 	private:
 	};
@@ -68,7 +68,7 @@ namespace Vel
 		ShadowMapCube(const glm::ivec2& size = glm::ivec2(512, 512));
 		virtual void BindTexturesReading() override;
 		virtual void UnbindTexturesReading() override;
-		void SetTextureUnit(GLuint textureUnit);
+		void SetTextureUnit(uint32_t textureUnit);
 	protected:
 		virtual void AddDepthTextureAttachment() override;
 		std::shared_ptr<DepthTextureCube> _depthAttachment;

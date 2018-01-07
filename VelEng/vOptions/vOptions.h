@@ -8,10 +8,10 @@ namespace Vel
 	{
 	public:
 		const glm::vec2& GetResolution();
-		const GLfloat GetMaxFrameRate();
+		const float GetMaxFrameRate();
 	private:
 		glm::vec2 _resolution;
-		GLfloat _maxFrameRate;
+		float _maxFrameRate;
 	};
 
 }

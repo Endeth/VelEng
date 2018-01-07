@@ -19,10 +19,10 @@ namespace Vel
 
 	void LightSource::SetShadowUniforms()
 	{
-		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));
+		//glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));
 	}
 
-	void LightSource::SetTextureUnit(GLuint textureUnit)
+	void LightSource::SetTextureUnit(uint32_t textureUnit)
 	{
 		_shadowMap->SetTextureUnit(textureUnit);
 	}
@@ -69,23 +69,23 @@ namespace Vel
 		_quadratic = 0.032f;
 	}
 
-	void PointLight::SetLPassLightUniforms(GLuint program, GLuint uniformID)
+	void PointLight::SetLPassLightUniforms(uint32_t program, uint32_t uniformID)
 	{
 		auto id = std::to_string(uniformID);
 
-		glUniform3fv(glGetUniformLocation(program, ("pointLights[" + id + "].Position").c_str()), 1, &_position[0]);
+		/*glUniform3fv(glGetUniformLocation(program, ("pointLights[" + id + "].Position").c_str()), 1, &_position[0]);
 		glUniform3fv(glGetUniformLocation(program, ("pointLights[" + id + "].ColorDiff").c_str()), 1, &_color.GetDiffuse()[0]); 
 		glUniform3fv(glGetUniformLocation(program, ("pointLights[" + id + "].ColorSpec").c_str()), 1, &_color.GetSpecular()[0]);
 		glUniform1f(glGetUniformLocation(program, ("pointLights[" + id + "].Constant").c_str()), _constant);
 		glUniform1f(glGetUniformLocation(program, ("pointLights[" + id + "].FarPlane").c_str()), 25.0f); //TODO add far plane
 		glUniform1f(glGetUniformLocation(program, ("pointLights[" + id + "].Linear").c_str()), _linear);
-		glUniform1f(glGetUniformLocation(program, ("pointLights[" + id + "].Quadratic").c_str()), _quadratic);
+		glUniform1f(glGetUniformLocation(program, ("pointLights[" + id + "].Quadratic").c_str()), _quadratic);*/
 		//glUniformMatrix4fv(glGetUniformLocation(program, ("pointLights[" + id + "].lightSpaceMatrix").c_str()), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix)); //TODO Don't know if this will be the same with cube shadow
 	}
 
 	void PointLight::SetShadowUniforms()
 	{
-		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "shadowTransforms[0]"), 1, GL_FALSE, glm::value_ptr(_shadowTransforms[0]));
+		/*glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "shadowTransforms[0]"), 1, GL_FALSE, glm::value_ptr(_shadowTransforms[0]));
 		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "shadowTransforms[1]"), 1, GL_FALSE, glm::value_ptr(_shadowTransforms[1]));
 		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "shadowTransforms[2]"), 1, GL_FALSE, glm::value_ptr(_shadowTransforms[2]));
 		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "shadowTransforms[3]"), 1, GL_FALSE, glm::value_ptr(_shadowTransforms[3]));
@@ -93,7 +93,7 @@ namespace Vel
 		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "shadowTransforms[5]"), 1, GL_FALSE, glm::value_ptr(_shadowTransforms[5]));
 			
 		glUniform1f(glGetUniformLocation(_depthShader->GetProgramID(), "farPlane"), 25.0f); //TODO magic number
-		glUniform3fv(glGetUniformLocation(_depthShader->GetProgramID(), "lightPos"), 1, &_position[0]);
+		glUniform3fv(glGetUniformLocation(_depthShader->GetProgramID(), "lightPos"), 1, &_position[0]);*/
 
 	}
 
@@ -106,9 +106,9 @@ namespace Vel
 
 	void PointLight::UpdateShadowTransforms()
 	{
-		GLfloat aspect = 1; //TODO get this shit straight
-		GLfloat far = 25.0f;
-		GLfloat near = 1.0f;
+		float aspect = 1; //TODO get this shit straight
+		float far = 25.0f;
+		float near = 1.0f;
 
 		auto shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
 		_shadowTransforms[0] = (shadowProj * glm::lookAt(_position, _position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
@@ -132,16 +132,16 @@ namespace Vel
 		_shadowMap = std::make_unique<ShadowMap2D>(_shadowResolution);
 		SetDirection(direction);
 	}
-	void DirectionalLight::SetLPassLightUniforms(GLuint program)
+	void DirectionalLight::SetLPassLightUniforms(uint32_t program)
 	{
-		glUniform3fv(glGetUniformLocation(program, "dirLight.Direction"), 1, &_direction[0]);
+		/*glUniform3fv(glGetUniformLocation(program, "dirLight.Direction"), 1, &_direction[0]);
 		glUniform3fv(glGetUniformLocation(program, "dirLight.ColorDiff"), 1, &_color.GetDiffuse()[0]);
 		glUniform3fv(glGetUniformLocation(program, "dirLight.ColorSpec"), 1, &_color.GetSpecular()[0]);
-		glUniformMatrix4fv(glGetUniformLocation(program, "dirLight.lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));
+		glUniformMatrix4fv(glGetUniformLocation(program, "dirLight.lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));*/
 	}
 	void DirectionalLight::SetShadowUniforms()
 	{
-		glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));
+		//glUniformMatrix4fv(glGetUniformLocation(_depthShader->GetProgramID(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));
 	}
 	void DirectionalLight::SetDirection(const glm::vec3 & dir)
 	{
@@ -155,9 +155,9 @@ namespace Vel
 	}
 	void DirectionalLight::UpdateShadowTransforms()
 	{
-		GLfloat aspect = 1; //TODO get this shit straight
-		GLfloat far = 50.0f;
-		GLfloat near = 1.0f;
+		float aspect = 1; //TODO get this shit straight
+		float far = 50.0f;
+		float near = 1.0f;
 
 		auto _lightProj = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near, far);
 		auto _lightView = glm::lookAt(_shadowCastingPosition, _camPosition, glm::vec3(0.0, 1.0, 0.0));
@@ -166,7 +166,7 @@ namespace Vel
 	}
 	void SceneLighting::DrawSceneShadows(const std::vector<std::shared_ptr<Model>>& models) //TODO erase repeating code
 	{
-		glCullFace(GL_FRONT);
+		/*glCullFace(GL_FRONT);
 		auto dirRes = _directionalLight->GetShadowResolution();
 		glViewport(0, 0, dirRes.x, dirRes.y); //TODO set to directional light shader resolution
 		_directionalLight->BindShadowMapForWriting();
@@ -209,7 +209,7 @@ namespace Vel
 			break;
 		}
 		glViewport(0, 0, 1366, 768); //TODO set to main viewport
-		glCullFace(GL_BACK);
+		glCullFace(GL_BACK);*/
 	}
 	void SceneLighting::AddLight(const std::shared_ptr<LightSource>& lightSource)
 	{
@@ -225,7 +225,7 @@ namespace Vel
 	}
 	void SceneLighting::ActivateShadowMaps()
 	{
-		int counter = 0;
+		/*int counter = 0;
 		if (_directionalLight != nullptr)
 		{
 			_directionalLight->SetTextureUnit(GL_TEXTURE8);
@@ -241,11 +241,11 @@ namespace Vel
 				continue;
 			}
 			break;
-		}
+		}*/
 	}
-	void SceneLighting::SetLPassLightUniforms(GLuint lPassProgram)
+	void SceneLighting::SetLPassLightUniforms(uint32_t lPassProgram)
 	{
-		glUniform3fv(glGetUniformLocation(lPassProgram, ("ambientLight")), 1, &_ambientLight[0]);
+		/*glUniform3fv(glGetUniformLocation(lPassProgram, ("ambientLight")), 1, &_ambientLight[0]);
 		if (_directionalLight != nullptr)
 		{
 			_directionalLight->SetLPassLightUniforms(lPassProgram);
@@ -256,7 +256,7 @@ namespace Vel
 			if(counter < 16)
 				lightSource->SetLPassLightUniforms(lPassProgram, counter);
 			counter++;
-		}
+		}*/
 	}
 	void SceneLighting::SetCameraPosition(const glm::vec3 &pos)
 	{
