@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "external/glm/glm.hpp"
-#include "vTextures/vFBOTextures.h"
+#include "vGraphics/vTextures/vFBOTextures.h"
 
 namespace Vel
 {

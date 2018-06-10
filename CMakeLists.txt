@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.7.0)
 project (VelEngine)
 
+
 set (VelEngine_VERSION_MAJOR 0)
 set (VelEngine_VERSION_MINOR 1)
 

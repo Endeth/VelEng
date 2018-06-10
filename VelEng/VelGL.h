@@ -4,25 +4,25 @@
 #include <memory>
 #include <string>
 
+#include "VelEngConfig.h"
 #include "external/glfw/glfw3.h"
 
 #include "../VelUti/VTime.h"
 
 #include "external/vulkan/vulkan.h"
-#include "vShaders/vGLSLShader.h"
-#include "vWindow/vWindow.h"
-#include "vUti/VelEngUti.h"
-#include "vDrawable/vScene.h"
-#include "vDrawable/vModel.h"
-#include "vDrawable/vSky.h"
-#include "vCameras/vCamera.h"
-#include "vTextures/vTexture.h"
-#include "vRendering/vRenderer.h"
-#include "vRendering/vFramebuffer.h"
-#include "vLights/vLight.h"
 #include "vAssets/vAssets.h"
-
-#include "VelEngConfig.h"
+#include "vGraphics/vVulkan/vVulkan.h"
+#include "vGraphics/vShaders/vGLSLShader.h"
+#include "vGraphics/vWindow/vWindow.h"
+#include "vGraphics/vDrawable/vScene.h"
+#include "vGraphics/vDrawable/vModel.h"
+#include "vGraphics/vDrawable/vSky.h"
+#include "vGraphics/vCameras/vCamera.h"
+#include "vGraphics/vTextures/vTexture.h"
+#include "vGraphics/vRendering/vRenderer.h"
+#include "vGraphics/vRendering/vFramebuffer.h"
+#include "vGraphics/vLights/vLight.h"
+#include "vUti/VelEngUti.h"
 
 namespace Vel
 {
@@ -42,8 +42,13 @@ namespace Vel
 				_instance = new VelEng;
 			return _instance;
 		}
+        static void Destroy()
+        {
+            delete _instance;
+            glfwTerminate();
+        }
 		VelEng(const VelEng&) = delete;
-
+        ~VelEng();
         void Init(const Settings &set);
 
 		const bool ShouldRun() const { return _shouldRun; }
@@ -79,6 +84,7 @@ namespace Vel
         void InitCamera();
 		void InitGLFW();
 
+        Vulkan _vulkan;
 		std::unordered_map<std::string, std::shared_ptr<Shader>> _shaderPrograms;
 		std::map<std::string, std::shared_ptr<Scene>> _scenes;
 

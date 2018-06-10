@@ -12,8 +12,8 @@ namespace Vel
     {
     public:
         WindowInfo() = delete;
-        WindowInfo( const std::string& Name, const glm::uvec2 &Position, const  glm::uvec2 &Size, bool IsResizeable = false ) {}
-        WindowInfo( const std::string& Name, int PosX, int PosY, int Width, int Height, bool IsResizeable = false ) {}
+        WindowInfo( const std::string& Name, const glm::uvec2 &Position, const  glm::uvec2 &Size, bool IsResizeable = false );
+        WindowInfo( const std::string& Name, int PosX, int PosY, int Width, int Height, bool IsResizeable = false );
 
         const glm::uvec2& GetPosition() const { return _position; }
         const glm::uvec2& GetSize() const { return _size; }

@@ -12,10 +12,16 @@ namespace Vel
 	{
 	}
 
+    VelEng::~VelEng()
+    {
+        _vulkan.Destroy();
+    }
+ 
     void VelEng::Init(const Settings &set)
     {
         InitGLFW();
         InitWindow();
+        InitVulkan();
         InitCamera();
 
         auto keyFunc = []( GLFWwindow* window, int key, int scancode, int action, int mods )
@@ -47,7 +53,7 @@ namespace Vel
 
     void VelEng::InitVulkan()
     {
-
+        _vulkan.Init();
     }
 
     void VelEng::InitGLFW()
@@ -55,12 +61,12 @@ namespace Vel
         int init = glfwInit();
         assert( init );
         glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-        glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
     }
 
     void VelEng::InitWindow()
     {
-        _mainWindow = make_unique<Window>();
+        WindowInfo info( "Vulkan", glm::uvec2{ 100, 100 }, glm::uvec2{ 1366, 768 }, false );
+        _mainWindow = make_unique<Window>(info);
         auto size = _mainWindow->GetSize();
         _mouse.SetCurrentPosition( size.x / 2, size.y / 2 );
     }

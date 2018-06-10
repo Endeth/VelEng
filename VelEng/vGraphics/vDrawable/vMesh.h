@@ -4,12 +4,12 @@
 #include <memory>
 
 #include "external/glm/glm.hpp"
-#include "vShaders/vGLSLShader.h"
 #include "vGeo/vGeo.h"
-#include "vBuffers/vBuffers.h"
-#include "vDrawable/vDrawableObject.h"
-#include "vTextures/vTexture.h"
-#include "vMaterials/vMaterial.h"
+#include "vGraphics/vShaders/vGLSLShader.h"
+#include "vGraphics/vBuffers/vBuffers.h"
+#include "vGraphics/vDrawable/vDrawableObject.h"
+#include "vGraphics/vTextures/vTexture.h"
+#include "vGraphics/vMaterials/vMaterial.h"
 
 namespace Vel
 {

@@ -1,18 +1,18 @@
 // VelTest.cpp : Defines the entry point for the console application.
 //
 
+#ifdef WIN32
+#include <Windows.h>
+#endif
 #include <functional>
 
 #include "VelGL.h"
 #include "vUti/VelEngUti.h"
-#include "vLights/vLight.h"
-#include "vMaterials/vMaterial.h"
+#include "vGraphics/vLights/vLight.h"
+#include "vGraphics/vMaterials/vMaterial.h"
 #include "../VelUti/vTime.h"
 #include "VelTestConfig.h"
 
-#ifdef WIN32
-    #include <Windows.h>
-#endif
 //#include "json.hpp"
 
 using namespace Vel;
@@ -37,7 +37,9 @@ int main()
 	VelEng::Instance()->CreateScene("World");
 	VelEng::Instance()->CreateScene("Sky");
 
-    setVSync( false );
+    VelEng::Destroy();
 
+    int a;
+    std::cin >> a;
     return 0;
 }

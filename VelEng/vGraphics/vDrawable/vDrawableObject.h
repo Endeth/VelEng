@@ -4,8 +4,8 @@
 #include <memory>
 
 #include "external/glm/common.hpp"
-#include "vShaders/vGLSLShader.h"
 #include "vGeo/vGeo.h"
+#include "vGraphics/vShaders/vGLSLShader.h"
 
 namespace Vel
 {

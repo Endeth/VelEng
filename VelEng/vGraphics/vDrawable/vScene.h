@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "vModel.h"
-#include "vShaders/vGLSLShader.h"
-#include "vLights/vLight.h"
+#include "vGraphics/vShaders/vGLSLShader.h"
+#include "vGraphics/vLights/vLight.h"
 
 namespace Vel
 {

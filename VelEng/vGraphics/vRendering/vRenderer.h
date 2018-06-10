@@ -1,10 +1,10 @@
 #pragma once
 
 #include "external/glm/glm.hpp"
-#include "vRendering/vFramebuffer.h"
-#include "vShaders/vGLSLShader.h"
-#include "vDrawable/vScene.h"
-#include "vLights/vLight.h"
+#include "vGraphics/vRendering/vFramebuffer.h"
+#include "vGraphics/vShaders/vGLSLShader.h"
+#include "vGraphics/vDrawable/vScene.h"
+#include "vGraphics/vLights/vLight.h"
 
 namespace Vel
 {

@@ -4,8 +4,8 @@
 
 #include "external/glm/glm.hpp"
 #include "vGeo/vGeo.h"
-#include "vDrawable/vScene.h"
-#include "vDrawable/vModel.h"
+#include "vGraphics/vDrawable/vScene.h"
+#include "vGraphics/vDrawable/vModel.h"
 
 namespace Vel
 {

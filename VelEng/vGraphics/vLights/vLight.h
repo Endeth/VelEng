@@ -3,10 +3,10 @@
 #include <list>
 
 #include "external/glm/glm.hpp"
-#include "vShaders/vGLSLShader.h"
-#include "vRendering/vFramebuffer.h"
+#include "vGraphics/vShaders/vGLSLShader.h"
+#include "vGraphics/vRendering/vFramebuffer.h"
 #include "external/glm/gtc/matrix_transform.hpp"
-#include "vDrawable/vModel.h"
+#include "vGraphics/vDrawable/vModel.h"
 
 
 namespace Vel
