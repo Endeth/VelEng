@@ -9,7 +9,7 @@
 
 #include "../VelUti/VTime.h"
 
-#include "external/vulkan/vulkan.h"
+#include <vulkan/vulkan.hpp>
 #include "vAssets/vAssets.h"
 #include "vGraphics/vVulkan/vVulkan.h"
 #include "vGraphics/vShaders/vGLSLShader.h"

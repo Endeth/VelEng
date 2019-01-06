@@ -22,9 +22,9 @@ namespace Vel
 
         std::vector<const char*> extensions;
         extensions.insert( extensions.begin(), glfwExtensions, glfwExtensions + glfwExtCount );
-        createInfo.enabledLayerCount = 0;
 
 #ifdef _DEBUG
+		createInfo.enabledLayerCount = 1;
         extensions.push_back( VK_EXT_DEBUG_REPORT_EXTENSION_NAME );
         VulkanDebug::Instance()->PrintExtensions();
         std::cout << "Used extensions:" << std::endl;
@@ -35,7 +35,8 @@ namespace Vel
         createInfo.enabledLayerCount = VulkanDebug::Instance()->GetLayersExtensions().size();
         if ( !VulkanDebug::Instance()->EnableValidationLayers( createInfo ) )
             throw std::runtime_error( "validation layers requested, but not available" );
-
+#else
+		createInfo.enabledLayerCount = 0;
 #endif
 
         createInfo.enabledExtensionCount = extensions.size();
@@ -46,7 +47,7 @@ namespace Vel
         }
 
 
-        _device.SetupDevice( _instance );
+        _device.Setup( _instance );
 
 #ifdef _DEBUG
         if ( !VulkanDebug::Instance()->EnableCallback( _instance ) )
@@ -59,6 +60,7 @@ namespace Vel
 #ifdef _DEBUG
         VulkanDebug::Instance()->DisableCallback( _instance );
 #endif
+		_device.Destroy();
         vkDestroyInstance( _instance, nullptr );
     }
 }

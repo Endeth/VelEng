@@ -6,6 +6,8 @@ set (VelEngine_VERSION_MAJOR 0)
 set (VelEngine_VERSION_MINOR 1)
 
 option(USE_VELTEST "Adds executable test case" ON)
+set(VULKAN_INCLUDE "manually add path" CACHE PATH "Path to Vulkan headers if Vulkan is not found")
+set(VULKAN_LIB "manually add path" CACHE FILEPATH "Path to Vulkan library if Vulkan is not found")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 

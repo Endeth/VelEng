@@ -5,7 +5,7 @@
 #include <functional>
 #include <algorithm>
 
-#include "external/vulkan/vulkan.h"
+#include <vulkan/vulkan.hpp>
 
 #include "VelEngConfig.h"
 

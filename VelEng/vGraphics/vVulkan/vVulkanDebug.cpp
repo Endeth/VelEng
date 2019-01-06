@@ -36,7 +36,7 @@ namespace Vel
 
     VulkanDebug* VulkanDebug::_instance = nullptr;
 
-    VulkanDebug::VulkanDebug( std::vector<const char*> &layers ) : _validationLayers( layers )
+    VulkanDebug::VulkanDebug()
     {
         _cbCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
         _cbCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
@@ -59,8 +59,19 @@ namespace Vel
         }
     }
 
+	void VulkanDebug::SetValidationLayers( std::vector<const char*>& validationLayers )
+	{
+		_validationLayers = validationLayers;
+		_validationLayersSet = true;
+	}
+
     bool VulkanDebug::EnableValidationLayers( VkInstanceCreateInfo &createInfo )
     {
+		if( !_validationLayersSet )
+		{
+			SetValidationLayers();
+		}
+
         std::vector<VkLayerProperties> availableLayers;
         VulkanQuery<VkLayerProperties>( vkEnumerateInstanceLayerProperties, availableLayers );
 

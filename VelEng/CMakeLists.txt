@@ -29,3 +29,16 @@ endforeach()
 
 add_library(VelEng ${SOURCE} ${HEADERS})
 set(VelEngPath ${CMAKE_CURRENT_SOURCE_DIR})
+
+message( "Looking for Vulkan..." )
+find_package(Vulkan)
+if(VULKAN_FOUND)
+	message( "Vulkan found" )
+	target_link_libraries(VelEng Vulkan::Vulkan)
+else(VULKAN_FOUND)
+	message( "Vulkan not found" )
+	target_link_libraries(VelEng ${VULKAN_LIB})
+endif(VULKAN_FOUND)
+target_compile_definitions(VelEng PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+
+target_link_libraries(VelEng ${LIBRARIES_DIR}/x64/glfw3.lib )

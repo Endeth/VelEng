@@ -39,7 +39,5 @@ int main()
 
     VelEng::Destroy();
 
-    int a;
-    std::cin >> a;
     return 0;
 }

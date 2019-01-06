@@ -1,6 +1,6 @@
 #pragma once
 
-#include "external/vulkan/vulkan.h"
+#include <vulkan/vulkan.hpp>
 #include "external/glfw/glfw3.h"
 #include "external/glm/glm.hpp"
 
@@ -16,14 +16,15 @@ namespace Vel
     class VulkanDevice
     {
     public:
-        void SetupDevice( VkInstance &instance );
+        void Setup( VkInstance &instance );
+		void Destroy();
+        VkCommandPool CreateCommandPool( uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT );
+		void CreateSemaphores();
     private:
-        class PhysicalDevice;
-        class LogicalDevice;
 
         class PhysicalDevice 
         {
-            friend class LogicalDevice;
+			friend class VulkanDevice;
         public:
             void FindDevice( VkInstance & instance );
             void QueryDevice( VkInstance & instance );
@@ -40,42 +41,34 @@ namespace Vel
 
             VkPhysicalDevice _suitableDevice = VK_NULL_HANDLE;
             VkCommandPool _commandPool = VK_NULL_HANDLE;
-        } _GPU;
+        } _physicalDevice;
 
-        class LogicalDevice
+        struct QueueFamilyIndices
         {
-            friend class PhysicalDevice;
-        public:
-            void CreateDevice( PhysicalDevice *pD, bool useSwapChain = true, VkQueueFlags requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT );
-            VkCommandPool CreateCommandPool( uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT );
-            void CreateSemaphores();
-        private:
-            struct QueueFamilyIndices
-            {
-                uint32_t graphics;
-                uint32_t present;
-                uint32_t compute;
-                uint32_t transfer;
-            } _queueFamilyIndices;
-            void RequestQueue( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType );
+            uint32_t graphics;
+            uint32_t present;
+            uint32_t compute;
+            uint32_t transfer;
+        } _queueFamilyIndices;
+        void RequestQueue( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType );
 
-            struct Semaphores
-            {
-                VkSemaphore presentComplete;
-                VkSemaphore renderComplete;
-                VkSemaphore overlayComplete;
-            } _semaphores[2];
+        struct Semaphores
+        {
+            VkSemaphore presentComplete;
+            VkSemaphore renderComplete;
+            VkSemaphore overlayComplete;
+        } _semaphores[2];
 
-            VkDevice _logDevice;
-            VkFormat _depthFormat;
-            VkCommandPool _gCommandPool;
-            VkQueue _gQueue;
-            VkQueue _pQueue;
-            VkQueue _tQueue;
-            VkQueue _cQueue;
-            PhysicalDevice *_physicalDevice;
+		void CreateDevice( bool useSwapChain = true, VkQueueFlags requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT );
 
-            const float _defaultQueuePriority = 0.5f;
-        } _logical;
+        VkDevice _logDevice;
+        VkFormat _depthFormat;
+        VkCommandPool _gCommandPool;
+        VkQueue _gQueue;
+        VkQueue _pQueue;
+        VkQueue _tQueue;
+        VkQueue _cQueue;
+
+        const float _defaultQueuePriority = 0.5f;
     };
 }

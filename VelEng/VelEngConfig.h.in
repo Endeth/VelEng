@@ -4,6 +4,4 @@
 #define VelEngine_VERSION_MAJOR "${VelEngine_VERSION_MAJOR}"
 #define VelEngine_VERSION_MINOR "${VelEngine_VERSION_MINOR}"
 
-#define VK_USE_PLATFORM_WIN32_KHR 1
-
 #endif
