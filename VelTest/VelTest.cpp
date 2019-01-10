@@ -37,6 +37,14 @@ int main()
 	VelEng::Instance()->CreateScene("World");
 	VelEng::Instance()->CreateScene("Sky");
 
+	while( VelEng::Instance()->ShouldRun() )
+	{
+		VelEng::Instance()->GetFrameClock().Tick();
+		VelEng::Instance()->HandleInput();
+		VelEng::Instance()->RenderFrame();
+		//VelEng::Instance()->GetFrameClock().CapFPS(); //TODO
+	}
+
     VelEng::Destroy();
 
     return 0;

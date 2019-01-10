@@ -53,7 +53,7 @@ namespace Vel
 
     void VelEng::InitVulkan()
     {
-        _vulkan.Init();
+        _vulkan.Init( _mainWindow->GetGLFWWindow() );
     }
 
     void VelEng::InitGLFW()
@@ -172,7 +172,7 @@ namespace Vel
 	//adjusts camera and vp matrices in shaders, then renders scenes
 	void Vel::VelEng::RenderFrame()
 	{	
-		auto vMat = _mainCamera->GetViewMatrix(); //TODO adjust uniforms in signal
+		/*auto vMat = _mainCamera->GetViewMatrix(); //TODO adjust uniforms in signal
 		auto pMat = _mainCamera->GetProjectionMatrix();
 
 		auto gPassShd = GetShader("GPass"); //TODO separate from deferred. Shaders inf renderer?
@@ -197,7 +197,8 @@ namespace Vel
 		skybox->SetUniformsValue(Uniform<glm::mat4>{ "P", pMat });
 		skybox->Deactivate();
 
-		RenderScenes();
+		RenderScenes();*/
+		_vulkan.PresentImage();
 	}
 
 }

@@ -22,7 +22,7 @@ namespace Vel
         void SubmitCommandBuffer( const VkQueue &queue, const VkCommandBuffer *cmdBuffers, const VkSubmitInfo *submitInfo = nullptr, const VkFence &fence = VK_NULL_HANDLE );
 
         void ResetPool();
-    private:
+
         VkCommandPool _pool; //TODO more for threads
         std::vector<VkCommandBuffer> _buffers = std::vector<VkCommandBuffer>(3);
     };

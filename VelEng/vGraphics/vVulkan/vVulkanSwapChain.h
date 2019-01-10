@@ -16,31 +16,32 @@
 
 namespace Vel
 {
-    class VulkanSwapChain
+    class VulkanSwapchain
     {
     public:
-        void InitSurface( GLFWwindow *platformHandle );
-        void Connect( VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device );
-        void Create( uint32_t *width, uint32_t *height, bool vsync = false );
+        void Init( VkInstance instance, VkDevice device, GLFWwindow *window );
+        void Connect();
+        void Create( SwapchainSupportDetails swapchainSupport, uint32_t queueIndex ); //TODO proper queues
         VkResult AcquireNextImage( VkSemaphore presentCompleteSemaphore, uint32_t *imageIndex );
         VkResult QueuePresent( VkQueue queue, uint32_t imageIndex, VkSemaphore waitSemaphore = VK_NULL_HANDLE );
         void Cleanup();
-    private:
+
         struct SwapChainBuffer
         {
             VkImage image;
             VkImageView view;
         };
 
-        VkInstance _instance;
-        VkPhysicalDevice _physicalDevice;
-        VkDevice _device;
+		VkInstance _instance;
+		VkDevice _device;
+		VkPhysicalDevice _physicalDevice;
+		GLFWwindow *_window;
 
         VkSurfaceKHR _surface;
         VkFormat _colorFormat;
         VkColorSpaceKHR _colorSpace;
         
-        VkSwapchainKHR _swapChain = VK_NULL_HANDLE;
+        VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
 
         uint32_t _imageCount;
         std::vector<VkImage> _images;
@@ -48,7 +49,7 @@ namespace Vel
 
         uint32_t _queueNodeIndex = UINT32_MAX;
 
-        PFN_vkGetPhysicalDeviceSurfaceSupportKHR _getPhysicalDeviceSurfaceSupportKHR; //TODO physical device?
+        PFN_vkGetPhysicalDeviceSurfaceSupportKHR _getPhysicalDeviceSurfaceSupportKHR;
         PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR _getPhysicalDeviceSurfaceCapabilitiesKHR;
         PFN_vkGetPhysicalDeviceSurfaceFormatsKHR _getPhysicalDeviceSurfaceFormatsKHR;
         PFN_vkGetPhysicalDeviceSurfacePresentModesKHR _getPhysicalDeviceSurfacePresentModesKHR;

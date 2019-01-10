@@ -17,20 +17,21 @@ namespace Vel
     {
     public:
         void Setup( VkInstance &instance );
+		void CreateDevice( bool useSwapChain = true, VkQueueFlags requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT );
 		void Destroy();
-        VkCommandPool CreateCommandPool( uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT );
-		void CreateSemaphores();
-    private:
+		void SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType );
+
+        //VkCommandPool CreateCommandPool( uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT );
+		//void CreateSemaphores();
 
         class PhysicalDevice 
         {
-			friend class VulkanDevice;
         public:
-            void FindDevice( VkInstance & instance );
-            void QueryDevice( VkInstance & instance );
+            void FindDevice( VkInstance &instance );
+            void QueryDevice( VkInstance &instance );
+			void QuerySwapchainSupport( VkSurfaceKHR surface );
 
             VkBool32 GetSupportedDepthFormat( VkFormat *depthFormat );
-        private:
             bool IsSuitable( VkPhysicalDevice device );
             uint32_t GetQueueFamilyIndex( VkQueueFlagBits queueFlags );
 
@@ -41,25 +42,13 @@ namespace Vel
 
             VkPhysicalDevice _suitableDevice = VK_NULL_HANDLE;
             VkCommandPool _commandPool = VK_NULL_HANDLE;
+
+			SwapchainSupportDetails _swapchainSupport;
+
         } _physicalDevice;
 
-        struct QueueFamilyIndices
-        {
-            uint32_t graphics;
-            uint32_t present;
-            uint32_t compute;
-            uint32_t transfer;
-        } _queueFamilyIndices;
-        void RequestQueue( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType );
-
-        struct Semaphores
-        {
-            VkSemaphore presentComplete;
-            VkSemaphore renderComplete;
-            VkSemaphore overlayComplete;
-        } _semaphores[2];
-
-		void CreateDevice( bool useSwapChain = true, VkQueueFlags requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT );
+        QueueFamilyIndices _queueFamilyIndices;
+        Semaphores _semaphores[2];
 
         VkDevice _logDevice;
         VkFormat _depthFormat;

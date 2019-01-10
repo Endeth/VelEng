@@ -15,8 +15,6 @@ namespace Vel
 
 	/*TODO checking for
     -supported extensions
-    -surface formats
-    -present modes
     -queues*/
     void VulkanDevice::PhysicalDevice::FindDevice( VkInstance & instance )
     {
@@ -37,43 +35,19 @@ namespace Vel
             throw std::runtime_error( "failed to find a suitable GPU" );
     }
 
-    /*
-    -- Query for features, memory properties and queue properties --
-    */
     void VulkanDevice::PhysicalDevice::QueryDevice( VkInstance & instance )
     {
         vkGetPhysicalDeviceFeatures( _suitableDevice, &_features );
         vkGetPhysicalDeviceMemoryProperties( _suitableDevice, &_memoryProperties );
-        VulkanQuery<VkPhysicalDevice, VkQueueFamilyProperties>( _suitableDevice, vkGetPhysicalDeviceQueueFamilyProperties, _queueFamilyProperties );
-
-/* TODO ?
-#ifdef _DEBUG
-        auto &layers = VulkanDebug::Instance()->GetValidationLayers();
-        uint32_t size; //TODO
-        std::vector<VkExtensionProperties> extensions;
-
-        for ( auto &layer : layers )
-        {
-            std::vector<VkExtensionProperties> layerExt;
-            vkEnumerateDeviceExtensionProperties( _suitableDevice, layer, &size, nullptr );
-            layerExt.resize( size );
-            vkEnumerateDeviceExtensionProperties( _suitableDevice, layer, &size, layerExt.data() );
-        }
-
-        std::cout << "Available device extensions:" << std::endl;
-        for ( const auto& extension : extensions )
-        {
-            std::cout << "\t" << extension.extensionName << std::endl;
-        }
-
-        VulkanDebug::Instance()->SetLayersExtensions( std::move( extensions ) );
-#endif*/
-
-        //TODO vkGetPhysicalDeviceSurfaceFormats
-        //TODO vkGetPhysicalDeviceSurfacePresentModes
+        VulkanQuery<VkPhysicalDevice, VkQueueFamilyProperties>( _suitableDevice, vkGetPhysicalDeviceQueueFamilyProperties, _queueFamilyProperties ); //TODO handle wrong result
     }
 
-
+	void VulkanDevice::PhysicalDevice::QuerySwapchainSupport( VkSurfaceKHR surface )
+	{
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR( _suitableDevice, surface, &_swapchainSupport.capabilities );
+		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkSurfaceFormatKHR, VkResult>( _suitableDevice, surface, vkGetPhysicalDeviceSurfaceFormatsKHR, _swapchainSupport.formats ); //TODO handle wrong result
+		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkPresentModeKHR, VkResult>( _suitableDevice, surface, vkGetPhysicalDeviceSurfacePresentModesKHR, _swapchainSupport.presentModes ); //TODO handle wrong result
+	}
 
     uint32_t VulkanDevice::PhysicalDevice::GetQueueFamilyIndex( VkQueueFlagBits queueFlags )
     {
@@ -140,6 +114,53 @@ namespace Vel
 		_physicalDevice.FindDevice( instance );
 		_physicalDevice.QueryDevice( instance );
 		CreateDevice();
+		_semaphores[0].CreateSemaphores( _logDevice );
+	}
+
+	void VulkanDevice::CreateDevice( bool useSwapChain, VkQueueFlags requestedQueueTypes )
+	{
+		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+
+		SetRequestedQueues( queueCreateInfos, VK_QUEUE_GRAPHICS_BIT );
+		//SetRequestedQueues( queueCreateInfos, VK_QUEUE_COMPUTE_BIT ); //TODO
+		//SetRequestedQueues( queueCreateInfos, VK_QUEUE_TRANSFER_BIT );
+		//SetRequestedQueues( queueCreateInfos, VK_QUEUE_SPARSE_BINDING_BIT );
+
+		std::vector<const char*> deviceExtensions;
+		if( useSwapChain )
+			deviceExtensions.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+
+		VkDeviceCreateInfo deviceCreateInfo;
+		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		deviceCreateInfo.pNext = nullptr;
+		deviceCreateInfo.flags = 0;
+		deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>( queueCreateInfos.size() );
+		deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+		deviceCreateInfo.enabledLayerCount = 0;
+		deviceCreateInfo.ppEnabledLayerNames = nullptr;
+		deviceCreateInfo.enabledExtensionCount = 0;
+		deviceCreateInfo.ppEnabledExtensionNames = nullptr;
+		deviceCreateInfo.pEnabledFeatures = &( _physicalDevice._features );
+
+		if( deviceExtensions.size() > 0 )
+		{
+			deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>( deviceExtensions.size() );
+			deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
+		}
+
+		VkResult result = vkCreateDevice( _physicalDevice._suitableDevice, &deviceCreateInfo, nullptr, &_logDevice );
+
+		if( result == VK_SUCCESS )
+		{
+			//_gCommandPool = CreateCommandPool( _queueFamilyIndices.graphics );
+		}
+
+		vkGetDeviceQueue( _logDevice, _queueFamilyIndices.graphics, 0, &_gQueue ); //TODO move this someplace right
+		//TODO compute & transfer
+
+		if( !_physicalDevice.GetSupportedDepthFormat( &_depthFormat ) )
+			throw std::runtime_error( "no suitable depth format" );
+
 	}
 
 	void VulkanDevice::Destroy()
@@ -147,9 +168,9 @@ namespace Vel
 		vkDestroyDevice( _logDevice, nullptr );
 	}
 
-    void VulkanDevice::RequestQueue( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType )
+    void VulkanDevice::SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType )
     {
-        if ( queueType & VK_QUEUE_GRAPHICS_BIT ) //TODO make this smaller
+        if ( queueType & VK_QUEUE_GRAPHICS_BIT )
         {
             _queueFamilyIndices.graphics = _physicalDevice.GetQueueFamilyIndex( VK_QUEUE_GRAPHICS_BIT );
             VkDeviceQueueCreateInfo queueInfo;
@@ -163,75 +184,6 @@ namespace Vel
         }
         else
             _queueFamilyIndices.graphics = VK_NULL_HANDLE;
-    }
-
-    void VulkanDevice::CreateDevice( bool useSwapChain, VkQueueFlags requestedQueueTypes )
-    {
-        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-
-        RequestQueue( queueCreateInfos, VK_QUEUE_GRAPHICS_BIT );
-        //RequestQueue( queueCreateInfos, VK_QUEUE_COMPUTE_BIT ); //TODO
-        //RequestQueue( queueCreateInfos, VK_QUEUE_TRANSFER_BIT );
-        //RequestQueue( queueCreateInfos, VK_QUEUE_SPARSE_BINDING_BIT );
-
-        std::vector<const char*> deviceExtensions;
-        if ( useSwapChain )
-            deviceExtensions.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
-
-        VkDeviceCreateInfo deviceCreateInfo;
-        deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        deviceCreateInfo.pNext = nullptr;
-        deviceCreateInfo.enabledLayerCount = 0;
-        deviceCreateInfo.ppEnabledLayerNames = nullptr;
-        deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-        deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-        deviceCreateInfo.flags = 0;
-        deviceCreateInfo.pEnabledFeatures = &( _physicalDevice._features);
-
-        if ( deviceExtensions.size() > 0 )
-        {
-            deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-            deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
-        }
-
-        VkResult result = vkCreateDevice( _physicalDevice._suitableDevice, &deviceCreateInfo, nullptr, &_logDevice );
-
-        if ( result == VK_SUCCESS )
-        {
-            //_gCommandPool = CreateCommandPool( _queueFamilyIndices.graphics );
-        }
-
-        vkGetDeviceQueue( _logDevice, _queueFamilyIndices.graphics, 0, &_gQueue );
-        //TODO compute & transfer
-
-        if ( !_physicalDevice.GetSupportedDepthFormat( &_depthFormat ) )
-            throw std::runtime_error( "no suitable depth format" );
-
-    }
-
-    VkCommandPool VulkanDevice::CreateCommandPool( uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags )
-    {
-        VkCommandPoolCreateInfo cmdPoolInfo;
-        cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        cmdPoolInfo.queueFamilyIndex = queueFamilyIndex;
-        cmdPoolInfo.flags = createFlags;
-        VkCommandPool cmdPool;
-        //VkResult result = vkCreateCommandPool( _logDevice, &cmdPoolInfo, nullptr, &cmdPool );
-        //if ( result != VK_SUCCESS )
-        //    throw std::runtime_error( "error creating command pool" );
-        return cmdPool;
-    }
-
-    void VulkanDevice::CreateSemaphores() //TODO get this straight
-    {
-        /*VkSemaphoreCreateInfo createInfo = {};
-        createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-        for ( int i = 0; i < 2; i++ )
-        {
-            vkCreateSemaphore( _logDevice, &createInfo, nullptr, &_semaphores[i].renderComplete );
-            vkCreateSemaphore( _logDevice, &createInfo, nullptr, &_semaphores[i].presentComplete );
-        }*/
     }
 }
 

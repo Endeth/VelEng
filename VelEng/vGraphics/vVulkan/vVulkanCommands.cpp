@@ -10,9 +10,7 @@ namespace Vel
         createInfo.flags = flags;
         createInfo.queueFamilyIndex = queueFamilyIndex;
 
-        auto res = vkCreateCommandPool( device, &createInfo, nullptr, &_pool );
-        if( !res )
-            throw std::runtime_error( "creating command pool failed" );
+        CheckResult( vkCreateCommandPool( device, &createInfo, nullptr, &_pool ), "creating command pool failed" );
 
     }
 
@@ -21,9 +19,7 @@ namespace Vel
         VkResult res;
         if ( cmdBufInfo )
         {
-            res = vkAllocateCommandBuffers( *device, cmdBufInfo, &_buffers[cmdBuf] );
-            if( !res )
-                throw std::runtime_error( "allocating cmd buffer failed" );
+            CheckResult( vkAllocateCommandBuffers( *device, cmdBufInfo, &_buffers[cmdBuf] ), "allocating cmd buffer failed" );
             return;
         }
 
@@ -34,9 +30,7 @@ namespace Vel
         cmdInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         cmdInfo.commandBufferCount = 1;
 
-        res = vkAllocateCommandBuffers( *device, &cmdInfo, &_buffers[cmdBuf] );
-        if ( !res )
-            throw std::runtime_error( "allocating cmd buffer failed" );
+		CheckResult( vkAllocateCommandBuffers( *device, &cmdInfo, &_buffers[cmdBuf] ), "allocating cmd buffer failed" );
     }
 
     void VulkanCommands::BeginCommandBuffer( uint32_t cmdBuf, VkCommandBufferBeginInfo * cmdBeginInfo )
@@ -44,9 +38,7 @@ namespace Vel
         VkResult res;
         if ( cmdBeginInfo )
         {
-            res = vkBeginCommandBuffer( _buffers[cmdBuf], cmdBeginInfo );
-            if ( !res )
-                throw std::runtime_error( "begin command buffer failed" );
+			CheckResult( vkBeginCommandBuffer( _buffers[cmdBuf], cmdBeginInfo ), "begin command buffer failed" );
             return;
         }
 
@@ -67,17 +59,13 @@ namespace Vel
         cmdInfo.pInheritanceInfo = &cmdBufInhInfo;
 
 
-        res = vkBeginCommandBuffer( _buffers[cmdBuf], &cmdInfo );
-        if ( !res )
-            throw std::runtime_error( "begin command buffer failed" );
+		CheckResult( vkBeginCommandBuffer( _buffers[cmdBuf], &cmdInfo ), "begin command buffer failed" );
 
     }
     
     void VulkanCommands::EndCommandBuffer( uint32_t cmdBuf )
     {
-        auto res = vkEndCommandBuffer( _buffers[cmdBuf] );
-        if ( !res )
-            throw std::runtime_error( "end buffer failed" );
+		CheckResult( vkEndCommandBuffer( _buffers[cmdBuf] ), "end buffer failed" );
     }
     
     void VulkanCommands::SubmitCommandBuffer( const VkQueue & queue, const VkCommandBuffer * cmdBuffers, const VkSubmitInfo * submitInfo, const VkFence & fence )

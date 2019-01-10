@@ -40,5 +40,6 @@ else(VULKAN_FOUND)
 	target_link_libraries(VelEng ${VULKAN_LIB})
 endif(VULKAN_FOUND)
 target_compile_definitions(VelEng PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+target_compile_definitions(VelEng PRIVATE GLFW_EXPOSE_NATIVE_WIN32)
 
 target_link_libraries(VelEng ${LIBRARIES_DIR}/x64/glfw3.lib )
