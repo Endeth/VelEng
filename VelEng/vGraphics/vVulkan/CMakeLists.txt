@@ -2,10 +2,11 @@ set(SOURCE
    ${SOURCE}
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkan.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanCommands.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanCommon.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanDebug.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanDevice.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanFramebuffer.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanSwapChain.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanRenderPass.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanSwapchain.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanTexture.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanUtil.cpp
    PARENT_SCOPE
@@ -14,10 +15,11 @@ set(HEADERS
    ${HEADERS}
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkan.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanCommands.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanCommon.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanDebug.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanDevice.h
-   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanFramebuffer.h
-   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanSwapChain.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanRenderPass.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanSwapchain.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanTexture.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanUtil.h
    PARENT_SCOPE

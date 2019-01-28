@@ -1,5 +1,4 @@
 #include "vVulkanDevice.h"
-#include "vVulkanUtil.h"
 
 #ifdef _DEBUG
 #include "vVulkanDebug.h"
@@ -7,7 +6,7 @@
 
 namespace Vel
 {
-    bool VulkanDevice::PhysicalDevice::IsSuitable( VkPhysicalDevice device )
+    bool VulkanDeviceManager::PhysicalDeviceProperties::IsSuitable( VkPhysicalDevice device )
     {
         vkGetPhysicalDeviceProperties( device, &_properties );
         return _properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
@@ -16,40 +15,40 @@ namespace Vel
 	/*TODO checking for
     -supported extensions
     -queues*/
-    void VulkanDevice::PhysicalDevice::FindDevice( VkInstance & instance )
+    void VulkanDeviceManager::PhysicalDeviceProperties::FindDevice()
     {
 
         std::vector<VkPhysicalDevice> devices;
-        VulkanQuery<VkInstance, VkPhysicalDevice, VkResult>( instance, vkEnumeratePhysicalDevices, devices );
+        VulkanQuery<VkInstance, VkPhysicalDevice, VkResult>( VulkanCommon::Instance, vkEnumeratePhysicalDevices, devices );
 
         for ( const auto &device : devices )
         {
             if ( IsSuitable( device ) )
             {
-                _suitableDevice = device;
+				VulkanCommon::PhysicalDevice = device;
                 break;
             }
         }
 
-        if ( _suitableDevice == VK_NULL_HANDLE )
+        if ( VulkanCommon::PhysicalDevice == VK_NULL_HANDLE )
             throw std::runtime_error( "failed to find a suitable GPU" );
     }
 
-    void VulkanDevice::PhysicalDevice::QueryDevice( VkInstance & instance )
+    void VulkanDeviceManager::PhysicalDeviceProperties::QueryDevice()
     {
-        vkGetPhysicalDeviceFeatures( _suitableDevice, &_features );
-        vkGetPhysicalDeviceMemoryProperties( _suitableDevice, &_memoryProperties );
-        VulkanQuery<VkPhysicalDevice, VkQueueFamilyProperties>( _suitableDevice, vkGetPhysicalDeviceQueueFamilyProperties, _queueFamilyProperties ); //TODO handle wrong result
+        vkGetPhysicalDeviceFeatures( VulkanCommon::PhysicalDevice, &_features );
+        vkGetPhysicalDeviceMemoryProperties( VulkanCommon::PhysicalDevice, &_memoryProperties );
+        VulkanQuery<VkPhysicalDevice, VkQueueFamilyProperties>( VulkanCommon::PhysicalDevice, vkGetPhysicalDeviceQueueFamilyProperties, _queueFamilyProperties ); //TODO handle wrong result
     }
 
-	void VulkanDevice::PhysicalDevice::QuerySwapchainSupport( VkSurfaceKHR surface )
+	void VulkanDeviceManager::PhysicalDeviceProperties::QuerySwapchainSupport( VkSurfaceKHR surface )
 	{
-		vkGetPhysicalDeviceSurfaceCapabilitiesKHR( _suitableDevice, surface, &_swapchainSupport.capabilities );
-		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkSurfaceFormatKHR, VkResult>( _suitableDevice, surface, vkGetPhysicalDeviceSurfaceFormatsKHR, _swapchainSupport.formats ); //TODO handle wrong result
-		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkPresentModeKHR, VkResult>( _suitableDevice, surface, vkGetPhysicalDeviceSurfacePresentModesKHR, _swapchainSupport.presentModes ); //TODO handle wrong result
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR( VulkanCommon::PhysicalDevice, surface, &_swapchainSupport.capabilities );
+		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkSurfaceFormatKHR, VkResult>( VulkanCommon::PhysicalDevice, surface, vkGetPhysicalDeviceSurfaceFormatsKHR, _swapchainSupport.formats ); //TODO handle wrong result
+		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkPresentModeKHR, VkResult>( VulkanCommon::PhysicalDevice, surface, vkGetPhysicalDeviceSurfacePresentModesKHR, _swapchainSupport.presentModes ); //TODO handle wrong result
 	}
 
-    uint32_t VulkanDevice::PhysicalDevice::GetQueueFamilyIndex( VkQueueFlagBits queueFlags )
+    uint32_t VulkanDeviceManager::PhysicalDeviceProperties::GetQueueFamilyIndex( VkQueueFlagBits queueFlags )
     {
         if ( queueFlags & VK_QUEUE_COMPUTE_BIT )
         {
@@ -84,20 +83,20 @@ namespace Vel
         throw std::runtime_error( "Could not find a matching queue family index" );
     }
 
-    VkBool32 VulkanDevice::PhysicalDevice::GetSupportedDepthFormat( VkFormat * depthFormat )
+    VkBool32 VulkanDeviceManager::PhysicalDeviceProperties::GetSupportedDepthFormat( VkFormat * depthFormat )
     {
         std::vector<VkFormat> depthFormats = {
+			VK_FORMAT_D24_UNORM_S8_UINT,
+			VK_FORMAT_D16_UNORM_S8_UINT,
             VK_FORMAT_D32_SFLOAT_S8_UINT,
             VK_FORMAT_D32_SFLOAT,
-            VK_FORMAT_D24_UNORM_S8_UINT,
-            VK_FORMAT_D16_UNORM_S8_UINT,
             VK_FORMAT_D16_UNORM
         };
 
         for ( auto &format : depthFormats )
         {
             VkFormatProperties formatProperties;
-            vkGetPhysicalDeviceFormatProperties( _suitableDevice, format, &formatProperties );
+            vkGetPhysicalDeviceFormatProperties( VulkanCommon::PhysicalDevice, format, &formatProperties );
 
             if ( formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT )
             {
@@ -109,22 +108,21 @@ namespace Vel
     }
 
 
-	void VulkanDevice::Setup( VkInstance & instance )
+	void VulkanDeviceManager::Setup()
 	{
-		_physicalDevice.FindDevice( instance );
-		_physicalDevice.QueryDevice( instance );
+		_physicalDeviceProperties.FindDevice();
+		_physicalDeviceProperties.QueryDevice();
 		CreateDevice();
-		_semaphores[0].CreateSemaphores( _logDevice );
+		_semaphores[0].CreateSemaphores();
 	}
 
-	void VulkanDevice::CreateDevice( bool useSwapChain, VkQueueFlags requestedQueueTypes )
+	void VulkanDeviceManager::CreateDevice( bool useSwapChain, VkQueueFlags requestedQueueTypes )
 	{
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
-		SetRequestedQueues( queueCreateInfos, VK_QUEUE_GRAPHICS_BIT );
+		SetRequestedQueues( queueCreateInfos, VK_QUEUE_GRAPHICS_BIT ); //TODO in device create info this q info has 0 flag - is that ok?
 		//SetRequestedQueues( queueCreateInfos, VK_QUEUE_COMPUTE_BIT ); //TODO
 		//SetRequestedQueues( queueCreateInfos, VK_QUEUE_TRANSFER_BIT );
-		//SetRequestedQueues( queueCreateInfos, VK_QUEUE_SPARSE_BINDING_BIT );
 
 		std::vector<const char*> deviceExtensions;
 		if( useSwapChain )
@@ -140,7 +138,7 @@ namespace Vel
 		deviceCreateInfo.ppEnabledLayerNames = nullptr;
 		deviceCreateInfo.enabledExtensionCount = 0;
 		deviceCreateInfo.ppEnabledExtensionNames = nullptr;
-		deviceCreateInfo.pEnabledFeatures = &( _physicalDevice._features );
+		deviceCreateInfo.pEnabledFeatures = &( _physicalDeviceProperties._features );
 
 		if( deviceExtensions.size() > 0 )
 		{
@@ -148,31 +146,32 @@ namespace Vel
 			deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		}
 
-		VkResult result = vkCreateDevice( _physicalDevice._suitableDevice, &deviceCreateInfo, nullptr, &_logDevice );
+		VkResult result = vkCreateDevice( VulkanCommon::PhysicalDevice, &deviceCreateInfo, nullptr, &VulkanCommon::Device );
 
 		if( result == VK_SUCCESS )
 		{
 			//_gCommandPool = CreateCommandPool( _queueFamilyIndices.graphics );
 		}
 
-		vkGetDeviceQueue( _logDevice, _queueFamilyIndices.graphics, 0, &_gQueue ); //TODO move this someplace right
+		vkGetDeviceQueue( VulkanCommon::Device, _queueFamilyIndices.graphics, 0, &_gQueue ); //TODO move this someplace right
 		//TODO compute & transfer
 
-		if( !_physicalDevice.GetSupportedDepthFormat( &_depthFormat ) )
+		if( !_physicalDeviceProperties.GetSupportedDepthFormat( &_depthFormat ) )
 			throw std::runtime_error( "no suitable depth format" );
 
 	}
 
-	void VulkanDevice::Destroy()
+	void VulkanDeviceManager::Destroy()
 	{
-		vkDestroyDevice( _logDevice, nullptr );
+		vkDestroyDevice( VulkanCommon::Device, nullptr );
+		VulkanCommon::Device = VK_NULL_HANDLE;
 	}
 
-    void VulkanDevice::SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType )
+    void VulkanDeviceManager::SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType )
     {
         if ( queueType & VK_QUEUE_GRAPHICS_BIT )
         {
-            _queueFamilyIndices.graphics = _physicalDevice.GetQueueFamilyIndex( VK_QUEUE_GRAPHICS_BIT );
+            _queueFamilyIndices.graphics = _physicalDeviceProperties.GetQueueFamilyIndex( VK_QUEUE_GRAPHICS_BIT );
             VkDeviceQueueCreateInfo queueInfo;
             queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
             queueInfo.pNext = nullptr;

@@ -7,34 +7,8 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "VelEngConfig.h"
-
 namespace Vel
 {
-	struct SwapchainSupportDetails
-	{
-		VkSurfaceCapabilitiesKHR capabilities;
-		std::vector<VkSurfaceFormatKHR> formats;
-		std::vector<VkPresentModeKHR> presentModes;
-	};
-
-	struct Semaphores
-	{
-		void CreateSemaphores( VkDevice device );
-
-		VkSemaphore presentComplete = 0;
-		VkSemaphore renderComplete = 0;
-		VkSemaphore acquireComplete = 0;
-	};
-
-	struct QueueFamilyIndices
-	{
-		uint32_t graphics = 0;
-		uint32_t present = 0;
-		uint32_t compute = 0;
-		uint32_t transfer = 0;
-	};
-
 	void CheckResult( VkResult result, const char *failMsg );
 
 	template< typename FirstObjectToQuery, typename SecondObjectToQuery, typename DataType, typename Result >

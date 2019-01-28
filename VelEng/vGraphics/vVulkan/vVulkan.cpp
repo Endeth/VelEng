@@ -1,4 +1,5 @@
 #include "vVulkan.h"
+#include "vVulkanCommon.h"
 
 namespace Vel
 {
@@ -43,76 +44,82 @@ namespace Vel
 
         createInfo.enabledExtensionCount = extensions.size();
         createInfo.ppEnabledExtensionNames = extensions.data();
-        CheckResult( vkCreateInstance( &createInfo, nullptr, &_instance ), "failed to create instance");
-
-        _device.Setup( _instance );
+        CheckResult( vkCreateInstance( &createInfo, nullptr, &VulkanCommon::Instance ), "failed to create instance");
 
 #ifdef _DEBUG
-        if ( !VulkanDebug::Instance()->EnableCallback( _instance ) )
-            throw std::runtime_error( "failed to set up debug callback" );
+		if( !VulkanDebug::Instance()->EnableCallback() )
+			throw std::runtime_error( "failed to set up debug callback" );
 #endif
 
+        _deviceManager.Setup();
+
 		CreateSurface( window );
+		CreateCommandBuffers();
+		_renderPass.Create();
+		_renderPass.CreatePipeline();
+		_renderPass.CreateFramebuffers( _swapchain._images, _swapchain._imageSize );
+		RecordCommandBuffers();
     }
 
     void Vulkan::Destroy()
     {
 #ifdef _DEBUG
-        VulkanDebug::Instance()->DisableCallback( _instance );
+        VulkanDebug::Instance()->DisableCallback();
 #endif
-		vkDestroyCommandPool( _device._logDevice, _commandPool, nullptr );
+		vkDestroyCommandPool( VulkanCommon::Device, _commandPool, nullptr );
+		_commandPool = VK_NULL_HANDLE;
+
 		_swapchain.Cleanup();
-		_device.Destroy();
-        vkDestroyInstance( _instance, nullptr );
+		_deviceManager.Destroy();
+
+        vkDestroyInstance( VulkanCommon::Instance, nullptr );
+		VulkanCommon::Instance = VK_NULL_HANDLE;
     }
 
 	void Vulkan::CreateSurface( GLFWwindow *window)
 	{
-		_swapchain.Init( _instance, _device._logDevice, window );
+		_swapchain.Init( window );
 
-		VkBool32 presentSupported = 0;
-		vkGetPhysicalDeviceSurfaceSupportKHR( _device._physicalDevice._suitableDevice, _device._queueFamilyIndices.graphics, _swapchain._surface, &presentSupported );
+		VkBool32 presentSupported = 0; //Create Proper Present Queue
+		vkGetPhysicalDeviceSurfaceSupportKHR( VulkanCommon::PhysicalDevice, _deviceManager._queueFamilyIndices.graphics, _swapchain._surface, &presentSupported );
 
-		_device._physicalDevice.QuerySwapchainSupport( _swapchain._surface );
-		_swapchain.Create( _device._physicalDevice._swapchainSupport, _device._queueFamilyIndices.graphics );
+		_deviceManager._physicalDeviceProperties.QuerySwapchainSupport( _swapchain._surface );
+		_swapchain.Create( _deviceManager._physicalDeviceProperties._swapchainSupport, _deviceManager._queueFamilyIndices.graphics );
+	}
 
-		uint32_t swapchainImageCount = sizeof( _swapchainImages ) / sizeof( _swapchainImages[0] );
-		CheckResult( vkGetSwapchainImagesKHR( _device._logDevice, _swapchain._swapchain, &swapchainImageCount, _swapchainImages ), "failed to get swapchain images" );
-
+	void Vulkan::CreateCommandBuffers()
+	{
 		VkCommandPoolCreateInfo cmdPoolCreateInfo;
 		cmdPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		cmdPoolCreateInfo.pNext = nullptr;
 		cmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-		cmdPoolCreateInfo.queueFamilyIndex = _device._queueFamilyIndices.graphics;
+		cmdPoolCreateInfo.queueFamilyIndex = _deviceManager._queueFamilyIndices.graphics;
 
-		CheckResult( vkCreateCommandPool( _device._logDevice, &cmdPoolCreateInfo, nullptr, &_commandPool ), "failed to crete command pool" ); //CREATION IN FUNC
+		CheckResult( vkCreateCommandPool( VulkanCommon::Device, &cmdPoolCreateInfo, nullptr, &_commandPool ), "failed to create command pool" );
+
+		uint32_t imagesCount = _swapchain._images.size();
+
+		_commandBuffers.resize( imagesCount, VK_NULL_HANDLE );
 
 		VkCommandBufferAllocateInfo commandBufferAllocateInfo;
 		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		commandBufferAllocateInfo.pNext = nullptr;
 		commandBufferAllocateInfo.commandPool = _commandPool;
 		commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		commandBufferAllocateInfo.commandBufferCount = 1;
+		commandBufferAllocateInfo.commandBufferCount = imagesCount;
 
-		_commandBuffer = 0;
-		vkAllocateCommandBuffers( _device._logDevice, &commandBufferAllocateInfo, &_commandBuffer );
+		CheckResult( vkAllocateCommandBuffers( VulkanCommon::Device, &commandBufferAllocateInfo, _commandBuffers.data() ), "failed to allocate command buffers" );
 	}
-	void Vulkan::PresentImage()
+
+	void Vulkan::RecordCommandBuffers()
 	{
-		uint32_t imageIndex = 0;
-		CheckResult( vkAcquireNextImageKHR( _device._logDevice, _swapchain._swapchain, 0ull, _device._semaphores[0].acquireComplete, VK_NULL_HANDLE, &imageIndex ), "failed to acquire next image" );
-
-		CheckResult( vkResetCommandPool( _device._logDevice, _commandPool, 0 ), "failed to reset cmd pool" );
-
 		VkCommandBufferBeginInfo beginInfo;
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.pNext = nullptr;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		beginInfo.pInheritanceInfo = nullptr;
 
-		CheckResult( vkBeginCommandBuffer( _commandBuffer, &beginInfo ), "failed to begin command buffer" );
-
-		VkClearColorValue color = { 1, 0, 1, 1 };
+		VkClearValue color = { 48.f / 256.f, 10 / 256.f, 36 / 256.f, 1.f };
 		VkImageSubresourceRange range;
 		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		range.baseMipLevel = 0;
@@ -120,39 +127,67 @@ namespace Vel
 		range.baseArrayLayer = 0;
 		range.layerCount = 1;
 
-		vkCmdClearColorImage( _commandBuffer, _swapchainImages[imageIndex], VK_IMAGE_LAYOUT_GENERAL, &color, 1, &range );
+		VkRect2D renderArea;
+		renderArea.offset = { 0, 0 };
+		renderArea.extent = { 500, 500 };
 
-		CheckResult( vkEndCommandBuffer( _commandBuffer ), "failed to end command buffer");
+		uint32_t imageCount = _swapchain._images.size();
+
+		VkRenderPassBeginInfo renderPassBeginInfo;
+		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassBeginInfo.pNext = nullptr;
+		renderPassBeginInfo.renderPass = _renderPass._renderPass;
+		renderPassBeginInfo.renderArea = renderArea;
+		renderPassBeginInfo.clearValueCount = 1;
+		renderPassBeginInfo.pClearValues = &color;
+
+		for( int i = 0; i < imageCount; ++i )
+		{
+			CheckResult( vkBeginCommandBuffer( _commandBuffers[i], &beginInfo ), "failed to begin command buffer" );
+
+			renderPassBeginInfo.framebuffer = _renderPass._framebuffers[i]._framebuffer;
+			vkCmdBeginRenderPass( _commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
+			vkCmdBindPipeline( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _renderPass._graphicsPipeline );
+			vkCmdDraw( _commandBuffers[i], 3, 1, 0, 0 );
+			vkCmdEndRenderPass( _commandBuffers[i] );
+
+			//vkCmdClearColorImage( _commandBuffers[i], _swapchain._images[i].Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &color, 1, &range );
+
+			CheckResult( vkEndCommandBuffer( _commandBuffers[i] ), "failed to end command buffer" );
+		}
+	}
+
+	void Vulkan::Draw()
+	{
+		uint32_t imageIndex = 0;
+		CheckResult( vkAcquireNextImageKHR( VulkanCommon::Device, _swapchain._swapchain, 0ull, _deviceManager._semaphores[0].acquireComplete, VK_NULL_HANDLE, &imageIndex ), "failed to acquire next image" );
 
 		VkPipelineStageFlags submitStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
 		VkSubmitInfo submitInfo;
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.pNext = nullptr;
 		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = &_device._semaphores[0].acquireComplete;
-		submitInfo.waitSemaphoreCount = 0;
-		submitInfo.pWaitSemaphores = nullptr;
+		submitInfo.pWaitSemaphores = &_deviceManager._semaphores[0].acquireComplete;
 		submitInfo.pWaitDstStageMask = &submitStageFlags;
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &_commandBuffer;
+		submitInfo.pCommandBuffers = &_commandBuffers[imageIndex];
 		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &_device._semaphores[0].renderComplete;
+		submitInfo.pSignalSemaphores = &_deviceManager._semaphores[0].renderComplete;
 
-		vkQueueSubmit( _device._gQueue, 1, &submitInfo, VK_NULL_HANDLE );
+		vkQueueSubmit( _deviceManager._gQueue, 1, &submitInfo, VK_NULL_HANDLE );
 
 		VkPresentInfoKHR presentInfo;
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;
 		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = &_device._semaphores[0].renderComplete;
+		presentInfo.pWaitSemaphores = &_deviceManager._semaphores[0].renderComplete;
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = &_swapchain._swapchain;
 		presentInfo.pImageIndices = &imageIndex;
 		presentInfo.pResults = nullptr;
 
-		CheckResult( vkQueuePresentKHR( _device._gQueue, &presentInfo ), "failed to queue present" );
-		CheckResult( vkDeviceWaitIdle( _device._logDevice ), "failed to device wait idle" );
+		CheckResult( vkQueuePresentKHR( _deviceManager._gQueue, &presentInfo ), "failed to queue present" );
+		CheckResult( vkDeviceWaitIdle( VulkanCommon::Device ), "failed to device wait idle" );
 	}
 }
 

@@ -3,9 +3,7 @@
 #include <sstream>
 #include <cassert>
 
-#include <vulkan/vulkan.hpp>
-
-#include "vVulkanUtil.h"
+#include "vVulkanCommon.h"
 
 #ifdef _DEBUG
 #include "vVulkanDebug.h"

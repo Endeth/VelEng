@@ -3,11 +3,9 @@
 #include <sstream>
 #include <cassert>
 
-#include <vulkan/vulkan.hpp>
+#include "vVulkanCommon.h"
 #include "external/glfw/glfw3.h"
 #include "external/glm/glm.hpp"
-
-#include "vVulkanUtil.h"
 
 #ifdef _DEBUG
 #include "vVulkanDebug.h"
@@ -19,44 +17,22 @@ namespace Vel
     class VulkanSwapchain
     {
     public:
-        void Init( VkInstance instance, VkDevice device, GLFWwindow *window );
-        void Connect();
+        void Init( GLFWwindow *window ); //TODO init and create?
         void Create( SwapchainSupportDetails swapchainSupport, uint32_t queueIndex ); //TODO proper queues
         VkResult AcquireNextImage( VkSemaphore presentCompleteSemaphore, uint32_t *imageIndex );
         VkResult QueuePresent( VkQueue queue, uint32_t imageIndex, VkSemaphore waitSemaphore = VK_NULL_HANDLE );
         void Cleanup();
 
-        struct SwapChainBuffer
-        {
-            VkImage image;
-            VkImageView view;
-        };
-
-		VkInstance _instance;
-		VkDevice _device;
-		VkPhysicalDevice _physicalDevice;
 		GLFWwindow *_window;
 
         VkSurfaceKHR _surface;
-        VkFormat _colorFormat;
-        VkColorSpaceKHR _colorSpace;
+		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
+
+		VkSurfaceFormatKHR _format;
+		VkPresentModeKHR _presentMode;
         
-        VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
-
+		glm::i32vec2 _imageSize;
         uint32_t _imageCount;
-        std::vector<VkImage> _images;
-        std::vector<SwapChainBuffer> _buffers;
-
-        uint32_t _queueNodeIndex = UINT32_MAX;
-
-        PFN_vkGetPhysicalDeviceSurfaceSupportKHR _getPhysicalDeviceSurfaceSupportKHR;
-        PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR _getPhysicalDeviceSurfaceCapabilitiesKHR;
-        PFN_vkGetPhysicalDeviceSurfaceFormatsKHR _getPhysicalDeviceSurfaceFormatsKHR;
-        PFN_vkGetPhysicalDeviceSurfacePresentModesKHR _getPhysicalDeviceSurfacePresentModesKHR;
-        PFN_vkCreateSwapchainKHR _createSwapchainKHR;
-        PFN_vkDestroySwapchainKHR _destroySwapchainKHR;
-        PFN_vkGetSwapchainImagesKHR _getSwapchainImagesKHR;
-        PFN_vkAcquireNextImageKHR _acquireNextImageKHR;
-        PFN_vkQueuePresentKHR _queuePresentKHR;
+        std::vector<VulkanImage> _images;
     };
 }

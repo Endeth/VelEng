@@ -1,10 +1,8 @@
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include "vVulkanCommon.h"
 #include "external/glfw/glfw3.h"
 #include "external/glm/glm.hpp"
-
-#include "vVulkanUtil.h"
 
 #ifdef _DEBUG
 #include "vVulkanDebug.h"
@@ -13,10 +11,10 @@
 
 namespace Vel
 {
-    class VulkanDevice
+    class VulkanDeviceManager
     {
     public:
-        void Setup( VkInstance &instance );
+        void Setup();
 		void CreateDevice( bool useSwapChain = true, VkQueueFlags requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT );
 		void Destroy();
 		void SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType );
@@ -24,15 +22,14 @@ namespace Vel
         //VkCommandPool CreateCommandPool( uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT );
 		//void CreateSemaphores();
 
-        class PhysicalDevice 
+        class PhysicalDeviceProperties
         {
         public:
-            void FindDevice( VkInstance &instance );
-            void QueryDevice( VkInstance &instance );
+            void FindDevice();
+            void QueryDevice();
 			void QuerySwapchainSupport( VkSurfaceKHR surface );
 
             VkBool32 GetSupportedDepthFormat( VkFormat *depthFormat );
-            bool IsSuitable( VkPhysicalDevice device );
             uint32_t GetQueueFamilyIndex( VkQueueFlagBits queueFlags );
 
             VkPhysicalDeviceProperties _properties;
@@ -40,24 +37,21 @@ namespace Vel
             std::vector<VkQueueFamilyProperties> _queueFamilyProperties;
             VkPhysicalDeviceFeatures _features;
 
-            VkPhysicalDevice _suitableDevice = VK_NULL_HANDLE;
-            VkCommandPool _commandPool = VK_NULL_HANDLE;
-
 			SwapchainSupportDetails _swapchainSupport;
+		private:
+			bool IsSuitable( VkPhysicalDevice device );
 
-        } _physicalDevice;
+        } _physicalDeviceProperties;
 
         QueueFamilyIndices _queueFamilyIndices;
         Semaphores _semaphores[2];
 
-        VkDevice _logDevice;
         VkFormat _depthFormat;
-        VkCommandPool _gCommandPool;
         VkQueue _gQueue;
         VkQueue _pQueue;
-        VkQueue _tQueue;
-        VkQueue _cQueue;
+        //VkQueue _tQueue;
+        //VkQueue _cQueue;
 
-        const float _defaultQueuePriority = 0.5f;
+        const float _defaultQueuePriority = 0.5f;    
     };
 }

@@ -53,7 +53,7 @@ namespace Vel
 
     void VelEng::InitVulkan()
     {
-        _vulkan.Init( _mainWindow->GetGLFWWindow() );
+        _vulkan.Init( _mainWindow->GetGLFWWindow() ); 
     }
 
     void VelEng::InitGLFW()
@@ -198,7 +198,7 @@ namespace Vel
 		skybox->Deactivate();
 
 		RenderScenes();*/
-		_vulkan.PresentImage();
+		_vulkan.Draw();
 	}
 
 }

@@ -4,9 +4,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <vulkan/vulkan.hpp>
-
-#include "vVulkanUtil.h"
+#include "vVulkanCommon.h"
 
 
 namespace Vel
@@ -31,8 +29,8 @@ namespace Vel
         void PrintExtensions();
         bool EnableValidationLayers( VkInstanceCreateInfo &createInfo );
 
-        bool EnableCallback( VkInstance &instance );
-        void DisableCallback( VkInstance &instance );
+        bool EnableCallback();
+        void DisableCallback();
 
         void SetLayersExtensions( std::vector<VkExtensionProperties>&& extensions ) { _layersExtensions = extensions; }
 		void SetValidationLayers (std::vector<const char*> &validationLayers = std::vector<const char*>( { "VK_LAYER_LUNARG_standard_validation", "VK_LAYER_LUNARG_core_validation" } ) ); //"VK_LAYER_LUNARG_standard_validation", "VK_LAYER_LUNARG_core_validation" 

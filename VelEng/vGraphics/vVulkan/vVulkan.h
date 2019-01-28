@@ -1,13 +1,13 @@
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include "vVulkanCommon.h"
 #include "external/glfw/glfw3.h"
 #include "external/glm/glm.hpp"
 
 #include "vVulkanCommands.h"
 #include "vVulkanDevice.h"
 #include "vVulkanSwapChain.h"
-#include "vVulkanUtil.h"
+#include "vVulkanRenderpass.h"
 
 #ifdef _DEBUG
 #include "vVulkanDebug.h"
@@ -21,18 +21,19 @@ namespace Vel
         void Init( GLFWwindow *window );
         void Destroy();
 		void CreateSurface( GLFWwindow *window );
-		void PresentImage();
+		void CreateCommandBuffers();
+		void DestroyCommandBuffers();
+		void RecordCommandBuffers();
+		void Draw();
 
-        VulkanDevice _device;
+        VulkanDeviceManager _deviceManager;
         VulkanCommands _commands;
         VulkanSwapchain _swapchain;
+		VulkanRenderPass _renderPass;
 
-		VkImage _swapchainImages[16]; //TODO remove HACK
-		VkCommandPool _commandPool = 0; //TODO get rid of this test cmdpool
-		VkCommandBuffer _commandBuffer = 0;
+		VkCommandPool _commandPool = VK_NULL_HANDLE; //TODO get rid of this test cmdpool
+		std::vector<VkCommandBuffer> _commandBuffers;
 
         bool _enableValidationLayers = false;
-        VkInstance _instance;
-
     };
 }

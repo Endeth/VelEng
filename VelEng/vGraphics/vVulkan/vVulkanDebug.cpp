@@ -1,4 +1,5 @@
 #include "vVulkanDebug.h"
+#include "vVulkanCommon.h"
 
 namespace Vel
 {
@@ -102,13 +103,13 @@ namespace Vel
         return true;
     }
 
-    bool VulkanDebug::EnableCallback( VkInstance &instance )
+    bool VulkanDebug::EnableCallback()
     {
         PFN_vkCreateDebugReportCallbackEXT CreateDebugReportCallback = VK_NULL_HANDLE;
-        CreateDebugReportCallback = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr( instance, "vkCreateDebugReportCallbackEXT" ));
+        CreateDebugReportCallback = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr( VulkanCommon::Instance, "vkCreateDebugReportCallbackEXT" ));
         if ( CreateDebugReportCallback != nullptr )
         {
-            VkResult err = CreateDebugReportCallback( instance, &_cbCreateInfo, nullptr, &_dbCallback );
+            VkResult err = CreateDebugReportCallback( VulkanCommon::Instance, &_cbCreateInfo, nullptr, &_dbCallback );
             assert( !err );
         }
         else
@@ -116,11 +117,11 @@ namespace Vel
         return true;
     }
 
-    void VulkanDebug::DisableCallback( VkInstance & instance )
+    void VulkanDebug::DisableCallback()
     {
-        auto DestroyDebugReportCallback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr( instance, "vkDestroyDebugReportCallbackEXT" ));
+        auto DestroyDebugReportCallback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr( VulkanCommon::Instance, "vkDestroyDebugReportCallbackEXT" ));
         if ( DestroyDebugReportCallback != nullptr )
-            DestroyDebugReportCallback( instance, _dbCallback, nullptr );
+            DestroyDebugReportCallback( VulkanCommon::Instance, _dbCallback, nullptr );
     }
 }
 
