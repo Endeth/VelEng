@@ -227,6 +227,10 @@ namespace Vel
 		vkCreateGraphicsPipelines( VulkanCommon::Device, _pipelineCache, 1, &createInfo, nullptr, &_graphicsPipeline );
 		vkDestroyPipelineLayout( VulkanCommon::Device, pipelineLayout, nullptr );
 		pipelineLayout = VK_NULL_HANDLE;
+		vkDestroyShaderModule( VulkanCommon::Device, vertexShaderModule, nullptr );
+		vkDestroyShaderModule( VulkanCommon::Device, fragmentShaderModule, nullptr );
+		vertexShaderModule = VK_NULL_HANDLE;
+		fragmentShaderModule = VK_NULL_HANDLE;
 	}
 
 	void VulkanRenderPass::CreateFramebuffers( const std::vector<VulkanImage> &images, glm::i32vec2 size )
@@ -237,6 +241,9 @@ namespace Vel
 
 	void VulkanRenderPass::Cleanup()
 	{
+		for( auto &framebuffer : _framebuffers )
+			framebuffer.Cleanup();
+
 		vkDestroyPipeline( VulkanCommon::Device, _graphicsPipeline, nullptr );
 		vkDestroyPipelineCache( VulkanCommon::Device, _pipelineCache, nullptr );
 		vkDestroyRenderPass( VulkanCommon::Device, _renderPass, nullptr );
@@ -298,6 +305,7 @@ namespace Vel
 
 	void VulkanFramebuffer::Cleanup()
 	{
-		vkDestroyFramebuffer( VulkanCommon::Device, _framebuffer, nullptr );
+		if( _framebuffer != VK_NULL_HANDLE )
+			vkDestroyFramebuffer( VulkanCommon::Device, _framebuffer, nullptr );
 	}
 }

@@ -16,4 +16,21 @@ namespace Vel
 		CheckResult( vkCreateSemaphore( VulkanCommon::Device, &semaphoreCreateInfo, nullptr, &renderComplete ), "failed to create render complete semaphore" );
 		CheckResult( vkCreateSemaphore( VulkanCommon::Device, &semaphoreCreateInfo, nullptr, &acquireComplete ), "failed to create acquire complete semaphore" );
 	}
+	void Semaphores::Cleanup()
+	{
+		if( presentComplete != VK_NULL_HANDLE )
+			vkDestroySemaphore( VulkanCommon::Device, presentComplete, nullptr );
+
+		if( renderComplete != VK_NULL_HANDLE )
+			vkDestroySemaphore( VulkanCommon::Device, renderComplete, nullptr );
+
+		if( acquireComplete != VK_NULL_HANDLE )
+			vkDestroySemaphore( VulkanCommon::Device, acquireComplete, nullptr );
+	}
+
+	void VulkanImage::DestroyImageView()
+	{
+		if( ImageView != VK_NULL_HANDLE )
+			vkDestroyImageView( VulkanCommon::Device, ImageView, nullptr );
+	}
 }

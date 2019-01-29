@@ -163,6 +163,9 @@ namespace Vel
 
 	void VulkanDeviceManager::Destroy()
 	{
+		for( auto &semaphore : _semaphores )
+			semaphore.Cleanup();
+
 		vkDestroyDevice( VulkanCommon::Device, nullptr );
 		VulkanCommon::Device = VK_NULL_HANDLE;
 	}

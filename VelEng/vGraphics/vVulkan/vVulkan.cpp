@@ -70,6 +70,7 @@ namespace Vel
 		_commandPool = VK_NULL_HANDLE;
 
 		_swapchain.Cleanup();
+		_renderPass.Cleanup();
 		_deviceManager.Destroy();
 
         vkDestroyInstance( VulkanCommon::Instance, nullptr );

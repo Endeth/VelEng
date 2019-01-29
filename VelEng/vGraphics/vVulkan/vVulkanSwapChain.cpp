@@ -102,6 +102,9 @@ namespace Vel
 
     void VulkanSwapchain::Cleanup()
     {
+		for( auto &image : _images )
+			image.DestroyImageView();
+
         if ( _swapchain != VK_NULL_HANDLE )
         {
             //for ( uint32_t i = 0; i < _imageCount; i++ )

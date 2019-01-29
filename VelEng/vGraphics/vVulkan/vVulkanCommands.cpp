@@ -12,6 +12,7 @@ namespace Vel
 
         CheckResult( vkCreateCommandPool( device, &createInfo, nullptr, &_pool ), "creating command pool failed" );
 
+		_buffers.resize( 3, VK_NULL_HANDLE );
     }
 
     void VulkanCommands::CreateCommandBuffer( const VkDevice *device, uint32_t cmdBuf, const VkCommandBufferAllocateInfo *cmdBufInfo )
@@ -32,6 +33,10 @@ namespace Vel
 
 		CheckResult( vkAllocateCommandBuffers( *device, &cmdInfo, &_buffers[cmdBuf] ), "allocating cmd buffer failed" );
     }
+
+	void VulkanCommands::Cleanup()
+	{
+	}
 
     void VulkanCommands::BeginCommandBuffer( uint32_t cmdBuf, VkCommandBufferBeginInfo * cmdBeginInfo )
     {
@@ -72,4 +77,3 @@ namespace Vel
     {
     }
 }
-

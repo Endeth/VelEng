@@ -15,6 +15,11 @@ namespace Vel
 		static VkPhysicalDevice PhysicalDevice;
 	};
 
+	struct VulkanOptions
+	{
+		static glm::i32vec2 WindowSize;
+	};
+
 	struct VulkanImage
 	{
 		VkImage Image;
@@ -28,6 +33,8 @@ namespace Vel
 			Sampler( VK_NULL_HANDLE ),
 			Memory( VK_NULL_HANDLE )
 		{}
+
+		void DestroyImageView();
 	};
 
 	struct SwapchainSupportDetails
@@ -40,6 +47,7 @@ namespace Vel
 	struct Semaphores
 	{
 		void CreateSemaphores();
+		void Cleanup();
 
 		VkSemaphore presentComplete = VK_NULL_HANDLE;
 		VkSemaphore renderComplete = VK_NULL_HANDLE;
