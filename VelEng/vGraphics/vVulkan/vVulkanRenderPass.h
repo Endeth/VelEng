@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "vVulkanCommon.h"
+#include "vGeo/vGeo.h"
 
 
 namespace Vel

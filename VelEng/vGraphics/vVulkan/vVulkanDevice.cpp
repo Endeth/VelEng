@@ -48,6 +48,18 @@ namespace Vel
 		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkPresentModeKHR, VkResult>( VulkanCommon::PhysicalDevice, surface, vkGetPhysicalDeviceSurfacePresentModesKHR, _swapchainSupport.presentModes ); //TODO handle wrong result
 	}
 
+	uint32_t VulkanDeviceManager::PhysicalDeviceProperties::FindMemoryType( uint32_t typeFilter, VkMemoryPropertyFlags properties )
+	{
+		for( uint32_t i = 0; i < _memoryProperties.memoryTypeCount; ++i )
+		{
+			if( typeFilter & ( 1 << i ) && ( _memoryProperties.memoryTypes[i].propertyFlags & properties ) == properties )
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
     uint32_t VulkanDeviceManager::PhysicalDeviceProperties::GetQueueFamilyIndex( VkQueueFlagBits queueFlags )
     {
         if ( queueFlags & VK_QUEUE_COMPUTE_BIT )
@@ -121,8 +133,7 @@ namespace Vel
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
 		SetRequestedQueues( queueCreateInfos, VK_QUEUE_GRAPHICS_BIT ); //TODO in device create info this q info has 0 flag - is that ok?
-		//SetRequestedQueues( queueCreateInfos, VK_QUEUE_COMPUTE_BIT ); //TODO
-		//SetRequestedQueues( queueCreateInfos, VK_QUEUE_TRANSFER_BIT );
+		SetRequestedQueues( queueCreateInfos, VK_QUEUE_TRANSFER_BIT );
 
 		std::vector<const char*> deviceExtensions;
 		if( useSwapChain )

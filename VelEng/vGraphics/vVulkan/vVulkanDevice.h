@@ -28,6 +28,7 @@ namespace Vel
             void FindDevice();
             void QueryDevice();
 			void QuerySwapchainSupport( VkSurfaceKHR surface );
+			uint32_t FindMemoryType( uint32_t typeFilter, VkMemoryPropertyFlags properties );
 
             VkBool32 GetSupportedDepthFormat( VkFormat *depthFormat );
             uint32_t GetQueueFamilyIndex( VkQueueFlagBits queueFlags );
@@ -49,8 +50,7 @@ namespace Vel
         VkFormat _depthFormat;
         VkQueue _gQueue;
         VkQueue _pQueue;
-        //VkQueue _tQueue;
-        //VkQueue _cQueue;
+        VkQueue _tQueue;
 
         const float _defaultQueuePriority = 0.5f;    
     };

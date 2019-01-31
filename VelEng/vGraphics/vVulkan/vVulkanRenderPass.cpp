@@ -58,8 +58,8 @@ namespace Vel
 
 		vkCreatePipelineCache( VulkanCommon::Device, &pipelineCacheCreateInfo, nullptr, &_pipelineCache );
 
-		VkShaderModule vertexShaderModule = CreateShaderModule( "shaders/vert.spv" );
-		VkShaderModule fragmentShaderModule = CreateShaderModule( "shaders/frag.spv" );
+		VkShaderModule vertexShaderModule = CreateShaderModule( "shaders/shader.vert.spv" );
+		VkShaderModule fragmentShaderModule = CreateShaderModule( "shaders/shader.frag.spv" );
 
 		VkPipelineShaderStageCreateInfo shaderStageInfo[2] =
 		{
@@ -83,14 +83,25 @@ namespace Vel
 			}
 		};
 
+		VkVertexInputBindingDescription vertexInputBindingDescription;
+		vertexInputBindingDescription.binding = 0;
+		vertexInputBindingDescription.stride = sizeof(VertexColor);
+		vertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		VkVertexInputAttributeDescription vertexInputAttributeDescription;
+		vertexInputAttributeDescription.location = 0;
+		vertexInputAttributeDescription.binding = 0;
+		vertexInputAttributeDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputAttributeDescription.offset = offsetof( struct VertexColor, position.x );
+
 		VkPipelineVertexInputStateCreateInfo vertexInputStateInfo;
 		vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputStateInfo.pNext = nullptr;
 		vertexInputStateInfo.flags = 0;
-		vertexInputStateInfo.vertexBindingDescriptionCount = 0;
-		vertexInputStateInfo.pVertexBindingDescriptions = nullptr;
-		vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
-		vertexInputStateInfo.pVertexAttributeDescriptions = nullptr;
+		vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+		vertexInputStateInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
+		vertexInputStateInfo.vertexAttributeDescriptionCount = 1;
+		vertexInputStateInfo.pVertexAttributeDescriptions = &vertexInputAttributeDescription;
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
 		inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -128,7 +139,7 @@ namespace Vel
 		rasterizationStateInfo.rasterizerDiscardEnable = VK_FALSE;
 		rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizationStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rasterizationStateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 		rasterizationStateInfo.depthBiasEnable = VK_FALSE;
 		rasterizationStateInfo.depthBiasConstantFactor = 0.f;
 		rasterizationStateInfo.depthBiasClamp = 0.f;

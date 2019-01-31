@@ -24,6 +24,7 @@ namespace Vel
 		void CreateCommandBuffers();
 		void DestroyCommandBuffers();
 		void RecordCommandBuffers();
+		void CreateBuffer();
 		void Draw();
 
         VulkanDeviceManager _deviceManager;
@@ -33,6 +34,8 @@ namespace Vel
 
 		VkCommandPool _commandPool = VK_NULL_HANDLE; //TODO get rid of this test cmdpool
 		std::vector<VkCommandBuffer> _commandBuffers;
+		VkBuffer _vertexBuffer;
+		VkDeviceMemory _vertexBufferMemory;
 
         bool _enableValidationLayers = false;
     };

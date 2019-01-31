@@ -54,6 +54,7 @@ namespace Vel
         _deviceManager.Setup();
 
 		CreateSurface( window );
+		CreateBuffer();
 		CreateCommandBuffers();
 		_renderPass.Create();
 		_renderPass.CreatePipeline();
@@ -66,6 +67,8 @@ namespace Vel
 #ifdef _DEBUG
         VulkanDebug::Instance()->DisableCallback();
 #endif
+		vkDestroyBuffer( VulkanCommon::Device, _vertexBuffer, nullptr );
+		vkFreeMemory( VulkanCommon::Device, _vertexBufferMemory, nullptr );
 		vkDestroyCommandPool( VulkanCommon::Device, _commandPool, nullptr );
 		_commandPool = VK_NULL_HANDLE;
 
@@ -142,6 +145,9 @@ namespace Vel
 		renderPassBeginInfo.clearValueCount = 1;
 		renderPassBeginInfo.pClearValues = &color;
 
+		VkBuffer vertexBuffers[] = { _vertexBuffer };
+		VkDeviceSize offsets[] = { 0 };
+
 		for( int i = 0; i < imageCount; ++i )
 		{
 			CheckResult( vkBeginCommandBuffer( _commandBuffers[i], &beginInfo ), "failed to begin command buffer" );
@@ -149,6 +155,7 @@ namespace Vel
 			renderPassBeginInfo.framebuffer = _renderPass._framebuffers[i]._framebuffer;
 			vkCmdBeginRenderPass( _commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 			vkCmdBindPipeline( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _renderPass._graphicsPipeline );
+			vkCmdBindVertexBuffers( _commandBuffers[i], 0, 1, vertexBuffers, offsets );
 			vkCmdDraw( _commandBuffers[i], 3, 1, 0, 0 );
 			vkCmdEndRenderPass( _commandBuffers[i] );
 
@@ -156,6 +163,44 @@ namespace Vel
 
 			CheckResult( vkEndCommandBuffer( _commandBuffers[i] ), "failed to end command buffer" );
 		}
+	}
+
+	void Vulkan::CreateBuffer()
+	{
+		VertexColor bufferData[3] = {
+			VertexColor( glm::vec3( -1.f, -1.f, 0.f), glm::vec4( 1.f, 0.f, 0.f, 1.f ) ),
+			VertexColor( glm::vec3( 1.f, 1.f, 0.f ), glm::vec4( 0.f, 1.f, 0.f, 1.f ) ),
+			VertexColor( glm::vec3( -1.f, 1.f, 0.f ), glm::vec4( 0.f, 0.f, 1.f, 1.f ) ),
+		};
+
+		VkBufferCreateInfo vertexBufferCreateInfo;
+		vertexBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		vertexBufferCreateInfo.pNext = nullptr;
+		vertexBufferCreateInfo.flags = 0;
+		vertexBufferCreateInfo.size = sizeof(VertexColor) * 3;
+		vertexBufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		vertexBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		vertexBufferCreateInfo.queueFamilyIndexCount = 0;
+		vertexBufferCreateInfo.pQueueFamilyIndices = nullptr;
+
+		CheckResult( vkCreateBuffer( VulkanCommon::Device, &vertexBufferCreateInfo, nullptr, &_vertexBuffer ), "failed to create vertex buffer" );
+
+		VkMemoryRequirements memoryRequirements;
+		vkGetBufferMemoryRequirements( VulkanCommon::Device, _vertexBuffer, &memoryRequirements );
+
+		VkMemoryAllocateInfo memoryAllocInfo;
+		memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		memoryAllocInfo.pNext = nullptr;
+		memoryAllocInfo.allocationSize = memoryRequirements.size;
+		memoryAllocInfo.memoryTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+
+		CheckResult( vkAllocateMemory( VulkanCommon::Device, &memoryAllocInfo, nullptr, &_vertexBufferMemory ), "failed to allocate memory" );
+		CheckResult( vkBindBufferMemory( VulkanCommon::Device, _vertexBuffer, _vertexBufferMemory, 0 ), "failed to bind memory" );
+
+		void *data;
+		vkMapMemory( VulkanCommon::Device, _vertexBufferMemory, 0, vertexBufferCreateInfo.size, 0, &data );
+		memcpy( data, bufferData, (size_t)vertexBufferCreateInfo.size );
+		vkUnmapMemory( VulkanCommon::Device, _vertexBufferMemory );
 	}
 
 	void Vulkan::Draw()
