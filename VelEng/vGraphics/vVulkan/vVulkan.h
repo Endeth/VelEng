@@ -35,6 +35,7 @@ namespace Vel
 		VkCommandPool _commandPoolGraphics = VK_NULL_HANDLE; //TODO get rid of this test cmdpool
 		VkCommandPool _commandPoolTransfer = VK_NULL_HANDLE; //TODO get rid of this test cmdpool
 		std::vector<VkCommandBuffer> _commandBuffers;
+		VkCommandBuffer _transferCommand;
 		VulkanBuffer _vertexBuffer;
 		VulkanBuffer _stagingBuffer;
 

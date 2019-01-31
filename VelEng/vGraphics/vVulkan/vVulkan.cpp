@@ -54,8 +54,8 @@ namespace Vel
         _deviceManager.Setup();
 
 		CreateSurface( window );
-		CreateBuffer();
 		CreateCommandBuffers();
+		CreateBuffer();
 		_renderPass.Create();
 		_renderPass.CreatePipeline();
 		_renderPass.CreateFramebuffers( _swapchain._images, _swapchain._imageSize );
@@ -162,12 +162,19 @@ namespace Vel
 			VertexColor( glm::vec3( -1.f, 1.f, 0.f ), glm::vec4( 0.f, 0.f, 1.f, 1.f ) ),
 		};
 
-		std::vector<uint32_t> queues( { _deviceManager._queueFamilyIndices.graphics, _deviceManager._queueFamilyIndices.transfer } );
-		_vertexBuffer.CreateBuffer( 0, sizeof( VertexColor ) * 3, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_CONCURRENT, queues );
-		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _vertexBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		std::vector<uint32_t> queueFamilyIndices( { _deviceManager._queueFamilyIndices.transfer, _deviceManager._queueFamilyIndices.graphics } );
+		_stagingBuffer.CreateBuffer( 0, sizeof( VertexColor ) * 3, usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
+		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _stagingBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+		_stagingBuffer.AllocateMemory( memTypeIndex );
+		_stagingBuffer.CopyDataToBuffer( bufferData, sizeof( VertexColor ) * 3 );
+
+		usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		_vertexBuffer.CreateBuffer( 0, sizeof( VertexColor ) * 3, usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
+		memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _vertexBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 		_vertexBuffer.AllocateMemory( memTypeIndex );
 
-		_vertexBuffer.CopyDataToBuffer( bufferData, sizeof( VertexColor ) * 3 );
+		CopyBuffer( _stagingBuffer, _vertexBuffer, sizeof( VertexColor ) * 3, _commandPoolTransfer, _deviceManager._tQueue );
 	}
 
 	void Vulkan::Draw()
