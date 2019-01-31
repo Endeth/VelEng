@@ -60,11 +60,11 @@ namespace Vel
 		return -1;
 	}
 
-    uint32_t VulkanDeviceManager::PhysicalDeviceProperties::GetQueueFamilyIndex( VkQueueFlagBits queueFlags )
+    uint32_t VulkanDeviceManager::PhysicalDeviceProperties::GetQueueFamilyIndex( VkQueueFlagBits queueFlags ) //TODO try to find queues that are not already found
     {
         if ( queueFlags & VK_QUEUE_COMPUTE_BIT )
         {
-            for ( uint32_t i = 0; i < static_cast<uint32_t>(_queueFamilyProperties.size()); i++ ) //COMPUTE
+            for ( uint32_t i = 0; i < static_cast<uint32_t>(_queueFamilyProperties.size()); i++ )
             {
                 if ( (_queueFamilyProperties[i].queueFlags & queueFlags) && (_queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0 )
                 {
@@ -73,18 +73,25 @@ namespace Vel
             }
         }
 
-        if ( queueFlags & VK_QUEUE_TRANSFER_BIT )
+        if( queueFlags & VK_QUEUE_TRANSFER_BIT )
         {
-            for ( uint32_t i = 0; i < static_cast<uint32_t>(_queueFamilyProperties.size()); i++ ) //TRANSFER
+			uint32_t index = 10000;
+            for( uint32_t i = 0; i < static_cast<uint32_t>(_queueFamilyProperties.size()); i++ )
             {
-                if ( (_queueFamilyProperties[i].queueFlags & queueFlags) && ((_queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) && ((_queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) == 0) )
+                if( (_queueFamilyProperties[i].queueFlags & queueFlags) && ((_queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) && ((_queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) == 0) )
                 {
                     return i;
                 }
+				else if( _queueFamilyProperties[i].queueFlags & queueFlags )
+				{
+					index = i;
+				}
             }
+			if( index < 10000 )
+				return index;
         }
 
-        for ( uint32_t i = 0; i < static_cast<uint32_t>(_queueFamilyProperties.size()); i++ ) //GRAPHICS
+        for ( uint32_t i = 0; i < static_cast<uint32_t>(_queueFamilyProperties.size()); i++ )
         {
             if ( _queueFamilyProperties[i].queueFlags & queueFlags )
             {
@@ -157,14 +164,10 @@ namespace Vel
 			deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		}
 
-		VkResult result = vkCreateDevice( VulkanCommon::PhysicalDevice, &deviceCreateInfo, nullptr, &VulkanCommon::Device );
-
-		if( result == VK_SUCCESS )
-		{
-			//_gCommandPool = CreateCommandPool( _queueFamilyIndices.graphics );
-		}
+		CheckResult( vkCreateDevice( VulkanCommon::PhysicalDevice, &deviceCreateInfo, nullptr, &VulkanCommon::Device ), "failed to create device" );
 
 		vkGetDeviceQueue( VulkanCommon::Device, _queueFamilyIndices.graphics, 0, &_gQueue ); //TODO move this someplace right
+		vkGetDeviceQueue( VulkanCommon::Device, _queueFamilyIndices.transfer, 0, &_tQueue );
 		//TODO compute & transfer
 
 		if( !_physicalDeviceProperties.GetSupportedDepthFormat( &_depthFormat ) )
@@ -195,6 +198,18 @@ namespace Vel
             queueInfo.pQueuePriorities = &_defaultQueuePriority;
             queueCreateInfos.push_back( queueInfo );
         }
+		else if( queueType & VK_QUEUE_TRANSFER_BIT )
+		{
+			_queueFamilyIndices.transfer = _physicalDeviceProperties.GetQueueFamilyIndex( VK_QUEUE_TRANSFER_BIT );
+			VkDeviceQueueCreateInfo queueInfo;
+			queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueInfo.pNext = nullptr;
+			queueInfo.flags = 0;
+			queueInfo.queueFamilyIndex = _queueFamilyIndices.transfer;
+			queueInfo.queueCount = 1;
+			queueInfo.pQueuePriorities = &_defaultQueuePriority;
+			queueCreateInfos.push_back( queueInfo );
+		}
         else
             _queueFamilyIndices.graphics = VK_NULL_HANDLE;
     }

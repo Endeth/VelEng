@@ -4,6 +4,7 @@
 #include "external/glfw/glfw3.h"
 #include "external/glm/glm.hpp"
 
+#include "vVulkanBuffer.h"
 #include "vVulkanCommands.h"
 #include "vVulkanDevice.h"
 #include "vVulkanSwapChain.h"
@@ -28,14 +29,14 @@ namespace Vel
 		void Draw();
 
         VulkanDeviceManager _deviceManager;
-        VulkanCommands _commands;
         VulkanSwapchain _swapchain;
 		VulkanRenderPass _renderPass;
 
-		VkCommandPool _commandPool = VK_NULL_HANDLE; //TODO get rid of this test cmdpool
+		VkCommandPool _commandPoolGraphics = VK_NULL_HANDLE; //TODO get rid of this test cmdpool
+		VkCommandPool _commandPoolTransfer = VK_NULL_HANDLE; //TODO get rid of this test cmdpool
 		std::vector<VkCommandBuffer> _commandBuffers;
-		VkBuffer _vertexBuffer;
-		VkDeviceMemory _vertexBufferMemory;
+		VulkanBuffer _vertexBuffer;
+		VulkanBuffer _stagingBuffer;
 
         bool _enableValidationLayers = false;
     };

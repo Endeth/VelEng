@@ -67,10 +67,11 @@ namespace Vel
 #ifdef _DEBUG
         VulkanDebug::Instance()->DisableCallback();
 #endif
-		vkDestroyBuffer( VulkanCommon::Device, _vertexBuffer, nullptr );
-		vkFreeMemory( VulkanCommon::Device, _vertexBufferMemory, nullptr );
-		vkDestroyCommandPool( VulkanCommon::Device, _commandPool, nullptr );
-		_commandPool = VK_NULL_HANDLE;
+		_vertexBuffer.DestroyBuffer();
+		_stagingBuffer.DestroyBuffer();
+		vkDestroyCommandPool( VulkanCommon::Device, _commandPoolGraphics, nullptr );
+		vkDestroyCommandPool( VulkanCommon::Device, _commandPoolTransfer, nullptr );
+		_commandPoolGraphics = VK_NULL_HANDLE;
 
 		_swapchain.Cleanup();
 		_renderPass.Cleanup();
@@ -93,26 +94,14 @@ namespace Vel
 
 	void Vulkan::CreateCommandBuffers()
 	{
-		VkCommandPoolCreateInfo cmdPoolCreateInfo;
-		cmdPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		cmdPoolCreateInfo.pNext = nullptr;
-		cmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-		cmdPoolCreateInfo.queueFamilyIndex = _deviceManager._queueFamilyIndices.graphics;
-
-		CheckResult( vkCreateCommandPool( VulkanCommon::Device, &cmdPoolCreateInfo, nullptr, &_commandPool ), "failed to create command pool" );
+		CreateCommandPool( 0, _deviceManager._queueFamilyIndices.graphics, &_commandPoolGraphics );
+		CreateCommandPool( VK_COMMAND_POOL_CREATE_TRANSIENT_BIT, _deviceManager._queueFamilyIndices.transfer, &_commandPoolTransfer );
 
 		uint32_t imagesCount = _swapchain._images.size();
 
 		_commandBuffers.resize( imagesCount, VK_NULL_HANDLE );
 
-		VkCommandBufferAllocateInfo commandBufferAllocateInfo;
-		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		commandBufferAllocateInfo.pNext = nullptr;
-		commandBufferAllocateInfo.commandPool = _commandPool;
-		commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		commandBufferAllocateInfo.commandBufferCount = imagesCount;
-
-		CheckResult( vkAllocateCommandBuffers( VulkanCommon::Device, &commandBufferAllocateInfo, _commandBuffers.data() ), "failed to allocate command buffers" );
+		AllocateCommandBuffers( imagesCount, _commandBuffers.data(), _commandPoolGraphics, VK_COMMAND_BUFFER_LEVEL_PRIMARY );
 	}
 
 	void Vulkan::RecordCommandBuffers()
@@ -145,7 +134,7 @@ namespace Vel
 		renderPassBeginInfo.clearValueCount = 1;
 		renderPassBeginInfo.pClearValues = &color;
 
-		VkBuffer vertexBuffers[] = { _vertexBuffer };
+		VkBuffer vertexBuffers[] = { _vertexBuffer._buffer };
 		VkDeviceSize offsets[] = { 0 };
 
 		for( int i = 0; i < imageCount; ++i )
@@ -173,34 +162,12 @@ namespace Vel
 			VertexColor( glm::vec3( -1.f, 1.f, 0.f ), glm::vec4( 0.f, 0.f, 1.f, 1.f ) ),
 		};
 
-		VkBufferCreateInfo vertexBufferCreateInfo;
-		vertexBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		vertexBufferCreateInfo.pNext = nullptr;
-		vertexBufferCreateInfo.flags = 0;
-		vertexBufferCreateInfo.size = sizeof(VertexColor) * 3;
-		vertexBufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		vertexBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		vertexBufferCreateInfo.queueFamilyIndexCount = 0;
-		vertexBufferCreateInfo.pQueueFamilyIndices = nullptr;
+		std::vector<uint32_t> queues( { _deviceManager._queueFamilyIndices.graphics, _deviceManager._queueFamilyIndices.transfer } );
+		_vertexBuffer.CreateBuffer( 0, sizeof( VertexColor ) * 3, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_CONCURRENT, queues );
+		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _vertexBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+		_vertexBuffer.AllocateMemory( memTypeIndex );
 
-		CheckResult( vkCreateBuffer( VulkanCommon::Device, &vertexBufferCreateInfo, nullptr, &_vertexBuffer ), "failed to create vertex buffer" );
-
-		VkMemoryRequirements memoryRequirements;
-		vkGetBufferMemoryRequirements( VulkanCommon::Device, _vertexBuffer, &memoryRequirements );
-
-		VkMemoryAllocateInfo memoryAllocInfo;
-		memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memoryAllocInfo.pNext = nullptr;
-		memoryAllocInfo.allocationSize = memoryRequirements.size;
-		memoryAllocInfo.memoryTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
-
-		CheckResult( vkAllocateMemory( VulkanCommon::Device, &memoryAllocInfo, nullptr, &_vertexBufferMemory ), "failed to allocate memory" );
-		CheckResult( vkBindBufferMemory( VulkanCommon::Device, _vertexBuffer, _vertexBufferMemory, 0 ), "failed to bind memory" );
-
-		void *data;
-		vkMapMemory( VulkanCommon::Device, _vertexBufferMemory, 0, vertexBufferCreateInfo.size, 0, &data );
-		memcpy( data, bufferData, (size_t)vertexBufferCreateInfo.size );
-		vkUnmapMemory( VulkanCommon::Device, _vertexBufferMemory );
+		_vertexBuffer.CopyDataToBuffer( bufferData, sizeof( VertexColor ) * 3 );
 	}
 
 	void Vulkan::Draw()

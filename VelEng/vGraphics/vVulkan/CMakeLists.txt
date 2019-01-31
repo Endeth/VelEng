@@ -1,6 +1,7 @@
 set(SOURCE
    ${SOURCE}
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkan.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanBuffer.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanCommands.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanCommon.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanDebug.cpp
@@ -14,6 +15,7 @@ set(SOURCE
 set(HEADERS
    ${HEADERS}
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkan.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanBuffer.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanCommands.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanCommon.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanDebug.h

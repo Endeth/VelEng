@@ -1,8 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.hpp>
-
-#include "vVulkanUtil.h"
+#include "vVulkanCommon.h"
 
 #ifdef _DEBUG
 #include "vVulkanDebug.h"
@@ -10,22 +8,6 @@
 
 namespace Vel
 {
-    class VulkanCommands
-    {
-    public:
-        void CreateCommandPool( VkDevice device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags = 0 );
-        void CreateCommandBuffer( const VkDevice *device, uint32_t cmdBuf, const VkCommandBufferAllocateInfo *cmdBufInfo );
-
-		void Cleanup();
-
-        void BeginCommandBuffer( uint32_t cmdBuf, VkCommandBufferBeginInfo *cmdBeginInfo = nullptr );
-        void EndCommandBuffer( uint32_t cmdBuf );
-
-        void SubmitCommandBuffer( const VkQueue &queue, const VkCommandBuffer *cmdBuffers, const VkSubmitInfo *submitInfo = nullptr, const VkFence &fence = VK_NULL_HANDLE );
-
-        void ResetPool();
-
-        VkCommandPool _pool; //TODO more for threads
-        std::vector<VkCommandBuffer> _buffers;
-    };
+	void CreateCommandPool( VkCommandPoolCreateFlags createFlags, uint32_t queueIndex, VkCommandPool *cmdPool );
+	void AllocateCommandBuffers( uint32_t count, VkCommandBuffer *buffers, VkCommandPool cmdPool, VkCommandBufferLevel level );
 }
