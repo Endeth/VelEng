@@ -47,7 +47,7 @@ namespace Vel
 		CheckResult( vkCreateRenderPass( VulkanCommon::Device, &renderPassCreateInfo, nullptr, &_renderPass ), "failed to create renderpass" );
 	}
 
-	void VulkanRenderPass::CreatePipeline()
+	void VulkanRenderPass::CreatePipeline( VkDescriptorSetLayout dscSetLayout, VkPipelineLayout &_pipelineLayout )
 	{
 		VkPipelineCacheCreateInfo pipelineCacheCreateInfo;
 		pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
@@ -139,7 +139,7 @@ namespace Vel
 		rasterizationStateInfo.rasterizerDiscardEnable = VK_FALSE;
 		rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizationStateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		rasterizationStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		rasterizationStateInfo.depthBiasEnable = VK_FALSE;
 		rasterizationStateInfo.depthBiasConstantFactor = 0.f;
 		rasterizationStateInfo.depthBiasClamp = 0.f;
@@ -156,21 +156,6 @@ namespace Vel
 		multisampleStateInfo.pSampleMask = nullptr;
 		multisampleStateInfo.alphaToCoverageEnable = VK_FALSE;
 		multisampleStateInfo.alphaToOneEnable = VK_FALSE;
-
-		/*
-		VkPipelineDepthStencilStateCreateInfo depthStencilStateInfo;
-		depthStencilStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencilStateInfo.pNext = nullptr;
-		depthStencilStateInfo.flags = 0;
-		depthStencilStateInfo.depthTestEnable = VK_TRUE;
-		depthStencilStateInfo.depthWriteEnable = VK_TRUE;
-		depthStencilStateInfo.depthCompareOp = VK_COMPARE_OP_ALWAYS;
-		depthStencilStateInfo.depthBoundsTestEnable = VK_FALSE;
-		depthStencilStateInfo.stencilTestEnable = VK_FALSE;
-		depthStencilStateInfo.front = VkStencilOpState();
-		depthStencilStateInfo.back = VkStencilOpState();
-		depthStencilStateInfo.minDepthBounds = 0.0f;
-		depthStencilStateInfo.maxDepthBounds = 1.0f;*/
 
 		VkPipelineColorBlendAttachmentState colorBlendAttachmentState;
 		colorBlendAttachmentState.blendEnable = VK_FALSE;
@@ -203,16 +188,18 @@ namespace Vel
 		dynamicStateInfo.pDynamicStates = nullptr;
 
 		VkPipelineLayout pipelineLayout;
+
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
 		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutCreateInfo.pNext = nullptr;
 		pipelineLayoutCreateInfo.flags = 0;
-		pipelineLayoutCreateInfo.setLayoutCount = 0;
-		pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+		pipelineLayoutCreateInfo.setLayoutCount = 1;
+		pipelineLayoutCreateInfo.pSetLayouts = &dscSetLayout;
 		pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 		pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 
 		CheckResult( vkCreatePipelineLayout( VulkanCommon::Device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout ), "failed to create pipeline layout" );
+		_pipelineLayout = pipelineLayout;
 
 		VkGraphicsPipelineCreateInfo createInfo;
 		createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -236,8 +223,6 @@ namespace Vel
 		createInfo.basePipelineIndex = -1;
 
 		vkCreateGraphicsPipelines( VulkanCommon::Device, _pipelineCache, 1, &createInfo, nullptr, &_graphicsPipeline );
-		vkDestroyPipelineLayout( VulkanCommon::Device, pipelineLayout, nullptr );
-		pipelineLayout = VK_NULL_HANDLE;
 		vkDestroyShaderModule( VulkanCommon::Device, vertexShaderModule, nullptr );
 		vkDestroyShaderModule( VulkanCommon::Device, fragmentShaderModule, nullptr );
 		vertexShaderModule = VK_NULL_HANDLE;
@@ -247,17 +232,23 @@ namespace Vel
 	void VulkanRenderPass::CreateFramebuffers( const std::vector<VulkanImage> &images, glm::i32vec2 size )
 	{
 		for( auto &image : images )
-			_framebuffers.push_back( VulkanFramebuffer( _renderPass, std::vector<VulkanImage>( { image } ), size ) ); //TODO make this hack right
+			_framebuffers.push_back( VulkanFramebuffer( _renderPass, std::vector<VulkanImage>( { image } ), size ) ); //TODO make this hack right, maybe func that gets all VkImages from VulkanImage[]
 	}
+
 
 	void VulkanRenderPass::Cleanup()
 	{
 		for( auto &framebuffer : _framebuffers )
 			framebuffer.Cleanup();
 
+		//vkFreeDescriptorSets( VulkanCommon::Device, _descriptorSet, nullptr );
 		vkDestroyPipeline( VulkanCommon::Device, _graphicsPipeline, nullptr );
 		vkDestroyPipelineCache( VulkanCommon::Device, _pipelineCache, nullptr );
 		vkDestroyRenderPass( VulkanCommon::Device, _renderPass, nullptr );
+		_descriptorSet = VK_NULL_HANDLE;
+		_graphicsPipeline = VK_NULL_HANDLE;
+		_pipelineCache = VK_NULL_HANDLE;
+		_renderPass = VK_NULL_HANDLE;
 	}
 
 	VkShaderModule VulkanRenderPass::CreateShaderModule( const char *filepath )

@@ -19,20 +19,16 @@ namespace Vel
     class VulkanRenderPass
     {
     public:
-		VulkanRenderPass() :
-			_renderPass( VK_NULL_HANDLE ),
-			_graphicsPipeline( VK_NULL_HANDLE )
-		{}
-
 		void Create();
-		void CreatePipeline();
+		void CreatePipeline( VkDescriptorSetLayout dscSetLayout, VkPipelineLayout &_pipelineLayout );
 		void CreateFramebuffers( const std::vector<VulkanImage> &images, glm::i32vec2 size );
 		void Cleanup();
 
 		VkRenderPass _renderPass;
 		std::vector<VulkanFramebuffer> _framebuffers;
-		VkPipeline _graphicsPipeline;
-		VkPipelineCache _pipelineCache;
+		VkPipeline _graphicsPipeline = VK_NULL_HANDLE;
+		VkPipelineCache _pipelineCache = VK_NULL_HANDLE;
+		VkDescriptorSet _descriptorSet = VK_NULL_HANDLE;
 	private:
 		VkShaderModule CreateShaderModule( const char *filepath );
     };

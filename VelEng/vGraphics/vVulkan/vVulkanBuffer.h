@@ -8,7 +8,7 @@
 
 namespace Vel
 {
-	class VulkanBuffer
+	class VulkanBuffer //TODO inheritance (not too fast though)? not every buffer can be copied from etc
 	{
 	public:
 		void CreateBuffer( VkBufferCreateFlags flags, VkDeviceSize size, VkBufferUsageFlags usage, VkSharingMode sharingMode, const std::vector<uint32_t> &queueFamilyIndices );

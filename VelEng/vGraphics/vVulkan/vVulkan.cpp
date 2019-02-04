@@ -1,6 +1,11 @@
 #include "vVulkan.h"
 #include "vVulkanCommon.h"
 
+//TEST DIRECTIVES
+#define GLM_FORCE_RADIANS
+#include "external/glm/gtc/matrix_transform.hpp"
+#include <chrono>
+
 namespace Vel
 {
     void Vulkan::Init( GLFWwindow *window )
@@ -56,8 +61,11 @@ namespace Vel
 		CreateSurface( window );
 		CreateCommandBuffers();
 		CreateBuffer();
+		CreateUniformBuffers();
+		CreateDescriptorPool();
+		CreateDescriptorSets();
 		_renderPass.Create();
-		_renderPass.CreatePipeline();
+		_renderPass.CreatePipeline( _descriptorSetLayout, _pipelineLayout );
 		_renderPass.CreateFramebuffers( _swapchain._images, _swapchain._imageSize );
 		RecordCommandBuffers();
     }
@@ -69,9 +77,20 @@ namespace Vel
 #endif
 		_vertexBuffer.DestroyBuffer();
 		_stagingBuffer.DestroyBuffer();
+
+		for( auto &buffer : _uniformBuffers )
+			buffer.DestroyBuffer();
+
 		vkDestroyCommandPool( VulkanCommon::Device, _commandPoolGraphics, nullptr );
 		vkDestroyCommandPool( VulkanCommon::Device, _commandPoolTransfer, nullptr );
+		vkDestroyPipelineLayout( VulkanCommon::Device, _pipelineLayout, nullptr );
+		_pipelineLayout = VK_NULL_HANDLE;
+		_commandPoolTransfer = VK_NULL_HANDLE;
 		_commandPoolGraphics = VK_NULL_HANDLE;
+		vkDestroyDescriptorSetLayout( VulkanCommon::Device, _descriptorSetLayout, nullptr );
+		_descriptorSetLayout = VK_NULL_HANDLE;
+		vkDestroyDescriptorPool( VulkanCommon::Device, _descriptorPool, nullptr );
+		_descriptorPool = VK_NULL_HANDLE;
 
 		_swapchain.Cleanup();
 		_renderPass.Cleanup();
@@ -145,12 +164,83 @@ namespace Vel
 			vkCmdBeginRenderPass( _commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 			vkCmdBindPipeline( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _renderPass._graphicsPipeline );
 			vkCmdBindVertexBuffers( _commandBuffers[i], 0, 1, vertexBuffers, offsets );
+			vkCmdBindDescriptorSets( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr );
 			vkCmdDraw( _commandBuffers[i], 3, 1, 0, 0 );
 			vkCmdEndRenderPass( _commandBuffers[i] );
 
 			//vkCmdClearColorImage( _commandBuffers[i], _swapchain._images[i].Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &color, 1, &range );
 
 			CheckResult( vkEndCommandBuffer( _commandBuffers[i] ), "failed to end command buffer" );
+		}
+	}
+
+	void Vulkan::CreateDescriptorPool()
+	{
+		VkDescriptorSetLayoutBinding descriptorSetLayoutBinding;
+		descriptorSetLayoutBinding.binding = 0;
+		descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorSetLayoutBinding.descriptorCount = 1;
+		descriptorSetLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
+
+		VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo;
+		descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptorSetLayoutCreateInfo.pNext = nullptr;
+		descriptorSetLayoutCreateInfo.flags = 0;
+		descriptorSetLayoutCreateInfo.bindingCount = 1;
+		descriptorSetLayoutCreateInfo.pBindings = &descriptorSetLayoutBinding;
+
+		CheckResult( vkCreateDescriptorSetLayout( VulkanCommon::Device, &descriptorSetLayoutCreateInfo, nullptr, &_descriptorSetLayout ), "failed to create descriptor set" ); //TODO move this to a place where it can be reused
+
+		VkDescriptorPoolSize descriptorPoolSize;
+		descriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorPoolSize.descriptorCount = static_cast<uint32_t>( _swapchain._images.size() );
+
+		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
+		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		descriptorPoolCreateInfo.pNext = nullptr;
+		descriptorPoolCreateInfo.flags = 0;
+		descriptorPoolCreateInfo.maxSets = static_cast<uint32_t>( _swapchain._images.size() );
+		descriptorPoolCreateInfo.poolSizeCount = 1;
+		descriptorPoolCreateInfo.pPoolSizes = &descriptorPoolSize;
+
+		CheckResult( vkCreateDescriptorPool( VulkanCommon::Device, &descriptorPoolCreateInfo, nullptr, &_descriptorPool ), "failed to create descriptor pool" );
+	}
+
+	void Vulkan::CreateDescriptorSets()
+	{
+		std::vector<VkDescriptorSetLayout> layouts( _swapchain._images.size(), _descriptorSetLayout );
+		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
+		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		descriptorSetAllocateInfo.pNext = nullptr;
+		descriptorSetAllocateInfo.descriptorPool = _descriptorPool;
+		descriptorSetAllocateInfo.descriptorSetCount = static_cast<uint32_t>( _swapchain._images.size() );
+		descriptorSetAllocateInfo.pSetLayouts = layouts.data();
+
+		_descriptorSets.resize( _swapchain._images.size() );
+		CheckResult( vkAllocateDescriptorSets( VulkanCommon::Device, &descriptorSetAllocateInfo, _descriptorSets.data() ), "failed to create descriptor sets" );
+
+		VkDescriptorBufferInfo descriptorBufferInfo;
+		descriptorBufferInfo.offset = 0;
+		descriptorBufferInfo.range = sizeof( CameraMatrices );
+
+		VkWriteDescriptorSet  descriptorWrite;
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.pNext = nullptr;
+		descriptorWrite.dstBinding = 0;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.pImageInfo = nullptr;
+		descriptorWrite.pBufferInfo = &descriptorBufferInfo;
+		descriptorWrite.pTexelBufferView = nullptr;
+
+		for( size_t i = 0; i < _swapchain._images.size(); ++i )
+		{
+			descriptorBufferInfo.buffer = _uniformBuffers[i]._buffer;
+			descriptorWrite.dstSet = _descriptorSets[i];
+
+			vkUpdateDescriptorSets( VulkanCommon::Device, 1, &descriptorWrite, 0, nullptr );
 		}
 	}
 
@@ -177,11 +267,45 @@ namespace Vel
 		CopyBuffer( _stagingBuffer, _vertexBuffer, sizeof( VertexColor ) * 3, _commandPoolTransfer, _deviceManager._tQueue );
 	}
 
+	void Vulkan::CreateUniformBuffers()
+	{
+		_uniformBuffers.resize( _swapchain._images.size() );
+		
+		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		std::vector<uint32_t> queueFamilyIndices( { _deviceManager._queueFamilyIndices.transfer, _deviceManager._queueFamilyIndices.graphics } );
+		
+		for( auto &buffer : _uniformBuffers )
+			buffer.CreateBuffer( 0, sizeof( CameraMatrices ), usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
+
+		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _uniformBuffers.front()._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+
+		for( auto &buffer : _uniformBuffers )
+			buffer.AllocateMemory( memTypeIndex );
+	}
+
+	void Vulkan::UpdateUniformBuffers( uint32_t imageIndex )
+	{
+		static auto startTime = std::chrono::high_resolution_clock::now();
+
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		float time = std::chrono::duration<float, std::chrono::seconds::period>( currentTime - startTime ).count();
+		
+		CameraMatrices cam;
+		cam.Model = glm::rotate( glm::mat4( 1.f ), time * glm::radians( 90.f ), glm::vec3( 0.f, 0.f, 1.f ) );
+		cam.View = glm::lookAt( glm::vec3( 2.f, 2.f, 2.f ), glm::vec3( 0.f, 0.f, 0.f ), glm::vec3( 0.f, 0.f, 1.f ) );
+		cam.Projection = glm::perspective( glm::radians( 45.f ), 1.f, 0.1f, 10.f );
+		cam.Projection[1][1] *= -1; //inverting Y (glm was designed for OpenGL)
+		
+		_uniformBuffers[imageIndex].CopyDataToBuffer( &cam, sizeof( CameraMatrices ) );
+	}
+
 	void Vulkan::Draw()
 	{
 		uint32_t imageIndex = 0;
 		CheckResult( vkAcquireNextImageKHR( VulkanCommon::Device, _swapchain._swapchain, 0ull, _deviceManager._semaphores[0].acquireComplete, VK_NULL_HANDLE, &imageIndex ), "failed to acquire next image" );
 
+		UpdateUniformBuffers( imageIndex );
+		
 		VkPipelineStageFlags submitStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		VkSubmitInfo submitInfo;
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
