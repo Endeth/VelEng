@@ -77,6 +77,7 @@ namespace Vel
 #endif
 		_vertexBuffer.DestroyBuffer();
 		_stagingBuffer.DestroyBuffer();
+		_indexBuffer.DestroyBuffer();
 
 		for( auto &buffer : _uniformBuffers )
 			buffer.DestroyBuffer();
@@ -164,8 +165,9 @@ namespace Vel
 			vkCmdBeginRenderPass( _commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 			vkCmdBindPipeline( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _renderPass._graphicsPipeline );
 			vkCmdBindVertexBuffers( _commandBuffers[i], 0, 1, vertexBuffers, offsets );
+			vkCmdBindIndexBuffer( _commandBuffers[i], _indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32 );
 			vkCmdBindDescriptorSets( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr );
-			vkCmdDraw( _commandBuffers[i], 3, 1, 0, 0 );
+			vkCmdDrawIndexed( _commandBuffers[i], 6, 1, 0, 0, 0 );
 			vkCmdEndRenderPass( _commandBuffers[i] );
 
 			//vkCmdClearColorImage( _commandBuffers[i], _swapchain._images[i].Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &color, 1, &range );
@@ -246,25 +248,36 @@ namespace Vel
 
 	void Vulkan::CreateBuffer()
 	{
-		VertexColor bufferData[3] = {
-			VertexColor( glm::vec3( -1.f, -1.f, 0.f), glm::vec4( 1.f, 0.f, 0.f, 1.f ) ),
-			VertexColor( glm::vec3( 1.f, 1.f, 0.f ), glm::vec4( 0.f, 1.f, 0.f, 1.f ) ),
-			VertexColor( glm::vec3( -1.f, 1.f, 0.f ), glm::vec4( 0.f, 0.f, 1.f, 1.f ) ),
+		VertexColor bufferData[4] = {
+			VertexColor( glm::vec3( -1.f, -1.f, 0.f), glm::vec4( 1.f, 0.0f, 0.5f, 1.f ) ),
+			VertexColor( glm::vec3( 1.f, 1.f, 0.f ), glm::vec4( 0.f, 0.5f, 1.f, 1.f ) ),
+			VertexColor( glm::vec3( -1.f, 1.f, 0.f ), glm::vec4( 0.f, 1.f, 0.5f, 1.f ) ),
+			VertexColor( glm::vec3( 1.f, -1.f, 0.f ), glm::vec4( 1.f, 0.5f, 0.f, 1.f ) ),
 		};
+
+		uint32_t indices[6] = { 0, 1, 2, 3, 1, 0 };
 
 		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		std::vector<uint32_t> queueFamilyIndices( { _deviceManager._queueFamilyIndices.transfer, _deviceManager._queueFamilyIndices.graphics } );
-		_stagingBuffer.CreateBuffer( 0, sizeof( VertexColor ) * 3, usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
+		_stagingBuffer.CreateBuffer( 0, sizeof( bufferData ), usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
 		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _stagingBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
 		_stagingBuffer.AllocateMemory( memTypeIndex );
-		_stagingBuffer.CopyDataToBuffer( bufferData, sizeof( VertexColor ) * 3 );
+		_stagingBuffer.CopyDataToBuffer( bufferData, sizeof( bufferData ) );
 
 		usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-		_vertexBuffer.CreateBuffer( 0, sizeof( VertexColor ) * 3, usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
+		_vertexBuffer.CreateBuffer( 0, sizeof( bufferData ), usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
 		memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _vertexBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 		_vertexBuffer.AllocateMemory( memTypeIndex );
 
-		CopyBuffer( _stagingBuffer, _vertexBuffer, sizeof( VertexColor ) * 3, _commandPoolTransfer, _deviceManager._tQueue );
+		CopyBuffer( _stagingBuffer, _vertexBuffer, sizeof( bufferData ), _commandPoolTransfer, _deviceManager._tQueue );
+
+		usageFlags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;;
+		_indexBuffer.CreateBuffer( 0, sizeof( indices ), usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
+		memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _indexBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ); //TODO might move this to createbuffer
+		_indexBuffer.AllocateMemory( memTypeIndex );
+
+		_stagingBuffer.CopyDataToBuffer( indices, sizeof( indices ) );
+		CopyBuffer( _stagingBuffer, _indexBuffer, sizeof( indices ), _commandPoolTransfer, _deviceManager._tQueue );
 	}
 
 	void Vulkan::CreateUniformBuffers()

@@ -44,6 +44,7 @@ namespace Vel
 		std::vector<VkCommandBuffer> _commandBuffers;
 		VkCommandBuffer _transferCommand;
 		VulkanBuffer _vertexBuffer;
+		VulkanBuffer _indexBuffer;
 		VulkanBuffer _stagingBuffer;
 		std::vector<VulkanBuffer> _uniformBuffers;
 		VkPipelineLayout _pipelineLayout; //TODO nasty hack to bind descriptor sets
