@@ -88,11 +88,15 @@ namespace Vel
 		vertexInputBindingDescription.stride = sizeof(VertexColor);
 		vertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		VkVertexInputAttributeDescription vertexInputAttributeDescription;
-		vertexInputAttributeDescription.location = 0;
-		vertexInputAttributeDescription.binding = 0;
-		vertexInputAttributeDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertexInputAttributeDescription.offset = offsetof( struct VertexColor, position.x );
+		VkVertexInputAttributeDescription vertexInputAttributeDescription[2];
+		vertexInputAttributeDescription[0].location = 0;
+		vertexInputAttributeDescription[0].binding = 0;
+		vertexInputAttributeDescription[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputAttributeDescription[0].offset = offsetof( struct VertexColor, position.x );
+		vertexInputAttributeDescription[1].location = 1;
+		vertexInputAttributeDescription[1].binding = 0;
+		vertexInputAttributeDescription[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		vertexInputAttributeDescription[1].offset = offsetof( struct VertexColor, color.r );
 
 		VkPipelineVertexInputStateCreateInfo vertexInputStateInfo;
 		vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -100,8 +104,8 @@ namespace Vel
 		vertexInputStateInfo.flags = 0;
 		vertexInputStateInfo.vertexBindingDescriptionCount = 1;
 		vertexInputStateInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
-		vertexInputStateInfo.vertexAttributeDescriptionCount = 1;
-		vertexInputStateInfo.pVertexAttributeDescriptions = &vertexInputAttributeDescription;
+		vertexInputStateInfo.vertexAttributeDescriptionCount = 2;
+		vertexInputStateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescription;
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
 		inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
