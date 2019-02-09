@@ -34,5 +34,11 @@ namespace Vel
 		glm::i32vec2 _imageSize;
         uint32_t _imageCount;
         std::vector<VulkanImage> _images;
+	private:
+		uint32_t GetImagesCount( VkSurfaceCapabilitiesKHR &capabilities );
+		VkExtent2D GetAppropriateExtent( VkSurfaceCapabilitiesKHR &capabilities );
+		VkSurfaceFormatKHR FindAppropriateFormat( std::vector<VkSurfaceFormatKHR> &formats );
+		VkImageUsageFlags FindAppropriateUsageFlags( VkSurfaceCapabilitiesKHR &capabilities );
+		VkPresentModeKHR FindAppropriatePresentMode( std::vector<VkPresentModeKHR> &presentModes );
     };
 }

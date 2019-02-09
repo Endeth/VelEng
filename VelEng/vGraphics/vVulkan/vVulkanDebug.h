@@ -33,7 +33,7 @@ namespace Vel
         void DisableCallback();
 
         void SetLayersExtensions( std::vector<VkExtensionProperties>&& extensions ) { _layersExtensions = extensions; }
-		void SetValidationLayers (std::vector<const char*> &validationLayers = std::vector<const char*>( { "VK_LAYER_LUNARG_standard_validation", "VK_LAYER_LUNARG_core_validation" } ) ); //"VK_LAYER_LUNARG_standard_validation", "VK_LAYER_LUNARG_core_validation" 
+		void SetValidationLayers( std::vector<const char*> &validationLayers = std::vector<const char*>( { "VK_LAYER_LUNARG_standard_validation" } ) );
 
         const std::vector<const char*>& GetValidationLayers() { return _validationLayers; }
         const std::vector<VkExtensionProperties>& GetLayersExtensions() { return _layersExtensions; }

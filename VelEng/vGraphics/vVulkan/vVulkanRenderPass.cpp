@@ -113,14 +113,14 @@ namespace Vel
 		VkViewport viewport; //TODO size of surface
 		viewport.x = 0.f;
 		viewport.y = 0.f;
-		viewport.width = 500.f;
-		viewport.height = 500.f;
+		viewport.width = static_cast<float>( VulkanOptions::WindowSize.x );
+		viewport.height = static_cast<float>( VulkanOptions::WindowSize.y );
 		viewport.minDepth = 0.f;
 		viewport.maxDepth = 1.f;
 
 		VkRect2D scissor;
 		scissor.offset = { 0, 0 };
-		scissor.extent = { 500, 500 }; //TODO size of surface
+		scissor.extent = { static_cast<uint32_t>( VulkanOptions::WindowSize.x ), static_cast<uint32_t>( VulkanOptions::WindowSize.y ) }; //TODO size of surface
 
 		VkPipelineViewportStateCreateInfo viewportStateInfo;
 		viewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

@@ -141,7 +141,7 @@ namespace Vel
 
 		VkRect2D renderArea;
 		renderArea.offset = { 0, 0 };
-		renderArea.extent = { 500, 500 };
+		renderArea.extent = { static_cast<uint32_t>( VulkanOptions::WindowSize.x ), static_cast<uint32_t>( VulkanOptions::WindowSize.y ) };
 
 		uint32_t imageCount = _swapchain._images.size();
 

@@ -2,6 +2,7 @@
 
 namespace Vel
 {
+	glm::i32vec2 VulkanOptions::WindowSize = { 0, 0 };
 	VkInstance VulkanCommon::Instance = VK_NULL_HANDLE;
 	VkDevice VulkanCommon::Device = VK_NULL_HANDLE;
 	VkPhysicalDevice VulkanCommon::PhysicalDevice = VK_NULL_HANDLE;
