@@ -30,6 +30,7 @@ namespace Vel
 		void CreateBuffer();
 		void CreateUniformBuffers();
 		void UpdateUniformBuffers( uint32_t imageIndex );
+		void UpdateCamera( glm::mat4 &view, glm::mat4 &proj );
 		void Draw();
 
         VulkanDeviceManager _deviceManager;
@@ -50,5 +51,6 @@ namespace Vel
 		VkPipelineLayout _pipelineLayout; //TODO nasty hack to bind descriptor sets
 
         bool _enableValidationLayers = false;
+		CameraMatrices _internalCamera;
     };
 }

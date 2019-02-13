@@ -72,9 +72,7 @@ namespace Vel
 
     void Vulkan::Destroy()
     {
-#ifdef _DEBUG
-        VulkanDebug::Instance()->DisableCallback();
-#endif
+		//TODO check if commands are still being executed
 		_vertexBuffer.DestroyBuffer();
 		_stagingBuffer.DestroyBuffer();
 		_indexBuffer.DestroyBuffer();
@@ -96,6 +94,10 @@ namespace Vel
 		_swapchain.Cleanup();
 		_renderPass.Cleanup();
 		_deviceManager.Destroy();
+
+#ifdef _DEBUG
+		VulkanDebug::Instance()->DisableCallback();
+#endif
 
         vkDestroyInstance( VulkanCommon::Instance, nullptr );
 		VulkanCommon::Instance = VK_NULL_HANDLE;
@@ -167,7 +169,7 @@ namespace Vel
 			vkCmdBindVertexBuffers( _commandBuffers[i], 0, 1, vertexBuffers, offsets );
 			vkCmdBindIndexBuffer( _commandBuffers[i], _indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32 );
 			vkCmdBindDescriptorSets( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr );
-			vkCmdDrawIndexed( _commandBuffers[i], 6, 1, 0, 0, 0 );
+			vkCmdDrawIndexed( _commandBuffers[i], 12, 1, 0, 0, 0 );
 			vkCmdEndRenderPass( _commandBuffers[i] );
 
 			//vkCmdClearColorImage( _commandBuffers[i], _swapchain._images[i].Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &color, 1, &range );
@@ -248,14 +250,22 @@ namespace Vel
 
 	void Vulkan::CreateBuffer()
 	{
-		VertexColor bufferData[4] = {
+		VertexColor bufferData[8] = {
 			VertexColor( glm::vec3( -1.f, -1.f, 0.f), glm::vec4( 1.f, 0.0f, 0.5f, 1.f ) ),
 			VertexColor( glm::vec3( 1.f, 1.f, 0.f ), glm::vec4( 0.f, 0.5f, 1.f, 1.f ) ),
 			VertexColor( glm::vec3( -1.f, 1.f, 0.f ), glm::vec4( 0.f, 1.f, 0.5f, 1.f ) ),
 			VertexColor( glm::vec3( 1.f, -1.f, 0.f ), glm::vec4( 1.f, 0.5f, 0.f, 1.f ) ),
+
+			VertexColor( glm::vec3( -1.5f, -1.5f, -2.f ), glm::vec4( 1.f, 0.0f, 0.0f, 1.f ) ),
+			VertexColor( glm::vec3( 1.5f, 1.5f, -2.f ), glm::vec4( 0.f, 1.f, 0.f, 1.f ) ),
+			VertexColor( glm::vec3( -1.5f, 1.5f, -2.f ), glm::vec4( 0.f, 0.f, 1.f, 1.f ) ),
+			VertexColor( glm::vec3( 1.5f, -1.5f, -2.f ), glm::vec4( 1.f, 0.5f, 0.f, 1.f ) )
 		};
 
-		uint32_t indices[6] = { 0, 1, 2, 3, 1, 0 };
+		uint32_t indices[12] = {
+			0, 1, 2, 3, 1, 0,
+			4, 5, 6, 7, 5, 4
+		};
 
 		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		std::vector<uint32_t> queueFamilyIndices( { _deviceManager._queueFamilyIndices.transfer, _deviceManager._queueFamilyIndices.graphics } );
@@ -302,14 +312,17 @@ namespace Vel
 
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		float time = std::chrono::duration<float, std::chrono::seconds::period>( currentTime - startTime ).count();
+
+		_internalCamera.Model = glm::rotate( glm::mat4( 1.f ), time * glm::radians( 90.f ), glm::vec3( 0.f, 0.f, 1.f ) );
 		
-		CameraMatrices cam;
-		cam.Model = glm::rotate( glm::mat4( 1.f ), time * glm::radians( 90.f ), glm::vec3( 0.f, 0.f, 1.f ) );
-		cam.View = glm::lookAt( glm::vec3( 1.f, 1.f, 6.f ), glm::vec3( 0.f, 0.f, 0.f ), glm::vec3( 0.f, 0.f, 1.f ) );
-		cam.Projection = glm::perspective( glm::radians( 45.f ), 1.f, 0.1f, 10.f );
-		cam.Projection[1][1] *= -1; //inverting Y (glm was designed for OpenGL)
-		
-		_uniformBuffers[imageIndex].CopyDataToBuffer( &cam, sizeof( CameraMatrices ) );
+		_uniformBuffers[imageIndex].CopyDataToBuffer( &_internalCamera, sizeof( CameraMatrices ) );
+	}
+
+	void Vulkan::UpdateCamera( glm::mat4 & view, glm::mat4 & proj )
+	{
+		_internalCamera.View = view;
+		_internalCamera.Projection = proj;
+		_internalCamera.Projection[1][1] *= -1; //inverting Y (glm was designed for OpenGL)
 	}
 
 	void Vulkan::Draw()
@@ -344,7 +357,7 @@ namespace Vel
 		presentInfo.pResults = nullptr;
 
 		CheckResult( vkQueuePresentKHR( _deviceManager._gQueue, &presentInfo ), "failed to queue present" );
-		CheckResult( vkDeviceWaitIdle( VulkanCommon::Device ), "failed to device wait idle" );
+		CheckResult( vkDeviceWaitIdle( VulkanCommon::Device ), "failed to device wait idle" ); //TODO work on max 2 frames at the same time
 	}
 }
 

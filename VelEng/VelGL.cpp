@@ -172,9 +172,9 @@ namespace Vel
 	//adjusts camera and vp matrices in shaders, then renders scenes
 	void Vel::VelEng::RenderFrame()
 	{	
-		/*auto vMat = _mainCamera->GetViewMatrix(); //TODO adjust uniforms in signal
-		auto pMat = _mainCamera->GetProjectionMatrix();
-
+		auto viewMat = _mainCamera->GetViewMatrix(); //TODO adjust uniforms in signal
+		auto projMat = _mainCamera->GetProjectionMatrix();
+		/*
 		auto gPassShd = GetShader("GPass"); //TODO separate from deferred. Shaders inf renderer?
 		gPassShd->Activate();
 		gPassShd->SetUniformsValue(Uniform<glm::mat4>{ "V", vMat });
@@ -198,6 +198,7 @@ namespace Vel
 		skybox->Deactivate();
 
 		RenderScenes();*/
+		_vulkan.UpdateCamera( viewMat, projMat );
 		_vulkan.Draw();
 	}
 
