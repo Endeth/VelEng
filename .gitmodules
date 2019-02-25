@@ -1,0 +1,3 @@
+[submodule "veleng/external/stb"]
+	path = veleng/external/stb
+	url = https://github.com/nothings/stb.git
