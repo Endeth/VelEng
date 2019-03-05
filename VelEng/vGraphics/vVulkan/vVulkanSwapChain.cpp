@@ -68,10 +68,10 @@ namespace Vel
 
 		for( int i = 0; i < _imageCount; ++i )
 		{
-			_images[i].Image = swapchainImages[i];
-			imageViewCreateInfo.image = _images[i].Image;
+			_images[i]._image = swapchainImages[i]; //TODO constructor based on VkImage?
+			imageViewCreateInfo.image = _images[i]._image;
 
-			CheckResult( vkCreateImageView( VulkanCommon::Device, &imageViewCreateInfo, nullptr, &_images[i].ImageView ), "failed to create image view" );
+			CheckResult( vkCreateImageView( VulkanCommon::Device, &imageViewCreateInfo, nullptr, &_images[i]._imageView ), "failed to create image view" );
 		}
 		delete[] swapchainImages;
     }
@@ -88,13 +88,11 @@ namespace Vel
 
     void VulkanSwapchain::Cleanup()
     {
-		for( auto &image : _images )
-			image.DestroyImageView();
-
         if ( _swapchain != VK_NULL_HANDLE )
         {
-            //for ( uint32_t i = 0; i < _imageCount; i++ )
-                //vkDestroyImageView( _deviceManager, _buffers[i].view, nullptr );
+            for ( uint32_t i = 0; i < _imageCount; i++ )
+                vkDestroyImageView( VulkanCommon::Device, _images[i]._imageView, nullptr );
+
 			vkDestroySwapchainKHR( VulkanCommon::Device, _swapchain, nullptr );
         }
         if ( _surface != VK_NULL_HANDLE )

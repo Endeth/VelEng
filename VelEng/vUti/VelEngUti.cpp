@@ -2,7 +2,7 @@
 
 #include "VelEngUti.h"
 
-Vel::Mouse::Mouse(int x, int y) : _mouseReset(false)
+Vel::Mouse::Mouse( int x, int y ) : _mouseReset( false ), _diff( 0, 0 )
 {
 	_oldPosition = glm::ivec2{ x, y };
 	_currentPosition = glm::ivec2{ x, y };

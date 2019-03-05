@@ -94,18 +94,22 @@ namespace Vel
 
 		VkVertexInputBindingDescription vertexInputBindingDescription;
 		vertexInputBindingDescription.binding = 0;
-		vertexInputBindingDescription.stride = sizeof(VertexColor);
+		vertexInputBindingDescription.stride = sizeof(VertexUVColor);
 		vertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		VkVertexInputAttributeDescription vertexInputAttributeDescription[2];
+		VkVertexInputAttributeDescription vertexInputAttributeDescription[3];
 		vertexInputAttributeDescription[0].location = 0;
 		vertexInputAttributeDescription[0].binding = 0;
 		vertexInputAttributeDescription[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertexInputAttributeDescription[0].offset = offsetof( struct VertexColor, position.x );
+		vertexInputAttributeDescription[0].offset = offsetof( struct VertexUVColor, position );
 		vertexInputAttributeDescription[1].location = 1;
 		vertexInputAttributeDescription[1].binding = 0;
 		vertexInputAttributeDescription[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		vertexInputAttributeDescription[1].offset = offsetof( struct VertexColor, color.r );
+		vertexInputAttributeDescription[1].offset = offsetof( struct VertexUVColor, color );
+		vertexInputAttributeDescription[2].location = 2;
+		vertexInputAttributeDescription[2].binding = 0;
+		vertexInputAttributeDescription[2].format = VK_FORMAT_R32G32_SFLOAT;
+		vertexInputAttributeDescription[2].offset = offsetof( struct VertexUVColor, UV );
 
 		VkPipelineVertexInputStateCreateInfo vertexInputStateInfo;
 		vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -113,7 +117,7 @@ namespace Vel
 		vertexInputStateInfo.flags = 0;
 		vertexInputStateInfo.vertexBindingDescriptionCount = 1;
 		vertexInputStateInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
-		vertexInputStateInfo.vertexAttributeDescriptionCount = 2;
+		vertexInputStateInfo.vertexAttributeDescriptionCount = 3;
 		vertexInputStateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescription;
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
@@ -301,7 +305,7 @@ namespace Vel
 		std::vector<VkImageView> attachements;
 		for( auto &img : images )
 		{
-			attachements.push_back( img.ImageView );
+			attachements.push_back( img._imageView );
 		}
 
 		VkFramebufferCreateInfo framebufferCreateInfo;

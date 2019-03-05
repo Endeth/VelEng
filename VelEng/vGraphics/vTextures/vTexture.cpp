@@ -1,4 +1,3 @@
-#include "external/SOIL/SOIL.h"
 #include "vTexture.h"
 
 namespace Vel

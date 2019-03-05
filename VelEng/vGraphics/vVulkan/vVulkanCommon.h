@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.hpp>
 #include "external/glm/common.hpp"
+#include "external/glm/glm.hpp"
+#include "external/glm/gtc/matrix_transform.hpp"
 
 #include "vVulkanUtil.h"
 #include "VelEngConfig.h"
@@ -18,23 +20,6 @@ namespace Vel
 	struct VulkanOptions
 	{
 		static glm::i32vec2 WindowSize;
-	};
-
-	struct VulkanImage
-	{
-		VkImage Image;
-		VkImageView ImageView;
-		VkSampler Sampler;
-		VkDeviceMemory Memory;
-
-		VulkanImage() :
-			Image( VK_NULL_HANDLE ),
-			ImageView( VK_NULL_HANDLE ),
-			Sampler( VK_NULL_HANDLE ),
-			Memory( VK_NULL_HANDLE )
-		{}
-
-		void DestroyImageView();
 	};
 
 	struct SwapchainSupportDetails

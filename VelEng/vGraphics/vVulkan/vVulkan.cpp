@@ -2,8 +2,6 @@
 #include "vVulkanCommon.h"
 
 //TEST DIRECTIVES
-#define GLM_FORCE_RADIANS
-#include "external/glm/gtc/matrix_transform.hpp"
 #include <chrono>
 
 namespace Vel
@@ -60,7 +58,10 @@ namespace Vel
 
 		CreateSurface( window );
 		CreateCommandBuffers();
+		CreateStagingBuffer();
 		CreateBuffer();
+		CreateImage();
+		Samplers.CreateSamplers();
 		CreateUniformBuffers();
 		CreateDescriptorPool();
 		CreateDescriptorSets();
@@ -73,12 +74,14 @@ namespace Vel
     void Vulkan::Destroy()
     {
 		//TODO check if commands are still being executed
-		_vertexBuffer.DestroyBuffer();
-		_stagingBuffer.DestroyBuffer();
-		_indexBuffer.DestroyBuffer();
+		_vertexBuffer.Destroy();
+		_stagingBuffer.Destroy();
+		_indexBuffer.Destroy();
+		Samplers.DestroySamplers();
+		_sampledImage.Destroy();
 
 		for( auto &buffer : _uniformBuffers )
-			buffer.DestroyBuffer();
+			buffer.Destroy();
 
 		vkDestroyCommandPool( VulkanCommon::Device, _commandPoolGraphics, nullptr );
 		vkDestroyCommandPool( VulkanCommon::Device, _commandPoolTransfer, nullptr );
@@ -159,20 +162,57 @@ namespace Vel
 		VkBuffer vertexBuffers[] = { _vertexBuffer._buffer };
 		VkDeviceSize offsets[] = { 0 };
 
+		VkImageSubresourceRange subresourceRange;
+		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subresourceRange.baseMipLevel = 0;
+		subresourceRange.levelCount = 1;
+		subresourceRange.baseArrayLayer = 0;
+		subresourceRange.layerCount = 1;
+
+		/*
+		VkImageMemoryBarrier barrierFromPresentToDraw;
+		barrierFromPresentToDraw.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrierFromPresentToDraw.pNext = nullptr;
+		barrierFromPresentToDraw.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		barrierFromPresentToDraw.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		barrierFromPresentToDraw.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		barrierFromPresentToDraw.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		barrierFromPresentToDraw.srcQueueFamilyIndex = 0;
+		barrierFromPresentToDraw.dstQueueFamilyIndex = 0;
+		barrierFromPresentToDraw.subresourceRange = subresourceRange;
+
+		VkImageMemoryBarrier barrierFromDrawToPresent;
+		barrierFromDrawToPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrierFromDrawToPresent.pNext = nullptr;
+		barrierFromDrawToPresent.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		barrierFromDrawToPresent.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		barrierFromDrawToPresent.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		barrierFromDrawToPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		barrierFromDrawToPresent.srcQueueFamilyIndex = 0;
+		barrierFromDrawToPresent.dstQueueFamilyIndex = 0;
+		barrierFromDrawToPresent.subresourceRange = subresourceRange; */
+
+
 		for( int i = 0; i < imageCount; ++i )
 		{
+			renderPassBeginInfo.framebuffer = _renderPass._framebuffers[i]._framebuffer;
+			//barrierFromPresentToDraw.image = _swapchain._images[i]._image; //TODO this is kind of a hack I guess
+			//barrierFromDrawToPresent.image = _swapchain._images[i]._image; //TODO this is kind of a hack I guess
+
 			CheckResult( vkBeginCommandBuffer( _commandBuffers[i], &beginInfo ), "failed to begin command buffer" );
 
-			renderPassBeginInfo.framebuffer = _renderPass._framebuffers[i]._framebuffer;
+			//vkCmdPipelineBarrier( _commandBuffers[i], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromPresentToDraw );
 			vkCmdBeginRenderPass( _commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 			vkCmdBindPipeline( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _renderPass._graphicsPipeline );
+
 			vkCmdBindVertexBuffers( _commandBuffers[i], 0, 1, vertexBuffers, offsets );
 			vkCmdBindIndexBuffer( _commandBuffers[i], _indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32 );
 			vkCmdBindDescriptorSets( _commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr );
-			vkCmdDrawIndexed( _commandBuffers[i], 12, 1, 0, 0, 0 );
-			vkCmdEndRenderPass( _commandBuffers[i] );
 
-			//vkCmdClearColorImage( _commandBuffers[i], _swapchain._images[i].Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &color, 1, &range );
+			vkCmdDrawIndexed( _commandBuffers[i], 12, 1, 0, 0, 0 );
+
+			vkCmdEndRenderPass( _commandBuffers[i] );
+			//vkCmdPipelineBarrier( _commandBuffers[i], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromDrawToPresent );
 
 			CheckResult( vkEndCommandBuffer( _commandBuffers[i] ), "failed to end command buffer" );
 		}
@@ -180,33 +220,41 @@ namespace Vel
 
 	void Vulkan::CreateDescriptorPool()
 	{
-		VkDescriptorSetLayoutBinding descriptorSetLayoutBinding;
-		descriptorSetLayoutBinding.binding = 0;
-		descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorSetLayoutBinding.descriptorCount = 1;
-		descriptorSetLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
+		std::array<VkDescriptorSetLayoutBinding, 2> descriptorSetsLayoutsBindings;
+		descriptorSetsLayoutsBindings[0].binding = 0;
+		descriptorSetsLayoutsBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorSetsLayoutsBindings[0].descriptorCount = 1;
+		descriptorSetsLayoutsBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		descriptorSetsLayoutsBindings[0].pImmutableSamplers = nullptr;
+
+		descriptorSetsLayoutsBindings[1].binding = 1;
+		descriptorSetsLayoutsBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorSetsLayoutsBindings[1].descriptorCount = 1;
+		descriptorSetsLayoutsBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptorSetsLayoutsBindings[1].pImmutableSamplers = nullptr;
 
 		VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo;
 		descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		descriptorSetLayoutCreateInfo.pNext = nullptr;
 		descriptorSetLayoutCreateInfo.flags = 0;
-		descriptorSetLayoutCreateInfo.bindingCount = 1;
-		descriptorSetLayoutCreateInfo.pBindings = &descriptorSetLayoutBinding;
+		descriptorSetLayoutCreateInfo.bindingCount = 2;
+		descriptorSetLayoutCreateInfo.pBindings = descriptorSetsLayoutsBindings.data();
 
 		CheckResult( vkCreateDescriptorSetLayout( VulkanCommon::Device, &descriptorSetLayoutCreateInfo, nullptr, &_descriptorSetLayout ), "failed to create descriptor set" ); //TODO move this to a place where it can be reused
 
-		VkDescriptorPoolSize descriptorPoolSize;
-		descriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorPoolSize.descriptorCount = static_cast<uint32_t>( _swapchain._images.size() );
+		std::array<VkDescriptorPoolSize, 2> descriptorPoolsSizes;
+		descriptorPoolsSizes[0].descriptorCount = static_cast<uint32_t>( _swapchain._images.size() );
+		descriptorPoolsSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorPoolsSizes[1].descriptorCount = static_cast<uint32_t>( _swapchain._images.size() );
+		descriptorPoolsSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
 		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		descriptorPoolCreateInfo.pNext = nullptr;
 		descriptorPoolCreateInfo.flags = 0;
 		descriptorPoolCreateInfo.maxSets = static_cast<uint32_t>( _swapchain._images.size() );
-		descriptorPoolCreateInfo.poolSizeCount = 1;
-		descriptorPoolCreateInfo.pPoolSizes = &descriptorPoolSize;
+		descriptorPoolCreateInfo.poolSizeCount = descriptorPoolsSizes.size();
+		descriptorPoolCreateInfo.pPoolSizes = descriptorPoolsSizes.data();
 
 		CheckResult( vkCreateDescriptorPool( VulkanCommon::Device, &descriptorPoolCreateInfo, nullptr, &_descriptorPool ), "failed to create descriptor pool" );
 	}
@@ -228,38 +276,64 @@ namespace Vel
 		descriptorBufferInfo.offset = 0;
 		descriptorBufferInfo.range = sizeof( CameraMatrices );
 
-		VkWriteDescriptorSet  descriptorWrite;
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.pNext = nullptr;
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.pImageInfo = nullptr;
-		descriptorWrite.pBufferInfo = &descriptorBufferInfo;
-		descriptorWrite.pTexelBufferView = nullptr;
+		VkDescriptorImageInfo descriptorImageInfo;
+		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		descriptorImageInfo.imageView = _sampledImage._imageView;
+		descriptorImageInfo.sampler = Samplers.GetSampler( VulkanSamplers::Type::BasicSampler );
+
+		std::array<VkWriteDescriptorSet, 2> writeDescriptorSets;
+		writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSets[0].pNext = nullptr;
+		writeDescriptorSets[0].dstBinding = 0;
+		writeDescriptorSets[0].dstArrayElement = 0;
+		writeDescriptorSets[0].descriptorCount = 1;
+		writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writeDescriptorSets[0].pImageInfo = nullptr;
+		writeDescriptorSets[0].pBufferInfo = &descriptorBufferInfo;
+		writeDescriptorSets[0].pTexelBufferView = nullptr;
+
+		writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSets[1].pNext = nullptr;
+		writeDescriptorSets[1].dstBinding = 1;
+		writeDescriptorSets[1].dstSet = nullptr;
+		writeDescriptorSets[1].dstArrayElement = 0;
+		writeDescriptorSets[1].descriptorCount = 1;
+		writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writeDescriptorSets[1].pImageInfo = &descriptorImageInfo;
+		writeDescriptorSets[1].pBufferInfo = nullptr;
+		writeDescriptorSets[1].pTexelBufferView = nullptr;
 
 		for( size_t i = 0; i < _swapchain._images.size(); ++i )
 		{
 			descriptorBufferInfo.buffer = _uniformBuffers[i]._buffer;
-			descriptorWrite.dstSet = _descriptorSets[i];
+			writeDescriptorSets[0].dstSet = _descriptorSets[i];
+			writeDescriptorSets[1].dstSet = _descriptorSets[i];
 
-			vkUpdateDescriptorSets( VulkanCommon::Device, 1, &descriptorWrite, 0, nullptr );
+			vkUpdateDescriptorSets( VulkanCommon::Device, static_cast<uint32_t>( writeDescriptorSets.size() ), writeDescriptorSets.data(), 0, nullptr );
 		}
+	}
+
+	void Vulkan::CreateStagingBuffer()
+	{
+		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		std::vector<uint32_t> queueFamilyIndices( { _deviceManager._queueFamilyIndices.transfer, _deviceManager._queueFamilyIndices.graphics } );
+		_stagingBuffer.CreateBuffer( 0, 1024 * 1024 * 4, usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices ); //TODO different size - current = size of 1024x1024 image with 4 channels
+		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _stagingBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+		_stagingBuffer.AllocateMemory( memTypeIndex );
 	}
 
 	void Vulkan::CreateBuffer()
 	{
-		VertexColor bufferData[8] = {
-			VertexColor( glm::vec3( -1.f, -1.f, 0.f), glm::vec4( 1.f, 0.0f, 0.5f, 1.f ) ),
-			VertexColor( glm::vec3( 1.f, 1.f, 0.f ), glm::vec4( 0.f, 0.5f, 1.f, 1.f ) ),
-			VertexColor( glm::vec3( -1.f, 1.f, 0.f ), glm::vec4( 0.f, 1.f, 0.5f, 1.f ) ),
-			VertexColor( glm::vec3( 1.f, -1.f, 0.f ), glm::vec4( 1.f, 0.5f, 0.f, 1.f ) ),
+		VertexUVColor bufferData[8] = {
+			VertexUVColor( glm::vec3( -1.f, -1.f, 0.f ), glm::vec4( 1.f, 0.0f, 0.5f, 1.f ), glm::vec2{ 0.f, 0.f } ),
+			VertexUVColor( glm::vec3( 1.f, 1.f, 0.f ), glm::vec4( 0.f, 0.5f, 1.f, 1.f ), glm::vec2{ 1.f, 1.f } ),
+			VertexUVColor( glm::vec3( -1.f, 1.f, 0.f ), glm::vec4( 0.f, 1.f, 0.5f, 1.f ), glm::vec2{ 0.f, 1.f } ),
+			VertexUVColor( glm::vec3( 1.f, -1.f, 0.f ), glm::vec4( 1.f, 0.5f, 0.f, 1.f ), glm::vec2{ 1.f, 0.f } ),
 
-			VertexColor( glm::vec3( -1.5f, -1.5f, -2.f ), glm::vec4( 1.f, 0.0f, 0.0f, 1.f ) ),
-			VertexColor( glm::vec3( 1.5f, 1.5f, -2.f ), glm::vec4( 0.f, 1.f, 0.f, 1.f ) ),
-			VertexColor( glm::vec3( -1.5f, 1.5f, -2.f ), glm::vec4( 0.f, 0.f, 1.f, 1.f ) ),
-			VertexColor( glm::vec3( 1.5f, -1.5f, -2.f ), glm::vec4( 1.f, 0.5f, 0.f, 1.f ) )
+			VertexUVColor( glm::vec3( -1.5f, -1.5f, -2.f ), glm::vec4( 1.f, 0.0f, 0.0f, 1.f ), glm::vec2{ 0.f, 0.f } ),
+			VertexUVColor( glm::vec3( 1.5f, 1.5f, -2.f ), glm::vec4( 0.f, 1.f, 0.f, 1.f ), glm::vec2{ 1.f, 1.f } ),
+			VertexUVColor( glm::vec3( -1.5f, 1.5f, -2.f ), glm::vec4( 0.f, 0.f, 1.f, 1.f ), glm::vec2{ 0.f, 1.f } ),
+			VertexUVColor( glm::vec3( 1.5f, -1.5f, -2.f ), glm::vec4( 1.f, 0.5f, 0.f, 1.f ), glm::vec2{ 1.f, 0.f } )
 		};
 
 		uint32_t indices[12] = {
@@ -267,18 +341,14 @@ namespace Vel
 			4, 5, 6, 7, 5, 4
 		};
 
-		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		std::vector<uint32_t> queueFamilyIndices( { _deviceManager._queueFamilyIndices.transfer, _deviceManager._queueFamilyIndices.graphics } );
-		_stagingBuffer.CreateBuffer( 0, sizeof( bufferData ), usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
-		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _stagingBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
-		_stagingBuffer.AllocateMemory( memTypeIndex );
-		_stagingBuffer.CopyDataToBuffer( bufferData, sizeof( bufferData ) );
-
-		usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		_vertexBuffer.CreateBuffer( 0, sizeof( bufferData ), usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
-		memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _vertexBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _vertexBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 		_vertexBuffer.AllocateMemory( memTypeIndex );
 
+		_stagingBuffer.CopyDataToBuffer
+		( bufferData, sizeof( bufferData ) );
 		CopyBuffer( _stagingBuffer, _vertexBuffer, sizeof( bufferData ), _commandPoolTransfer, _deviceManager._tQueue );
 
 		usageFlags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;;
@@ -288,6 +358,21 @@ namespace Vel
 
 		_stagingBuffer.CopyDataToBuffer( indices, sizeof( indices ) );
 		CopyBuffer( _stagingBuffer, _indexBuffer, sizeof( indices ), _commandPoolTransfer, _deviceManager._tQueue );
+	}
+
+	void Vulkan::CreateImage()
+	{
+		TexelData testImg( "assets/blood_moon.png" );
+		_stagingBuffer.CopyDataToBuffer( testImg._data, testImg.GetSize() );
+
+		std::vector<uint32_t> queueFamilyIndices( { _deviceManager._queueFamilyIndices.transfer, _deviceManager._queueFamilyIndices.graphics } );
+		_sampledImage.Create( testImg, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
+		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _vertexBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+		_sampledImage.AllocateMemory( memTypeIndex );
+
+		_sampledImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, _commandPoolTransfer, _deviceManager._tQueue );
+		CopyImage( _stagingBuffer, _sampledImage, testImg.GetSize(), _commandPoolTransfer, _deviceManager._tQueue );
+		_sampledImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, _commandPoolGraphics, _deviceManager._gQueue );
 	}
 
 	void Vulkan::CreateUniformBuffers()
@@ -313,7 +398,7 @@ namespace Vel
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		float time = std::chrono::duration<float, std::chrono::seconds::period>( currentTime - startTime ).count();
 
-		_internalCamera.Model = glm::rotate( glm::mat4( 1.f ), time * glm::radians( 90.f ), glm::vec3( 0.f, 0.f, 1.f ) );
+		_internalCamera.Model = glm::mat4( 1.f ); // glm::rotate( glm::mat4( 1.f ), time * glm::radians( 90.f ), glm::vec3( 0.f, 0.f, 1.f ) );
 		
 		_uniformBuffers[imageIndex].CopyDataToBuffer( &_internalCamera, sizeof( CameraMatrices ) );
 	}

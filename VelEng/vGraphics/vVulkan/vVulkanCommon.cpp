@@ -28,10 +28,4 @@ namespace Vel
 		if( acquireComplete != VK_NULL_HANDLE )
 			vkDestroySemaphore( VulkanCommon::Device, acquireComplete, nullptr );
 	}
-
-	void VulkanImage::DestroyImageView()
-	{
-		if( ImageView != VK_NULL_HANDLE )
-			vkDestroyImageView( VulkanCommon::Device, ImageView, nullptr );
-	}
 }

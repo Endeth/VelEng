@@ -1,4 +1,7 @@
 #pragma once
+#define GLM_FORCE_RADIANS
+#define GLM_DEPTH_ZERO_TO_ONE
+
 #include <unordered_map>
 #include <map>
 #include <memory>

@@ -19,13 +19,13 @@ using namespace Vel;
 
 void setVSync( bool sync )
 {
-#ifdef WIN32
-    /*typedef BOOL( APIENTRY *PFNWGLSWAPINTERVALPROC )(int);
+#ifdef VSYNC && WIN32
+    typedef BOOL( APIENTRY *PFNWGLSWAPINTERVALPROC )(int);
     PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = 0;
     wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress( "wglSwapIntervalEXT" );
 
     if ( wglSwapIntervalEXT )
-        wglSwapIntervalEXT( sync );*/
+        wglSwapIntervalEXT( sync );
 #endif
 }
 

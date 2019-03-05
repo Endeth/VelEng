@@ -12,7 +12,7 @@ namespace Vel
 	class Mouse
 	{
 	public:
-		Mouse(int x = 0, int y = 0);
+		Mouse( int x = 0, int y = 0 );
 
 		const glm::ivec2& GetCurrentPosition() const { return _currentPosition; }
 		const glm::ivec2& GetOldPosition() const { return _oldPosition; }
@@ -21,12 +21,12 @@ namespace Vel
 		void ResetIfOutside(GLFWwindow* window, const glm::ivec2 &min, const glm::ivec2 &max);
 
 		void ChangeResetting() { _mouseReset = !_mouseReset; }
-		void SetCurrentPosition(int x, int y);
-		void SetCurrentPosition(const glm::ivec2& newPosition);
+		void SetCurrentPosition( int x, int y );
+		void SetCurrentPosition( const glm::ivec2& newPosition );
 
-		void ResetMousePosition(GLFWwindow* window, const glm::ivec2& pos = glm::ivec2{ 0,0 });
+		void ResetMousePosition( GLFWwindow* window, const glm::ivec2& pos = glm::ivec2{ 0,0 } );
 	protected:
-		const bool ShouldReset(const glm::ivec2 &min, const glm::ivec2 &max) const;
+		const bool ShouldReset( const glm::ivec2 &min, const glm::ivec2 &max ) const;
 
 		glm::ivec2 _currentPosition;
 		glm::ivec2 _oldPosition;

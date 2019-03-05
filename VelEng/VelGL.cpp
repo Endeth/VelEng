@@ -173,7 +173,8 @@ namespace Vel
 	void Vel::VelEng::RenderFrame()
 	{	
 		auto viewMat = _mainCamera->GetViewMatrix(); //TODO adjust uniforms in signal
-		auto projMat = _mainCamera->GetProjectionMatrix();
+		auto projMat = _mainCamera->GetProjectionMatrix(); //TODO setting projection once
+
 		/*
 		auto gPassShd = GetShader("GPass"); //TODO separate from deferred. Shaders inf renderer?
 		gPassShd->Activate();
@@ -198,6 +199,7 @@ namespace Vel
 		skybox->Deactivate();
 
 		RenderScenes();*/
+
 		_vulkan.UpdateCamera( viewMat, projMat );
 		_vulkan.Draw();
 	}

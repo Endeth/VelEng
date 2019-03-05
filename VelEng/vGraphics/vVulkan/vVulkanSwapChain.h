@@ -7,6 +7,8 @@
 #include "external/glfw/glfw3.h"
 #include "external/glm/glm.hpp"
 
+#include "vVulkanImage.h"
+
 #ifdef _DEBUG
 #include "vVulkanDebug.h"
 #endif

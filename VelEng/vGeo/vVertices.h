@@ -31,4 +31,14 @@ namespace Vel
 		glm::vec3 position;
 		glm::vec4 color;
 	};
+
+	struct VertexUVColor
+	{
+		VertexUVColor( const glm::vec3 &pos, const glm::vec4 &color, const glm::vec2 &uvCoor = glm::vec2{ 0.0f, 0.0f } ) : position( pos ), color( color ), UV( uvCoor )
+		{
+		}
+		glm::vec3 position;
+		glm::vec4 color;
+		glm::vec2 UV;
+	};
 }

@@ -1,4 +1,5 @@
 #include "vVulkanBuffer.h"
+#include "vVulkanCommands.h"
 
 namespace Vel
 {
@@ -34,9 +35,18 @@ namespace Vel
 		void *data;
 		vkMapMemory( VulkanCommon::Device, _bufferMemory, 0, size, 0, &data );
 		memcpy( data, srcData, size );
+
+		VkMappedMemoryRange flushRange;
+		flushRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		flushRange.pNext = nullptr;
+		flushRange.memory = _bufferMemory;
+		flushRange.offset = 0;
+		flushRange.size = VK_WHOLE_SIZE; //TODO check nonCoherentAtomSize
+		vkFlushMappedMemoryRanges( VulkanCommon::Device, 1, &flushRange );
+
 		vkUnmapMemory( VulkanCommon::Device, _bufferMemory );
 	}
-	void VulkanBuffer::DestroyBuffer()
+	void VulkanBuffer::Destroy()
 	{
 		if( _bufferMemory != VK_NULL_HANDLE )
 		{
@@ -51,38 +61,30 @@ namespace Vel
 	}
 	void CopyBuffer( VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer, VkDeviceSize size, VkCommandPool cmdPool, VkQueue transferQueue )
 	{
-		VkCommandBufferAllocateInfo cmdBufferAllocateInfo;
-		cmdBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		cmdBufferAllocateInfo.pNext = nullptr;
-		cmdBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		cmdBufferAllocateInfo.commandBufferCount = 1;
-		cmdBufferAllocateInfo.commandPool = cmdPool;
-
-		VkCommandBuffer cmdBuffer;
-		CheckResult( vkAllocateCommandBuffers( VulkanCommon::Device, &cmdBufferAllocateInfo, &cmdBuffer ), "failed to allocate command buffer" );
-
-		VkCommandBufferBeginInfo beginInfo;
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.pNext = nullptr;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		beginInfo.pInheritanceInfo = nullptr;
+		auto cmdBuffer = BeginSingleTimeCommand( cmdPool );
 
 		VkBufferCopy bufferCopy;
 		bufferCopy.size = size;
 		bufferCopy.srcOffset = 0;
 		bufferCopy.dstOffset = 0;
 
-		vkBeginCommandBuffer( cmdBuffer, &beginInfo );
 		vkCmdCopyBuffer( cmdBuffer, srcBuffer._buffer, dstBuffer._buffer, 1, &bufferCopy );
+
 		vkEndCommandBuffer( cmdBuffer );
 
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.pNext = nullptr;
+		submitInfo.waitSemaphoreCount = 0;
+		submitInfo.pWaitSemaphores = nullptr;
+		submitInfo.pWaitDstStageMask = nullptr;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &cmdBuffer;
-
+		submitInfo.signalSemaphoreCount = 0;
+		submitInfo.pSignalSemaphores = nullptr; //TODO use semaphore
+		
 		vkQueueSubmit( transferQueue, 1, &submitInfo, VK_NULL_HANDLE );
-		vkQueueWaitIdle( transferQueue );
+		vkQueueWaitIdle( transferQueue ); //TODO use synchronization
 		vkFreeCommandBuffers( VulkanCommon::Device, cmdPool, 1, &cmdBuffer );
 	}
 }

@@ -9,6 +9,7 @@
 #include "vVulkanDevice.h"
 #include "vVulkanSwapChain.h"
 #include "vVulkanRenderpass.h"
+#include "vVulkanImage.h"
 
 #ifdef _DEBUG
 #include "vVulkanDebug.h"
@@ -27,7 +28,10 @@ namespace Vel
 		void RecordCommandBuffers();
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();
+		void CreateStagingBuffer();
 		void CreateBuffer();
+		void CreateImage();
+		void CreateDepthImage();
 		void CreateUniformBuffers();
 		void UpdateUniformBuffers( uint32_t imageIndex );
 		void UpdateCamera( glm::mat4 &view, glm::mat4 &proj );
@@ -47,6 +51,8 @@ namespace Vel
 		VulkanBuffer _vertexBuffer;
 		VulkanBuffer _indexBuffer;
 		VulkanBuffer _stagingBuffer;
+		VulkanImage _sampledImage;
+		VulkanImage _depthImage;
 		std::vector<VulkanBuffer> _uniformBuffers;
 		VkPipelineLayout _pipelineLayout; //TODO nasty hack to bind descriptor sets
 

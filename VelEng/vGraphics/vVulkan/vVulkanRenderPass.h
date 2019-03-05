@@ -4,7 +4,7 @@
 
 #include "vVulkanCommon.h"
 #include "vGeo/vGeo.h"
-
+#include "vVulkanImage.h"
 
 namespace Vel
 {
