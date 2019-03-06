@@ -6,20 +6,34 @@ namespace Vel
 {
 	void VulkanRenderPass::Create()
 	{
-		VkAttachmentDescription attachementDesc;
-		attachementDesc.flags = 0;
-		attachementDesc.format = VK_FORMAT_B8G8R8A8_UNORM; //TODO use somekind of getter from swapchain
-		attachementDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-		attachementDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachementDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachementDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachementDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachementDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachementDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		std::array< VkAttachmentDescription, 2 > attachmentsDescriptions;
+		attachmentsDescriptions[0].flags = 0;
+		attachmentsDescriptions[0].format = VK_FORMAT_B8G8R8A8_UNORM; //TODO use somekind of getter from swapchain
+		attachmentsDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachmentsDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachmentsDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachmentsDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachmentsDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachmentsDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachmentsDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-		VkAttachmentReference colorAttachementReference;
-		colorAttachementReference.attachment = 0;
-		colorAttachementReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachmentsDescriptions[1].flags = 0;
+		attachmentsDescriptions[1].format = VK_FORMAT_D32_SFLOAT_S8_UINT; //TODO remove hack
+		attachmentsDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachmentsDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachmentsDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachmentsDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachmentsDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachmentsDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachmentsDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference colorAttachmentReference;
+		colorAttachmentReference.attachment = 0;
+		colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depthAttachmentReference;
+		depthAttachmentReference.attachment = 1;
+		depthAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpassDescription;
 		subpassDescription.flags = 0;
@@ -27,9 +41,9 @@ namespace Vel
 		subpassDescription.inputAttachmentCount = 0;
 		subpassDescription.pInputAttachments = nullptr;
 		subpassDescription.colorAttachmentCount = 1;
-		subpassDescription.pColorAttachments = &colorAttachementReference;
+		subpassDescription.pColorAttachments = &colorAttachmentReference;
 		subpassDescription.pResolveAttachments = nullptr;
-		subpassDescription.pDepthStencilAttachment = nullptr;
+		subpassDescription.pDepthStencilAttachment = &depthAttachmentReference;
 		subpassDescription.preserveAttachmentCount = 0;
 		subpassDescription.pPreserveAttachments = nullptr;
 
@@ -46,8 +60,8 @@ namespace Vel
 		renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassCreateInfo.pNext = nullptr;
 		renderPassCreateInfo.flags = 0;
-		renderPassCreateInfo.attachmentCount = 1;
-		renderPassCreateInfo.pAttachments = &attachementDesc;
+		renderPassCreateInfo.attachmentCount = attachmentsDescriptions.size();
+		renderPassCreateInfo.pAttachments = attachmentsDescriptions.data();
 		renderPassCreateInfo.subpassCount = 1;
 		renderPassCreateInfo.pSubpasses = &subpassDescription;
 		renderPassCreateInfo.dependencyCount = 1;
@@ -174,6 +188,20 @@ namespace Vel
 		multisampleStateInfo.alphaToCoverageEnable = VK_FALSE;
 		multisampleStateInfo.alphaToOneEnable = VK_FALSE;
 
+		VkPipelineDepthStencilStateCreateInfo depthStencilStateInfo;
+		depthStencilStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencilStateInfo.pNext = nullptr;
+		depthStencilStateInfo.flags = 0;
+		depthStencilStateInfo.depthTestEnable = VK_TRUE;
+		depthStencilStateInfo.depthWriteEnable = VK_TRUE;
+		depthStencilStateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencilStateInfo.depthBoundsTestEnable = VK_FALSE;
+		depthStencilStateInfo.minDepthBounds = 0.f;
+		depthStencilStateInfo.maxDepthBounds = 1.f;
+		depthStencilStateInfo.stencilTestEnable = VK_FALSE;
+		depthStencilStateInfo.front = {};
+		depthStencilStateInfo.back = {};
+
 		VkPipelineColorBlendAttachmentState colorBlendAttachmentState;
 		colorBlendAttachmentState.blendEnable = VK_FALSE;
 		colorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
@@ -230,7 +258,7 @@ namespace Vel
 		createInfo.pViewportState = &viewportStateInfo;
 		createInfo.pRasterizationState = &rasterizationStateInfo;
 		createInfo.pMultisampleState = &multisampleStateInfo;
-		createInfo.pDepthStencilState = nullptr; // &depthStencilStateInfo;
+		createInfo.pDepthStencilState = &depthStencilStateInfo;
 		createInfo.pColorBlendState = &colorBlendStateInfo;
 		createInfo.pDynamicState = &dynamicStateInfo;
 		createInfo.layout = pipelineLayout;
@@ -246,10 +274,10 @@ namespace Vel
 		fragmentShaderModule = VK_NULL_HANDLE;
 	}
 
-	void VulkanRenderPass::CreateFramebuffers( const std::vector<VulkanImage> &images, glm::i32vec2 size )
+	void VulkanRenderPass::CreateFramebuffers( const std::vector<VulkanImage> &images, VulkanImage depthBuffer, glm::i32vec2 size )
 	{
 		for( auto &image : images )
-			_framebuffers.push_back( VulkanFramebuffer( _renderPass, std::vector<VulkanImage>( { image } ), size ) ); //TODO make this hack right, maybe func that gets all VkImages from VulkanImage[]
+			_framebuffers.push_back( VulkanFramebuffer( _renderPass, std::vector<VulkanImage>( { image, depthBuffer } ), size ) ); //TODO make this hack right, maybe func that gets all VkImages from VulkanImage[]
 	}
 
 

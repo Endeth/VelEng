@@ -62,17 +62,16 @@ namespace Vel
 		return _imageSize.x *_imageSize.y *_imageChannels;
 	}
 
-	void VulkanImage::Create( TexelData &data, VkImageCreateFlags flags, VkImageUsageFlags usage, VkSharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices )
+	void VulkanImage::Create( glm::ivec2 size, VkDeviceSize deviceSize, VkFormat imageFormat, VkImageCreateFlags flags, VkImageUsageFlags usage, VkSharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices )
 	{
-		VkDeviceSize imageSize = data._imageSize.x * data._imageSize.y * data._imageChannels;
-		_imageSize = data._imageSize;
-
+		_imageSize = size;
+		_format = imageFormat;
 		VkImageCreateInfo imageCreateInfo;
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageCreateInfo.pNext = nullptr;
 		imageCreateInfo.flags = flags;
 		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		imageCreateInfo.format = _format;
 		imageCreateInfo.extent.width = static_cast<uint32_t>( _imageSize.x );
 		imageCreateInfo.extent.height = static_cast<uint32_t>( _imageSize.y );
 		imageCreateInfo.extent.depth = 1;
@@ -108,9 +107,13 @@ namespace Vel
 		imageViewCreateInfo.flags = 0;
 		imageViewCreateInfo.image = _image;
 		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		imageViewCreateInfo.format = _format;
 		imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+		if( _format == VK_FORMAT_D32_SFLOAT_S8_UINT ) //TODO remove hack
+			imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+		else
+			imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
 		imageViewCreateInfo.subresourceRange.levelCount = 1;
 		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
@@ -123,7 +126,10 @@ namespace Vel
 	{
 		auto cmdBuffer = BeginSingleTimeCommand( cmdPool );
 		VkImageSubresourceRange subresourceRange;
-		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		if( _format == VK_FORMAT_D32_SFLOAT_S8_UINT ) //TODO remove hack
+			subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+		else
+			subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		subresourceRange.baseArrayLayer = 0;
 		subresourceRange.baseMipLevel = 0;
 		subresourceRange.layerCount = 1;
@@ -157,6 +163,13 @@ namespace Vel
 			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
+		else if( _layout == VK_FORMAT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
+		{
+			imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		}
 		else
 		{
 			throw std::invalid_argument( "Unsupported layout transition" );
@@ -169,7 +182,7 @@ namespace Vel
 
 		vkEndCommandBuffer( cmdBuffer );
 
-		VkSubmitInfo submitInfo = {};
+		VkSubmitInfo submitInfo = {}; //TODO move submit to command buffer class
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.pNext = nullptr;
 		submitInfo.waitSemaphoreCount = 0;

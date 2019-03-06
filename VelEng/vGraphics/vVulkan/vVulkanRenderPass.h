@@ -21,7 +21,7 @@ namespace Vel
     public:
 		void Create();
 		void CreatePipeline( VkDescriptorSetLayout dscSetLayout, VkPipelineLayout &_pipelineLayout );
-		void CreateFramebuffers( const std::vector<VulkanImage> &images, glm::i32vec2 size );
+		void CreateFramebuffers( const std::vector<VulkanImage> &images, VulkanImage depthBuffer, glm::i32vec2 size );
 		void Cleanup();
 
 		VkRenderPass _renderPass;

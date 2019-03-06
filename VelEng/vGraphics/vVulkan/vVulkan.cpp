@@ -60,6 +60,7 @@ namespace Vel
 		CreateCommandBuffers();
 		CreateStagingBuffer();
 		CreateBuffer();
+		CreateDepthImage();
 		CreateImage();
 		Samplers.CreateSamplers();
 		CreateUniformBuffers();
@@ -67,7 +68,7 @@ namespace Vel
 		CreateDescriptorSets();
 		_renderPass.Create();
 		_renderPass.CreatePipeline( _descriptorSetLayout, _pipelineLayout );
-		_renderPass.CreateFramebuffers( _swapchain._images, _swapchain._imageSize );
+		_renderPass.CreateFramebuffers( _swapchain._images, _depthImage, _swapchain._imageSize );
 		RecordCommandBuffers();
     }
 
@@ -79,6 +80,7 @@ namespace Vel
 		_indexBuffer.Destroy();
 		Samplers.DestroySamplers();
 		_sampledImage.Destroy();
+		_depthImage.Destroy();
 
 		for( auto &buffer : _uniformBuffers )
 			buffer.Destroy();
@@ -137,7 +139,10 @@ namespace Vel
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		beginInfo.pInheritanceInfo = nullptr;
 
-		VkClearValue color = { 48.f / 256.f, 10 / 256.f, 36 / 256.f, 1.f };
+		std::array<VkClearValue, 2> clearValues;
+		clearValues[0].color = { 48.f / 256.f, 10 / 256.f, 36 / 256.f, 1.f };
+		clearValues[1].depthStencil = { 1.0f, 0 };
+
 		VkImageSubresourceRange range;
 		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		range.baseMipLevel = 0;
@@ -156,8 +161,8 @@ namespace Vel
 		renderPassBeginInfo.pNext = nullptr;
 		renderPassBeginInfo.renderPass = _renderPass._renderPass;
 		renderPassBeginInfo.renderArea = renderArea;
-		renderPassBeginInfo.clearValueCount = 1;
-		renderPassBeginInfo.pClearValues = &color;
+		renderPassBeginInfo.clearValueCount = clearValues.size();
+		renderPassBeginInfo.pClearValues = clearValues.data();
 
 		VkBuffer vertexBuffers[] = { _vertexBuffer._buffer };
 		VkDeviceSize offsets[] = { 0 };
@@ -366,13 +371,26 @@ namespace Vel
 		_stagingBuffer.CopyDataToBuffer( testImg._data, testImg.GetSize() );
 
 		std::vector<uint32_t> queueFamilyIndices( { _deviceManager._queueFamilyIndices.transfer, _deviceManager._queueFamilyIndices.graphics } );
-		_sampledImage.Create( testImg, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
-		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _vertexBuffer._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+		_sampledImage.Create( testImg._imageSize, testImg.GetSize(), VK_FORMAT_R8G8B8A8_UNORM, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
+
+		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _sampledImage._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 		_sampledImage.AllocateMemory( memTypeIndex );
 
 		_sampledImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, _commandPoolTransfer, _deviceManager._tQueue );
 		CopyImage( _stagingBuffer, _sampledImage, testImg.GetSize(), _commandPoolTransfer, _deviceManager._tQueue );
 		_sampledImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, _commandPoolGraphics, _deviceManager._gQueue );
+	}
+
+	void Vulkan::CreateDepthImage()
+	{
+		std::vector<uint32_t> queueFamilyIndices( { _deviceManager._queueFamilyIndices.graphics } );
+		VkDeviceSize deviceSize = _swapchain._imageSize.x * _swapchain._imageSize.y * 4;
+		_depthImage.Create( _swapchain._imageSize, deviceSize, VK_FORMAT_D32_SFLOAT_S8_UINT, 0, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_SHARING_MODE_EXCLUSIVE, queueFamilyIndices );
+
+		auto memTypeIndex = _deviceManager._physicalDeviceProperties.FindMemoryType( _depthImage._memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+		_depthImage.AllocateMemory( memTypeIndex );
+
+		_depthImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, _commandPoolGraphics, _deviceManager._gQueue );
 	}
 
 	void Vulkan::CreateUniformBuffers()
