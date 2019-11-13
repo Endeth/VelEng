@@ -47,8 +47,8 @@ namespace Vel
 			void SetVAO();
 		private:
 			void LoadIntoGPU();
-			ArrayBuffer _vboVertices;
-			ElementArrayBuffer _vboIndices;
+			//ArrayBuffer _vboVertices;
+			//ElementArrayBuffer _vboIndices;
 		};
 		LightingPassQuad _quad;
 		

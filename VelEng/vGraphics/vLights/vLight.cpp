@@ -107,10 +107,10 @@ namespace Vel
 	void PointLight::UpdateShadowTransforms()
 	{
 		float aspect = 1; //TODO get this shit straight
-		float far = 25.0f;
-		float near = 1.0f;
+		float farPlane = 25.0f;
+		float nearPlane = 1.0f;
 
-		auto shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
+		auto shadowProj = glm::perspective(glm::radians(90.0f), aspect, nearPlane, farPlane );
 		_shadowTransforms[0] = (shadowProj * glm::lookAt(_position, _position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
 		_shadowTransforms[1] = (shadowProj * glm::lookAt(_position, _position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
 		_shadowTransforms[2] = (shadowProj * glm::lookAt(_position, _position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
@@ -156,10 +156,10 @@ namespace Vel
 	void DirectionalLight::UpdateShadowTransforms()
 	{
 		float aspect = 1; //TODO get this shit straight
-		float far = 50.0f;
-		float near = 1.0f;
+		float farPlane = 50.0f;
+		float nearPlane = 1.0f;
 
-		auto _lightProj = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near, far);
+		auto _lightProj = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, nearPlane, farPlane );
 		auto _lightView = glm::lookAt(_shadowCastingPosition, _camPosition, glm::vec3(0.0, 1.0, 0.0));
 
 		_lightSpaceMatrix = _lightProj * _lightView;

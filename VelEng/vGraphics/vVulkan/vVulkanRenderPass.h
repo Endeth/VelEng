@@ -8,28 +8,40 @@
 
 namespace Vel
 {
-	class VulkanFramebuffer
+
+	class Framebuffer : public NonCopyable
 	{
 	public:
-		VulkanFramebuffer( VkRenderPass renderPass, const std::vector<VulkanImage> &attachements, glm::u32vec2 size );
+		Framebuffer( VkRenderPass renderPass, const std::vector<VulkanImage> &images, glm::u32vec2 size );
 		void Cleanup();
-		VkFramebuffer _framebuffer;
+		VkFramebuffer framebuffer;
 	};
 
-    class VulkanRenderPass
+	class FrameContext
+	{
+	public:
+		FrameContext( VkRenderPass renderPass, const std::vector<VulkanImage> &images, glm::u32vec2 size );
+		void Cleanup();
+		VkFramebuffer GetFramebuffer() { return swapchainFramebuffer.framebuffer; }
+		VkCommandBuffer GetCommandBuffer() { return commandBuffer; }
+	private:
+		Framebuffer swapchainFramebuffer;
+		VkCommandPool commandPool;
+		VkCommandBuffer commandBuffer;
+		Semaphores semaphores;
+	};
+
+    class RenderPass
     {
     public:
 		void Create();
-		void CreatePipeline( VkDescriptorSetLayout dscSetLayout, VkPipelineLayout &_pipelineLayout );
-		void CreateFramebuffers( const std::vector<VulkanImage> &images, VulkanImage depthBuffer, glm::i32vec2 size );
 		void Cleanup();
+		void CreateFrameContexts( const std::vector<VulkanImage> &images, VulkanImage &depthBuffer, glm::i32vec2 size );
+		FrameContext& GetFrameContext( uint32_t swapchainImageId );
+		const VkRenderPass GetRenderPass() const { return renderPass; }
 
-		VkRenderPass _renderPass;
-		std::vector<VulkanFramebuffer> _framebuffers;
-		VkPipeline _graphicsPipeline = VK_NULL_HANDLE;
-		VkPipelineCache _pipelineCache = VK_NULL_HANDLE;
-		VkDescriptorSet _descriptorSet = VK_NULL_HANDLE;
 	private:
-		VkShaderModule CreateShaderModule( const char *filepath );
+		VkRenderPass renderPass;
+		std::vector<FrameContext> frameContexts;
     };
 }

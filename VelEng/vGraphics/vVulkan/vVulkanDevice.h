@@ -11,7 +11,7 @@
 
 namespace Vel
 {
-    class VulkanDeviceManager
+    class Device
     {
     public:
         void Setup();
@@ -20,7 +20,7 @@ namespace Vel
 		void SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType );
 
         //VkCommandPool CreateCommandPool( uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT );
-		//void CreateSemaphores();
+		//void Create();
 
         class PhysicalDeviceProperties
         {
@@ -33,25 +33,25 @@ namespace Vel
             VkBool32 GetSupportedDepthFormat( VkFormat *depthFormat );
             uint32_t GetQueueFamilyIndex( VkQueueFlagBits queueFlags );
 
-            VkPhysicalDeviceProperties _properties;
-            VkPhysicalDeviceMemoryProperties _memoryProperties;
-            std::vector<VkQueueFamilyProperties> _queueFamilyProperties;
-            VkPhysicalDeviceFeatures _features;
+            VkPhysicalDeviceProperties properties;
+            VkPhysicalDeviceMemoryProperties memoryProperties;
+            std::vector<VkQueueFamilyProperties> queueFamilyProperties;
+            VkPhysicalDeviceFeatures features;
 
-			SwapchainSupportDetails _swapchainSupport;
+			SwapchainSupportDetails swapchainSupport;
 		private:
 			bool IsSuitable( VkPhysicalDevice device );
 
-        } _physicalDeviceProperties;
+        } physicalDeviceProperties;
 
-        QueueFamilyIndices _queueFamilyIndices;
-        Semaphores _semaphores[2];
+        QueueFamilyIndices queueFamilyIndices;
+        Semaphores semaphores;
 
-        VkFormat _depthFormat;
-        VkQueue _gQueue;
-        VkQueue _pQueue;
-        VkQueue _tQueue;
+        VkFormat depthFormat;
+        VkQueue gQueue;
+        VkQueue pQueue;
+        VkQueue tQueue;
 
-        const float _defaultQueuePriority = 0.5f;    
+        const float defaultQueuePriority = 0.5f;    
     };
 }

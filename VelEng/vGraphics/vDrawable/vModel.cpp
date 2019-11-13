@@ -1,5 +1,8 @@
+#include <algorithm>
 #include "external/glm/gtc/matrix_transform.hpp"
 #include "vModel.h"
+
+static const char* materialsDir = "assets/";
 
 namespace Vel
 {
@@ -8,6 +11,24 @@ namespace Vel
 
 	Model::Model()
 	{
+	}
+
+	Model::Model( std::string &path )
+	{
+		tinyobj::attrib_t attrib;
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
+		std::string warn, err;
+
+		if( !tinyobj::LoadObj( &attrib, &shapes, &materials, &warn, &err, path.c_str(), materialsDir ) )
+		{
+			throw std::runtime_error( warn + err );
+		}
+
+		for( const auto& shape : shapes )
+		{
+			_meshes.emplace_back( std::make_shared<Mesh>( shape, attrib ) );
+		}
 	}
 
 	Model::~Model()
@@ -30,14 +51,8 @@ namespace Vel
 		for (auto &Mesh : _meshes)
 		{
 			//Mesh->DrawWithImposedShader();
-			Mesh->DrawVerticesWithImposedShader(); //TODO
+			//Mesh->DrawVerticesWithImposedShader(); //TODO
 		}
-	}
-
-	void Model::AddMesh(const shared_ptr<Mesh> &mesh)
-	{
-		_meshes.push_back(mesh);
-		_shaders.push_back(mesh->GetShader()); //TODO check for multiple instances of single shader
 	}
 
 	//sets internal model transformation matrix
@@ -55,12 +70,6 @@ namespace Vel
 			shader->SetUniformsValue(Uniform<glm::mat4>{ "M", _modelMatrix });
 			shader->Deactivate();
 		}*/
-	}
-
-	//sets model matrix in given shader
-	void Model::SetModelMatrixUniform(const ShaderPtr & shader)
-	{
-		//shader->SetUniformsValue(Uniform<glm::mat4>{ "M", _modelMatrix });
 	}
 
 	void Model::ModelMatrixTranslation(const glm::vec3& translation)

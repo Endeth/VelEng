@@ -1,3 +1,4 @@
+#define TINYOBJLOADER_IMPLEMENTATION
 #include <iostream>
 
 #include "vMesh.h"
@@ -5,29 +6,31 @@
 namespace Vel
 {
 	using namespace std;
-	Mesh::Mesh()
+
+	Mesh::Mesh( const tinyobj::shape_t &shape, const tinyobj::attrib_t &attrib )
 	{
-		//_primitive = GL_TRIANGLES;
+		std::unordered_map<VertexUVColor, uint32_t> uniqueVertices = {};
+
+		for( const auto& index : shape.mesh.indices )
+		{
+			VertexUVColor vertex;
+			vertex.position = glm::vec3( attrib.vertices[3 * index.vertex_index + 0], attrib.vertices[3 * index.vertex_index + 1], attrib.vertices[3 * index.vertex_index + 2] );
+			vertex.color = glm::vec4( attrib.normals[3 * index.normal_index + 0], attrib.normals[3 * index.normal_index + 1], attrib.normals[3 * index.normal_index + 2], 1.f );
+			vertex.UV = glm::vec2( attrib.texcoords[2 * index.texcoord_index + 0], 1 - attrib.texcoords[2 * index.texcoord_index + 1] );
+
+			if( uniqueVertices[vertex] == 0 )
+			{
+				uniqueVertices[vertex] = static_cast<uint32_t>( _vertices.size() );
+				_vertices.push_back( vertex );
+			}
+
+			_indices.push_back( uniqueVertices[vertex] );
+		}
 	}
 
 	Mesh::~Mesh()
 	{
-		DeleteVertices();
-	}
-
-	//loads mesh from file into GPU
-	void Mesh::LoadMesh(const char * filename) //TODO loading an actual mesh, test cube for now
-	{
-		if (_isLoaded)
-			return;
-
-		LoadIntoGPU();
-		_isLoaded = true;
-	}
-
-	void Mesh::LoadVerticesOnly() //DEBUG
-	{
-		//_vboVertices.FillBuffer(_vertices.size(), &_vertices[0]);
+		//DeleteVertices();
 	}
 
 	void Mesh::SetMaterial(const std::shared_ptr<Material>& mat)
@@ -35,14 +38,8 @@ namespace Vel
 		_material = mat;
 	}
 
-	void Mesh::DeleteVertices()
-	{
-	}
-	// fills both vertices and indices buffers
 	void Mesh::LoadIntoGPU()
 	{
-		_vboVertices.FillBuffer(_vertices.size(), &_vertices[0]);
-		_vboIndices.FillBuffer(_indices.size(), &_indices[0]);
 	}
 
 	void Mesh::UpdateVerticesInGPU()
@@ -100,41 +97,5 @@ namespace Vel
 	void Mesh::UnbindAdditionalDrawingOptions()
 	{
 		_material->UnbindMaterial();
-	}
-
-	PlaneMesh::PlaneMesh()
-	{
-		LoadVerticesOnly();
-	}
-
-	void PlaneMesh::LoadMesh(const char * filename)
-	{
-		if (_isLoaded)
-			return;
-		_vertices.reserve(8);
-		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 1.0f }));
-		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
-		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 0.0f }));
-		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 0.0f }));
-
-		_indices.reserve(6);
-		_indices.push_back(0); _indices.push_back(1); _indices.push_back(2);
-		_indices.push_back(1); _indices.push_back(3); _indices.push_back(2);
-
-		LoadIntoGPU();
-		_isLoaded = true;
-	}
-	void PlaneMesh::LoadVerticesOnly()
-	{
-		_vertices.reserve(6);
-		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 1.0f }));
-		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 0.0f }));
-		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
-
-		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }));
-		_vertices.push_back(Vertex(glm::vec3{ 1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 1.0f, 0.0f }));
-		_vertices.push_back(Vertex(glm::vec3{ -1.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec2{ 0.0f, 0.0f }));
-
-		_vboVertices.FillBuffer(_vertices.size(), &_vertices[0]);
 	}
 }

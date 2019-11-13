@@ -13,7 +13,7 @@ namespace Vel
     {
         for (auto &Model : _models)
         {
-            Model->DrawModel();
+            //Model->DrawModel();
         }
     }
 
@@ -23,8 +23,8 @@ namespace Vel
 
         for (auto &Model : _models)
         {
-            Model->SetModelMatrixUniform(shader);
-            Model->DrawModelWithImposedShader();
+            //Model->SetModelMatrixUniform(shader);
+            //Model->DrawModelWithImposedShader();
         }
         shader->Deactivate();
     }

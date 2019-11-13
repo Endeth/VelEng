@@ -5,7 +5,7 @@ namespace Vel
 	Skybox::Skybox(const std::shared_ptr<TextureCube> &texture)
 	{
 		_skyTex = texture;
-		LoadMesh();
+		//LoadMesh( "assets/cube.obj" );
 	}
 
 	void Skybox::SetVAO()

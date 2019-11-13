@@ -1,10 +1,12 @@
 set(SOURCE
    ${SOURCE}
    ${CMAKE_CURRENT_SOURCE_DIR}/vMaterial.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vMaterialPipeline.cpp
    PARENT_SCOPE
 )
 set(HEADERS
    ${HEADERS}
    ${CMAKE_CURRENT_SOURCE_DIR}/vMaterial.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vMaterialPipeline.h
    PARENT_SCOPE
 )

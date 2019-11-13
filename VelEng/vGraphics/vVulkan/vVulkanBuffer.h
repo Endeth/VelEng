@@ -18,7 +18,7 @@ namespace Vel
 
 		VkBuffer _buffer = VK_NULL_HANDLE;
 		VkDeviceMemory _bufferMemory = VK_NULL_HANDLE;
-		VkMemoryRequirements _memoryRequirements;
+		VkMemoryRequirements memoryRequirements;
 	};
 
 	void CopyBuffer( VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer, VkDeviceSize size, VkCommandPool cmdPool, VkQueue transferQueue );

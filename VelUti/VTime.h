@@ -8,13 +8,13 @@ namespace Vel
 	{
 	public:   
 		void Tick();
-		const double GetTime() const { return _currentTime; }
-		const double GetFrameRate() const { return _frameRate; }
-		const double GetTimeDifferance() const { return _currentTime - _prevTime; }
+		const double GetTime() const { return currentTime; }
+		const double GetFrameRate() const { return frameRate; }
+		const double GetTimeDifferance() const { return currentTime - prevTime; }
 	private:
-		double _prevTime{ 0.0 };
-		double _currentTime{ 0.0 };
-		double _frameRate{1.0/60.0};
+		double prevTime{ 0.0 };
+		double currentTime{ 0.0 };
+		double frameRate{1.0/60.0};
 	};*/
 	class SignalClock
 	{
@@ -28,7 +28,7 @@ namespace Vel
 		
 
 		std::chrono::system_clock::time_point _clockStart;
-		//float _currentTime;
+		//float currentTime;
 
 
 	};

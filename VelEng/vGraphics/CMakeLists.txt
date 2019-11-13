@@ -1,5 +1,4 @@
 
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vBuffers)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vCameras)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vDrawable)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vLights)

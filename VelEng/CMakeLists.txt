@@ -7,6 +7,7 @@ add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vGeo)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vGraphics)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vInput)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vOptions)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vScripts)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/vUti)
 
 foreach(FILE ${SOURCE} ${HEADERS} )
@@ -43,3 +44,4 @@ target_compile_definitions(VelEng PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 target_compile_definitions(VelEng PRIVATE GLFW_EXPOSE_NATIVE_WIN32)
 
 target_link_libraries(VelEng ${LIBRARIES_DIR}/x64/glfw3.lib )
+target_link_libraries(VelEng ${LIBRARIES_DIR}/x64/liblua53.a )

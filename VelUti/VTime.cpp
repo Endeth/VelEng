@@ -16,7 +16,7 @@ namespace Vel
 	}
 	/*void VFrameClock::Tick()
 	{
-		_prevTime = _currentTime;
-		_currentTime += _frameRate;
+		prevTime = currentTime;
+		currentTime += frameRate;
 	}*/
 }

@@ -31,10 +31,10 @@ namespace Vel
 
 	struct Semaphores
 	{
-		void CreateSemaphores();
+		void Create();
 		void Cleanup();
 
-		VkSemaphore presentComplete = VK_NULL_HANDLE;
+		VkSemaphore presentComplete = VK_NULL_HANDLE; //TODO not used as of now
 		VkSemaphore renderComplete = VK_NULL_HANDLE;
 		VkSemaphore acquireComplete = VK_NULL_HANDLE;
 	};
@@ -45,5 +45,18 @@ namespace Vel
 		uint32_t present = 0;
 		uint32_t compute = 0;
 		uint32_t transfer = 0;
+	};
+
+	class NonCopyable //TODO move to some helpers file
+	{
+	public:
+		NonCopyable() = default;
+		~NonCopyable() = default;
+		NonCopyable( NonCopyable && ) = default;
+		NonCopyable &operator=( NonCopyable && ) noexcept = default;
+
+	private:
+		NonCopyable( const NonCopyable & ) = delete;
+		NonCopyable &operator=( const NonCopyable & ) = delete;
 	};
 }

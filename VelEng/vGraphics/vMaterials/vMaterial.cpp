@@ -2,49 +2,31 @@
 
 namespace Vel
 {
-
-    //TODO make basic material? only diffuse
-
-	Material::Material(const VTexturePtr& diffuse, const VTexturePtr& normalMap, const VTexturePtr& specular, float & shininess)
+	Material::Material()
 	{
-		_diffuse = diffuse;
-        _normalMap = normalMap;
-		_specular = specular;
-		_shininess = shininess;
-		SetTexturesUnits();
-	}
-
-	void Material::SetTexturesUnits()
-	{
-		/*_diffuse->SetTextureUnit(GL_TEXTURE0);
-		_normalMap->SetTextureUnit(GL_TEXTURE1);
-		_specular->SetTextureUnit(GL_TEXTURE2);*/
 	}
 
 	void Material::BindMaterial()
 	{
-		_diffuse->ActivateTextureUnit();
-		_diffuse->BindTexture();
-        _normalMap->ActivateTextureUnit();
-        _normalMap->BindTexture();
-		_specular->ActivateTextureUnit();
-		_specular->BindTexture();
+		pipeline.Bind();
 	}
 
 	void Material::UnbindMaterial()
 	{
-		_diffuse->ActivateTextureUnit();
-		_diffuse->UnbindTexture();
-        _normalMap->ActivateTextureUnit();
-        _normalMap->UnbindTexture();
-		_specular->ActivateTextureUnit();
-		_specular->UnbindTexture();
+		pipeline.Unbind();
 	}
 
-	EmissiveMaterial::EmissiveMaterial(const VTexturePtr& diffuse, const VTexturePtr& normalMap, const VTexturePtr& specular, const VTexturePtr& emission, float & shininess) : Material(diffuse, normalMap, specular, shininess) //TODO Normals and shininess not needed
+	PhongMaterial::PhongMaterial( const TexturePtr & diffuse, const TexturePtr & normalMap, const TexturePtr & specular, float & shininess )
 	{
-		/*_emission = emission;
-		_emission->SetTextureUnit(GL_TEXTURE3);*/
+		_diffuse = diffuse;
+		_normalMap = normalMap;
+		_specular = specular;
+		_shininess = shininess;
+	}
+
+	EmissiveMaterial::EmissiveMaterial(const TexturePtr& diffuse, const TexturePtr& normalMap, const TexturePtr& specular, const TexturePtr& emission, float & shininess) : PhongMaterial(diffuse, normalMap, specular, shininess) //TODO Normals and shininess not needed
+	{
+		_emission = emission;
 	}
 
 	void EmissiveMaterial::BindMaterial()

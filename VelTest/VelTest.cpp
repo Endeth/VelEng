@@ -29,11 +29,16 @@ void setVSync( bool sync )
 #endif
 }
 
-
 int main()
 {
+	Lua lua;
+	lua.DoFile( "scripts/main.lua" );
+	lua.GetGlobal( "globalVariable" );
+	float numberTest;
+	lua.GetNumber( numberTest, -1 );
+	std::cout << numberTest << std::endl;
     VelEng::Settings initSettings;
-    VelEng::Instance()->Init(initSettings);
+    VelEng::Instance()->Init( initSettings );
 	VelEng::Instance()->CreateScene("World");
 	VelEng::Instance()->CreateScene("Sky");
 

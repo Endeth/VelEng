@@ -12,6 +12,7 @@ set(VULKAN_LIB "manually add path" CACHE FILEPATH "Path to Vulkan library if Vul
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 set(LIBRARIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
+set(DYNAMIC_LIBRARIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dll)
 
 configure_file (
 	"${PROJECT_SOURCE_DIR}/VelEng/VelEngConfig.h.in"

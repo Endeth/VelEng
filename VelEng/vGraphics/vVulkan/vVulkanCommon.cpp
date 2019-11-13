@@ -7,7 +7,7 @@ namespace Vel
 	VkDevice VulkanCommon::Device = VK_NULL_HANDLE;
 	VkPhysicalDevice VulkanCommon::PhysicalDevice = VK_NULL_HANDLE;
 
-	void Semaphores::CreateSemaphores() //TODO create proper semaphores
+	void Semaphores::Create() //TODO create proper semaphores
 	{
 		VkSemaphoreCreateInfo semaphoreCreateInfo;
 		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;

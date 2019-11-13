@@ -17,9 +17,9 @@ namespace Vel
 		~TexelData();
 		size_t GetSize();
 
-		void *_data = nullptr;
-		glm::ivec2 _imageSize;
-		int _imageChannels;
+		void *data = nullptr;
+		glm::ivec2 imageSize;
+		int imageChannels;
 	};
 
 	class VulkanSamplers
@@ -35,7 +35,7 @@ namespace Vel
 		void DestroySamplers();
 		VkSampler GetSampler( Type samplerType );
 
-		std::vector<VkSampler> _samplers;
+		std::vector<VkSampler> samplers;
 	};
 	static VulkanSamplers Samplers; //TODO
 
@@ -46,20 +46,20 @@ namespace Vel
 		void AllocateMemory( uint32_t memoryTypeIndex );
 		void Destroy();
 
-		//This sucks. Maybe add respective VkMemoryBarriers to arrays which we use in a single vkCmdPipelineBarrier each frame and get rid of cmdPool and queue
+		//TODO This sucks. Maybe add respective VkMemoryBarriers to arrays which we use in a single vkCmdPipelineBarrier each frame and get rid of cmdPool and queue
 		void AdjustMemoryBarrier( VkImageLayout newLayout, VkCommandPool cmdPool, VkQueue queue );
 
-		glm::ivec2 _imageSize = glm::ivec2( 0 );
+		glm::ivec2 imageSize = glm::ivec2( 0 );
 
-		VkImage _image = VK_NULL_HANDLE;
-		VkImageView _imageView = VK_NULL_HANDLE;
-		VkSampler _sampler = VK_NULL_HANDLE;
-		VkDeviceMemory _imageMemory = VK_NULL_HANDLE;
-		VkMemoryRequirements _memoryRequirements;
+		VkImage image = VK_NULL_HANDLE;
+		VkImageView imageView = VK_NULL_HANDLE;
+		VkSampler sampler = VK_NULL_HANDLE;
+		VkDeviceMemory imageMemory = VK_NULL_HANDLE;
+		VkMemoryRequirements memoryRequirements;
 
-		VkFormat _format = VK_FORMAT_UNDEFINED;
-		VkAccessFlags _accessMask = 0;
-		VkImageLayout _layout = VK_IMAGE_LAYOUT_UNDEFINED;
+		VkFormat format = VK_FORMAT_UNDEFINED;
+		VkAccessFlags accessMask = 0;
+		VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	};
 
 	void CopyImage( VulkanImage &srcImage, VulkanImage &dstImage, VkDeviceSize size, VkCommandPool cmdPool, VkQueue transferQueue );

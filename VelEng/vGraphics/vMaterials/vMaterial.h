@@ -3,34 +3,43 @@
 #include <memory>
 
 #include "external/glm/glm.hpp"
+
 #include "vGraphics/vTextures/vTexture.h"
+#include "vMaterialPipeline.h"
 
 namespace Vel
 {
-	class Material 
+	class Material
 	{
 	protected:
-		using VTexturePtr = std::shared_ptr<Vel::Texture>;
+		using TexturePtr = std::shared_ptr<Vel::Texture>;
 	public:
-		Material(const VTexturePtr& diffuse, const VTexturePtr& normalMap, const VTexturePtr& specular, float& shininess);
-		void SetTexturesUnits();
+		Material();
+
 		virtual void BindMaterial();
 		virtual void UnbindMaterial();
+		MaterialPipeline pipeline;
+	};
+
+	class PhongMaterial : public Material
+	{
+	public:
+		PhongMaterial( const TexturePtr& diffuse, const TexturePtr& normalMap, const TexturePtr& specular, float& shininess );
 	private:
-		VTexturePtr _diffuse;
-		VTexturePtr _normalMap;
-		VTexturePtr _specular;
+		TexturePtr _diffuse;
+		TexturePtr _normalMap;
+		TexturePtr _specular;
 		float _shininess;
 	};
 
-	class EmissiveMaterial : public Material
+	class EmissiveMaterial : public PhongMaterial
 	{
 	public:
-		EmissiveMaterial(const VTexturePtr& diffuse, const VTexturePtr& normalMap, const VTexturePtr& specular, const VTexturePtr& emission, float& shininess);
+		EmissiveMaterial(const TexturePtr& diffuse, const TexturePtr& normalMap, const TexturePtr& specular, const TexturePtr& emission, float& shininess);
 		void BindMaterial() final;
 		void UnbindMaterial() final;
 	protected:
-		VTexturePtr _emission;
+		TexturePtr _emission;
 	};
 }
 

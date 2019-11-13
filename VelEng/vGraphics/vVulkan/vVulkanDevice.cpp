@@ -6,16 +6,16 @@
 
 namespace Vel
 {
-    bool VulkanDeviceManager::PhysicalDeviceProperties::IsSuitable( VkPhysicalDevice device )
+    bool Device::PhysicalDeviceProperties::IsSuitable( VkPhysicalDevice device )
     {
-        vkGetPhysicalDeviceProperties( device, &_properties );
-        return _properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+        vkGetPhysicalDeviceProperties( device, &properties );
+        return properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
     }
 
 	/*TODO checking for
     -supported extensions
     -queues*/
-    void VulkanDeviceManager::PhysicalDeviceProperties::FindDevice()
+    void Device::PhysicalDeviceProperties::FindDevice()
     {
 
         std::vector<VkPhysicalDevice> devices;
@@ -34,25 +34,25 @@ namespace Vel
             throw std::runtime_error( "failed to find a suitable GPU" );
     }
 
-    void VulkanDeviceManager::PhysicalDeviceProperties::QueryDevice()
+    void Device::PhysicalDeviceProperties::QueryDevice()
     {
-        vkGetPhysicalDeviceFeatures( VulkanCommon::PhysicalDevice, &_features );
-        vkGetPhysicalDeviceMemoryProperties( VulkanCommon::PhysicalDevice, &_memoryProperties );
-        VulkanQuery<VkPhysicalDevice, VkQueueFamilyProperties>( VulkanCommon::PhysicalDevice, vkGetPhysicalDeviceQueueFamilyProperties, _queueFamilyProperties ); //TODO handle wrong result
+        vkGetPhysicalDeviceFeatures( VulkanCommon::PhysicalDevice, &features );
+        vkGetPhysicalDeviceMemoryProperties( VulkanCommon::PhysicalDevice, &memoryProperties );
+        VulkanQuery<VkPhysicalDevice, VkQueueFamilyProperties>( VulkanCommon::PhysicalDevice, vkGetPhysicalDeviceQueueFamilyProperties, queueFamilyProperties ); //TODO handle wrong result
     }
 
-	void VulkanDeviceManager::PhysicalDeviceProperties::QuerySwapchainSupport( VkSurfaceKHR surface )
+	void Device::PhysicalDeviceProperties::QuerySwapchainSupport( VkSurfaceKHR surface )
 	{
-		vkGetPhysicalDeviceSurfaceCapabilitiesKHR( VulkanCommon::PhysicalDevice, surface, &_swapchainSupport.capabilities );
-		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkSurfaceFormatKHR, VkResult>( VulkanCommon::PhysicalDevice, surface, vkGetPhysicalDeviceSurfaceFormatsKHR, _swapchainSupport.formats ); //TODO handle wrong result
-		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkPresentModeKHR, VkResult>( VulkanCommon::PhysicalDevice, surface, vkGetPhysicalDeviceSurfacePresentModesKHR, _swapchainSupport.presentModes ); //TODO handle wrong result
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR( VulkanCommon::PhysicalDevice, surface, &swapchainSupport.capabilities );
+		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkSurfaceFormatKHR, VkResult>( VulkanCommon::PhysicalDevice, surface, vkGetPhysicalDeviceSurfaceFormatsKHR, swapchainSupport.formats ); //TODO handle wrong result
+		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkPresentModeKHR, VkResult>( VulkanCommon::PhysicalDevice, surface, vkGetPhysicalDeviceSurfacePresentModesKHR, swapchainSupport.presentModes ); //TODO handle wrong result
 	}
 
-	uint32_t VulkanDeviceManager::PhysicalDeviceProperties::FindMemoryType( uint32_t typeFilter, VkMemoryPropertyFlags properties )
+	uint32_t Device::PhysicalDeviceProperties::FindMemoryType( uint32_t typeFilter, VkMemoryPropertyFlags properties )
 	{
-		for( uint32_t i = 0; i < _memoryProperties.memoryTypeCount; ++i )
+		for( uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i )
 		{
-			if( typeFilter & ( 1 << i ) && ( _memoryProperties.memoryTypes[i].propertyFlags & properties ) == properties )
+			if( typeFilter & ( 1 << i ) && ( memoryProperties.memoryTypes[i].propertyFlags & properties ) == properties )
 			{
 				return i;
 			}
@@ -60,13 +60,13 @@ namespace Vel
 		return -1;
 	}
 
-    uint32_t VulkanDeviceManager::PhysicalDeviceProperties::GetQueueFamilyIndex( VkQueueFlagBits queueFlags ) //TODO try to find queues that are not already found
+    uint32_t Device::PhysicalDeviceProperties::GetQueueFamilyIndex( VkQueueFlagBits queueFlags ) //TODO try to find queues that are not already found
     {
         if ( queueFlags & VK_QUEUE_COMPUTE_BIT )
         {
-            for ( uint32_t i = 0; i < static_cast<uint32_t>(_queueFamilyProperties.size()); i++ )
+            for ( uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size()); i++ )
             {
-                if ( (_queueFamilyProperties[i].queueFlags & queueFlags) && (_queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0 )
+                if ( (queueFamilyProperties[i].queueFlags & queueFlags) && (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0 )
                 {
                     return i;
                 }
@@ -76,13 +76,13 @@ namespace Vel
         if( queueFlags & VK_QUEUE_TRANSFER_BIT )
         {
 			uint32_t index = 10000;
-            for( uint32_t i = 0; i < static_cast<uint32_t>(_queueFamilyProperties.size()); i++ )
+            for( uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size()); i++ )
             {
-                if( (_queueFamilyProperties[i].queueFlags & queueFlags) && ((_queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) && ((_queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) == 0) )
+                if( (queueFamilyProperties[i].queueFlags & queueFlags) && ((queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) && ((queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) == 0) )
                 {
                     return i;
                 }
-				else if( _queueFamilyProperties[i].queueFlags & queueFlags )
+				else if( queueFamilyProperties[i].queueFlags & queueFlags )
 				{
 					index = i;
 				}
@@ -91,9 +91,9 @@ namespace Vel
 				return index;
         }
 
-        for ( uint32_t i = 0; i < static_cast<uint32_t>(_queueFamilyProperties.size()); i++ )
+        for ( uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProperties.size()); i++ )
         {
-            if ( _queueFamilyProperties[i].queueFlags & queueFlags )
+            if ( queueFamilyProperties[i].queueFlags & queueFlags )
             {
                 return i;
             }
@@ -102,7 +102,7 @@ namespace Vel
         throw std::runtime_error( "Could not find a matching queue family index" );
     }
 
-    VkBool32 VulkanDeviceManager::PhysicalDeviceProperties::GetSupportedDepthFormat( VkFormat * depthFormat )
+    VkBool32 Device::PhysicalDeviceProperties::GetSupportedDepthFormat( VkFormat * depthFormat )
     {
         std::vector<VkFormat> depthFormats = {
 			VK_FORMAT_D24_UNORM_S8_UINT,
@@ -127,15 +127,15 @@ namespace Vel
     }
 
 
-	void VulkanDeviceManager::Setup()
+	void Device::Setup()
 	{
-		_physicalDeviceProperties.FindDevice();
-		_physicalDeviceProperties.QueryDevice();
+		physicalDeviceProperties.FindDevice();
+		physicalDeviceProperties.QueryDevice();
 		CreateDevice();
-		_semaphores[0].CreateSemaphores();
+		semaphores.Create();
 	}
 
-	void VulkanDeviceManager::CreateDevice( bool useSwapChain, VkQueueFlags requestedQueueTypes )
+	void Device::CreateDevice( bool useSwapChain, VkQueueFlags requestedQueueTypes )
 	{
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
@@ -156,7 +156,7 @@ namespace Vel
 		deviceCreateInfo.ppEnabledLayerNames = nullptr;
 		deviceCreateInfo.enabledExtensionCount = 0;
 		deviceCreateInfo.ppEnabledExtensionNames = nullptr;
-		deviceCreateInfo.pEnabledFeatures = &( _physicalDeviceProperties._features );
+		deviceCreateInfo.pEnabledFeatures = &( physicalDeviceProperties.features );
 
 		if( deviceExtensions.size() > 0 )
 		{
@@ -166,52 +166,51 @@ namespace Vel
 
 		CheckResult( vkCreateDevice( VulkanCommon::PhysicalDevice, &deviceCreateInfo, nullptr, &VulkanCommon::Device ), "failed to create device" );
 
-		vkGetDeviceQueue( VulkanCommon::Device, _queueFamilyIndices.graphics, 0, &_gQueue ); //TODO move this someplace right
-		vkGetDeviceQueue( VulkanCommon::Device, _queueFamilyIndices.transfer, 0, &_tQueue );
+		vkGetDeviceQueue( VulkanCommon::Device, queueFamilyIndices.graphics, 0, &gQueue ); //TODO move this someplace right
+		vkGetDeviceQueue( VulkanCommon::Device, queueFamilyIndices.transfer, 0, &tQueue );
 		//TODO compute & transfer
 
-		if( !_physicalDeviceProperties.GetSupportedDepthFormat( &_depthFormat ) )
+		if( !physicalDeviceProperties.GetSupportedDepthFormat( &depthFormat ) )
 			throw std::runtime_error( "no suitable depth format" );
 
 	}
 
-	void VulkanDeviceManager::Destroy()
+	void Device::Destroy()
 	{
-		for( auto &semaphore : _semaphores )
-			semaphore.Cleanup();
+		semaphores.Cleanup();
 
 		vkDestroyDevice( VulkanCommon::Device, nullptr );
 		VulkanCommon::Device = VK_NULL_HANDLE;
 	}
 
-    void VulkanDeviceManager::SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType )
+    void Device::SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType )
     {
         if ( queueType & VK_QUEUE_GRAPHICS_BIT )
         {
-            _queueFamilyIndices.graphics = _physicalDeviceProperties.GetQueueFamilyIndex( VK_QUEUE_GRAPHICS_BIT );
+            queueFamilyIndices.graphics = physicalDeviceProperties.GetQueueFamilyIndex( VK_QUEUE_GRAPHICS_BIT );
             VkDeviceQueueCreateInfo queueInfo;
             queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
             queueInfo.pNext = nullptr;
             queueInfo.flags = 0;
-            queueInfo.queueFamilyIndex = _queueFamilyIndices.graphics;
+            queueInfo.queueFamilyIndex = queueFamilyIndices.graphics;
             queueInfo.queueCount = 1;
-            queueInfo.pQueuePriorities = &_defaultQueuePriority;
+            queueInfo.pQueuePriorities = &defaultQueuePriority;
             queueCreateInfos.push_back( queueInfo );
         }
 		else if( queueType & VK_QUEUE_TRANSFER_BIT )
 		{
-			_queueFamilyIndices.transfer = _physicalDeviceProperties.GetQueueFamilyIndex( VK_QUEUE_TRANSFER_BIT );
+			queueFamilyIndices.transfer = physicalDeviceProperties.GetQueueFamilyIndex( VK_QUEUE_TRANSFER_BIT );
 			VkDeviceQueueCreateInfo queueInfo;
 			queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			queueInfo.pNext = nullptr;
 			queueInfo.flags = 0;
-			queueInfo.queueFamilyIndex = _queueFamilyIndices.transfer;
+			queueInfo.queueFamilyIndex = queueFamilyIndices.transfer;
 			queueInfo.queueCount = 1;
-			queueInfo.pQueuePriorities = &_defaultQueuePriority;
+			queueInfo.pQueuePriorities = &defaultQueuePriority;
 			queueCreateInfos.push_back( queueInfo );
 		}
         else
-            _queueFamilyIndices.graphics = VK_NULL_HANDLE;
+            queueFamilyIndices.graphics = VK_NULL_HANDLE;
     }
 }
 

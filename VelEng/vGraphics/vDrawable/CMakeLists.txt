@@ -1,6 +1,5 @@
 set(SOURCE
    ${SOURCE}
-   ${CMAKE_CURRENT_SOURCE_DIR}/vDrawableObject.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vMesh.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vModel.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vScene.cpp

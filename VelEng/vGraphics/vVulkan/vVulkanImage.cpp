@@ -9,7 +9,7 @@ namespace Vel
 	//std::array<VulkanSampler, VulkanSampler::Type::TYPES> Samplers{};
 	void VulkanSamplers::CreateSamplers()
 	{
-		_samplers.resize( Type::TYPES );
+		samplers.resize( Type::TYPES );
 
 		VkSamplerCreateInfo samplerCreateInfo;
 		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -31,12 +31,12 @@ namespace Vel
 		samplerCreateInfo.minLod = 0.f;
 		samplerCreateInfo.maxLod = 0.f;
 
-		CheckResult( vkCreateSampler( VulkanCommon::Device, &samplerCreateInfo, nullptr, &_samplers[Type::BasicSampler] ), "failed to create sampler" );
+		CheckResult( vkCreateSampler( VulkanCommon::Device, &samplerCreateInfo, nullptr, &samplers[Type::BasicSampler] ), "failed to create sampler" );
 	}
 
 	void VulkanSamplers::DestroySamplers()
 	{
-		for( auto &sampler : _samplers )
+		for( auto &sampler : samplers )
 		{
 			vkDestroySampler( VulkanCommon::Device, sampler, nullptr );
 		}
@@ -44,36 +44,36 @@ namespace Vel
 
 	VkSampler VulkanSamplers::GetSampler( Type samplerType )
 	{
-		return _samplers[samplerType];
+		return samplers[samplerType];
 	}
 
 	TexelData::TexelData( const char * path )
 	{
-		_data = stbi_load( path, &_imageSize.x, &_imageSize.y, &_imageChannels, STBI_rgb_alpha );
+		data = stbi_load( path, &imageSize.x, &imageSize.y, &imageChannels, STBI_rgb_alpha );
 	}
 
 	TexelData::~TexelData()
 	{
-		stbi_image_free( _data );
+		stbi_image_free( data );
 	}
 
 	size_t TexelData::GetSize()
 	{
-		return _imageSize.x *_imageSize.y *_imageChannels;
+		return imageSize.x *imageSize.y *imageChannels;
 	}
 
 	void VulkanImage::Create( glm::ivec2 size, VkDeviceSize deviceSize, VkFormat imageFormat, VkImageCreateFlags flags, VkImageUsageFlags usage, VkSharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices )
 	{
-		_imageSize = size;
-		_format = imageFormat;
+		imageSize = size;
+		format = imageFormat;
 		VkImageCreateInfo imageCreateInfo;
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageCreateInfo.pNext = nullptr;
 		imageCreateInfo.flags = flags;
 		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageCreateInfo.format = _format;
-		imageCreateInfo.extent.width = static_cast<uint32_t>( _imageSize.x );
-		imageCreateInfo.extent.height = static_cast<uint32_t>( _imageSize.y );
+		imageCreateInfo.format = format;
+		imageCreateInfo.extent.width = static_cast<uint32_t>( imageSize.x );
+		imageCreateInfo.extent.height = static_cast<uint32_t>( imageSize.y );
 		imageCreateInfo.extent.depth = 1;
 		imageCreateInfo.mipLevels = 1;
 		imageCreateInfo.arrayLayers = 1;
@@ -85,9 +85,9 @@ namespace Vel
 		imageCreateInfo.pQueueFamilyIndices = queueFamilyIndices.data();
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-		CheckResult( vkCreateImage( VulkanCommon::Device, &imageCreateInfo, nullptr, &_image ), "failed to create image" );
+		CheckResult( vkCreateImage( VulkanCommon::Device, &imageCreateInfo, nullptr, &image ), "failed to create image" );
 
-		vkGetImageMemoryRequirements( VulkanCommon::Device, _image, &_memoryRequirements );
+		vkGetImageMemoryRequirements( VulkanCommon::Device, image, &memoryRequirements );
 	}
 
 	void VulkanImage::AllocateMemory( uint32_t memoryTypeIndex )
@@ -95,22 +95,22 @@ namespace Vel
 		VkMemoryAllocateInfo memoryAllocInfo;
 		memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memoryAllocInfo.pNext = nullptr;
-		memoryAllocInfo.allocationSize = _memoryRequirements.size;
+		memoryAllocInfo.allocationSize = memoryRequirements.size;
 		memoryAllocInfo.memoryTypeIndex = memoryTypeIndex;
 
-		CheckResult( vkAllocateMemory( VulkanCommon::Device, &memoryAllocInfo, nullptr, &_imageMemory ), "failed to allocate memory" );
-		CheckResult( vkBindImageMemory( VulkanCommon::Device, _image, _imageMemory, 0 ), "failed to bind memory" );
+		CheckResult( vkAllocateMemory( VulkanCommon::Device, &memoryAllocInfo, nullptr, &imageMemory ), "failed to allocate memory" );
+		CheckResult( vkBindImageMemory( VulkanCommon::Device, image, imageMemory, 0 ), "failed to bind memory" );
 
 		VkImageViewCreateInfo imageViewCreateInfo;
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		imageViewCreateInfo.pNext = nullptr;
 		imageViewCreateInfo.flags = 0;
-		imageViewCreateInfo.image = _image;
+		imageViewCreateInfo.image = image;
 		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfo.format = _format;
+		imageViewCreateInfo.format = format;
 		imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 
-		if( _format == VK_FORMAT_D32_SFLOAT_S8_UINT ) //TODO remove hack
+		if( format == VK_FORMAT_D32_SFLOAT_S8_UINT ) //TODO remove hack
 			imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 		else
 			imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -119,14 +119,14 @@ namespace Vel
 		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 		imageViewCreateInfo.subresourceRange.layerCount = 1;
 
-		CheckResult( vkCreateImageView( VulkanCommon::Device, &imageViewCreateInfo, nullptr, &_imageView ), "failed to create image view" );
+		CheckResult( vkCreateImageView( VulkanCommon::Device, &imageViewCreateInfo, nullptr, &imageView ), "failed to create image view" );
 	}
 
 	void VulkanImage::AdjustMemoryBarrier( VkImageLayout newLayout, VkCommandPool cmdPool, VkQueue queue )
 	{
 		auto cmdBuffer = BeginSingleTimeCommand( cmdPool );
 		VkImageSubresourceRange subresourceRange;
-		if( _format == VK_FORMAT_D32_SFLOAT_S8_UINT ) //TODO remove hack
+		if( format == VK_FORMAT_D32_SFLOAT_S8_UINT ) //TODO remove hack
 			subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 		else
 			subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -138,32 +138,32 @@ namespace Vel
 		VkImageMemoryBarrier imageBarrier;
 		imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		imageBarrier.pNext = nullptr;
-		imageBarrier.srcAccessMask = _accessMask;
-		imageBarrier.oldLayout = _layout;
+		imageBarrier.srcAccessMask = accessMask;
+		imageBarrier.oldLayout = layout;
 		imageBarrier.newLayout = newLayout;
 		imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		imageBarrier.image = _image;
+		imageBarrier.image = image;
 		imageBarrier.subresourceRange = subresourceRange;
 
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
 
-		if( _layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL )
+		if( layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL )
 		{
 			imageBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
 			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		}
-		else if( _layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL )
+		else if( layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL )
 		{
 			imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
 			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
-		else if( _layout == VK_FORMAT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
+		else if( layout == VK_FORMAT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
 		{
 			imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
@@ -175,8 +175,8 @@ namespace Vel
 			throw std::invalid_argument( "Unsupported layout transition" );
 		}
 
-		_accessMask = imageBarrier.dstAccessMask; //TODO don't like it before submitting
-		_layout = newLayout;
+		accessMask = imageBarrier.dstAccessMask; //TODO don't like it before submitting
+		layout = newLayout;
 
 		vkCmdPipelineBarrier( cmdBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier );
 
@@ -200,20 +200,20 @@ namespace Vel
 
 	void VulkanImage::Destroy()
 	{
-		if( _imageView != VK_NULL_HANDLE )
+		if( imageView != VK_NULL_HANDLE )
 		{
-			vkDestroyImageView( VulkanCommon::Device, _imageView, nullptr );
-			_imageView = VK_NULL_HANDLE;
+			vkDestroyImageView( VulkanCommon::Device, imageView, nullptr );
+			imageView = VK_NULL_HANDLE;
 		}
-		if( _image != VK_NULL_HANDLE )
+		if( image != VK_NULL_HANDLE )
 		{
-			vkDestroyImage( VulkanCommon::Device, _image, nullptr );
-			_image = VK_NULL_HANDLE;
+			vkDestroyImage( VulkanCommon::Device, image, nullptr );
+			image = VK_NULL_HANDLE;
 		}
-		if( _imageMemory != VK_NULL_HANDLE )
+		if( imageMemory != VK_NULL_HANDLE )
 		{
-			vkFreeMemory( VulkanCommon::Device, _imageMemory, nullptr );
-			_imageMemory = VK_NULL_HANDLE;
+			vkFreeMemory( VulkanCommon::Device, imageMemory, nullptr );
+			imageMemory = VK_NULL_HANDLE;
 		}
 	}
 
@@ -228,7 +228,7 @@ namespace Vel
 		imageCopy.dstOffset;
 		imageCopy.extent;
 
-		vkCmdCopyImage( cmdBuffer, srcImage._image, srcImage._layout, dstImage._image, dstImage._layout, 1, &imageCopy );
+		vkCmdCopyImage( cmdBuffer, srcImage.image, srcImage.layout, dstImage.image, dstImage.layout, 1, &imageCopy );
 		vkEndCommandBuffer( cmdBuffer );
 
 		VkSubmitInfo submitInfo = {};
@@ -264,10 +264,10 @@ namespace Vel
 		imageCopy.imageSubresource = subresource;
 		imageCopy.imageOffset = { 0, 0, 0, };
 		imageCopy.imageExtent.depth = 1;
-		imageCopy.imageExtent.width = dstImage._imageSize.x;
-		imageCopy.imageExtent.height = dstImage._imageSize.y;
+		imageCopy.imageExtent.width = dstImage.imageSize.x;
+		imageCopy.imageExtent.height = dstImage.imageSize.y;
  
-		vkCmdCopyBufferToImage( cmdBuffer, srcBuffer._buffer, dstImage._image, dstImage._layout, 1, &imageCopy );
+		vkCmdCopyBufferToImage( cmdBuffer, srcBuffer._buffer, dstImage.image, dstImage.layout, 1, &imageCopy );
 		vkEndCommandBuffer( cmdBuffer );
 
 		VkSubmitInfo submitInfo = {};

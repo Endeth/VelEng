@@ -35,13 +35,13 @@ namespace Vel
     }
 
 
-    VulkanDebug* VulkanDebug::_instance = nullptr;
+    VulkanDebug* VulkanDebug::instance = nullptr;
 
     VulkanDebug::VulkanDebug()
     {
-        _cbCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-        _cbCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-        _cbCreateInfo.pfnCallback = Vel::VulkanDebug::DebugCallback;
+        cbCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+        cbCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+        cbCreateInfo.pfnCallback = Vel::VulkanDebug::DebugCallback;
     }
 
     VulkanDebug::~VulkanDebug()
@@ -62,13 +62,13 @@ namespace Vel
 
 	void VulkanDebug::SetValidationLayers( std::vector<const char*>& validationLayers )
 	{
-		_validationLayers = validationLayers;
-		_validationLayersSet = true;
+		validationLayers = validationLayers;
+		validationLayersSet = true;
 	}
 
     bool VulkanDebug::EnableValidationLayers( VkInstanceCreateInfo &createInfo )
     {
-		if( !_validationLayersSet )
+		if( !validationLayersSet )
 		{
 			SetValidationLayers();
 		}
@@ -82,7 +82,7 @@ namespace Vel
             std::cout << "\t" << layer.layerName << std::endl;
         }
         std::cout << "Matching layers:" << std::endl;
-        for ( const char *layerName : _validationLayers )
+        for ( const char *layerName : validationLayers )
         {
             bool layerFound = false;
             for ( const auto &layerProperties : availableLayers )
@@ -97,8 +97,8 @@ namespace Vel
             if ( !layerFound )
                 return false;
         }
-        createInfo.enabledLayerCount = static_cast<uint32_t>(_validationLayers.size());
-        createInfo.ppEnabledLayerNames = _validationLayers.data();
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.ppEnabledLayerNames = validationLayers.data();
 
         return true;
     }
@@ -109,7 +109,7 @@ namespace Vel
         CreateDebugReportCallback = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr( VulkanCommon::Instance, "vkCreateDebugReportCallbackEXT" ));
         if ( CreateDebugReportCallback != nullptr )
         {
-            VkResult err = CreateDebugReportCallback( VulkanCommon::Instance, &_cbCreateInfo, nullptr, &_dbCallback );
+            VkResult err = CreateDebugReportCallback( VulkanCommon::Instance, &cbCreateInfo, nullptr, &dbCallback );
             assert( !err );
         }
         else
@@ -121,7 +121,7 @@ namespace Vel
     {
         auto DestroyDebugReportCallback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr( VulkanCommon::Instance, "vkDestroyDebugReportCallbackEXT" ));
         if ( DestroyDebugReportCallback != nullptr )
-            DestroyDebugReportCallback( VulkanCommon::Instance, _dbCallback, nullptr );
+            DestroyDebugReportCallback( VulkanCommon::Instance, dbCallback, nullptr );
     }
 }
 

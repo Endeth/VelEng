@@ -17,14 +17,14 @@ namespace Vel
 
 		CheckResult( vkCreateBuffer( VulkanCommon::Device, &vertexBufferCreateInfo, nullptr, &_buffer ), "failed to create vertex buffer" );
 
-		vkGetBufferMemoryRequirements( VulkanCommon::Device, _buffer, &_memoryRequirements );
+		vkGetBufferMemoryRequirements( VulkanCommon::Device, _buffer, &memoryRequirements );
 	}
 	void VulkanBuffer::AllocateMemory( uint32_t memoryTypeIndex )
 	{
 		VkMemoryAllocateInfo memoryAllocInfo;
 		memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memoryAllocInfo.pNext = nullptr;
-		memoryAllocInfo.allocationSize = _memoryRequirements.size;
+		memoryAllocInfo.allocationSize = memoryRequirements.size;
 		memoryAllocInfo.memoryTypeIndex = memoryTypeIndex;
 
 		CheckResult( vkAllocateMemory( VulkanCommon::Device, &memoryAllocInfo, nullptr, &_bufferMemory ), "failed to allocate memory" );

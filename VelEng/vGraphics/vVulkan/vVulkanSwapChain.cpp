@@ -2,30 +2,30 @@
 
 namespace Vel
 {
-    void VulkanSwapchain::Init( GLFWwindow *window )
+    void Swapchain::CreateSurface( GLFWwindow *window )
     {
-		glfwGetWindowSize( window, &_imageSize.x, &_imageSize.y );
-		VulkanOptions::WindowSize.x = _imageSize.x;
-		VulkanOptions::WindowSize.y = _imageSize.y;
-        CheckResult( glfwCreateWindowSurface( VulkanCommon::Instance, window, nullptr, &_surface ), "fail creating surface" ); //TODO get rid of glfw here
+		glfwGetWindowSize( window, &imageSize.x, &imageSize.y ); //TODO does this sets? queries? why options are set here?
+		VulkanOptions::WindowSize.x = imageSize.x;
+		VulkanOptions::WindowSize.y = imageSize.y;
+        CheckResult( glfwCreateWindowSurface( VulkanCommon::Instance, window, nullptr, &surface ), "fail creating surface" ); //TODO get rid of glfw here
     }
 
-    void VulkanSwapchain::Create( SwapchainSupportDetails swapchainSupport, uint32_t queueIndex )
+    void Swapchain::CreateSwapchain( SwapchainSupportDetails swapchainSupport, uint32_t queueIndex )
     {
-		_format = FindAppropriateFormat( swapchainSupport.formats );
-		_presentMode = FindAppropriatePresentMode( swapchainSupport.presentModes );
+		format = FindAppropriateFormat( swapchainSupport.formats );
+		presentMode = FindAppropriatePresentMode( swapchainSupport.presentModes );
 		VkImageUsageFlags usageFlags = FindAppropriateUsageFlags( swapchainSupport.capabilities );
 
 		VkSwapchainCreateInfoKHR swapchainCreateInfo;
 		swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchainCreateInfo.flags = 0;
 		swapchainCreateInfo.pNext = nullptr;
-		swapchainCreateInfo.surface = _surface;
-		swapchainCreateInfo.minImageCount = GetImagesCount( swapchainSupport.capabilities ); //TODO tbh might only be useful when implementing triple buffering
-		swapchainCreateInfo.imageFormat = _format.format;
-		swapchainCreateInfo.imageColorSpace = _format.colorSpace;
-		swapchainCreateInfo.imageExtent.width = _imageSize.x; //TODO use physicaldevicesurfacecapabilities
-		swapchainCreateInfo.imageExtent.height = _imageSize.y; //TODO use physicaldevicesurfacecapabilities
+		swapchainCreateInfo.surface = surface;
+		swapchainCreateInfo.minImageCount = GetImagesCount( swapchainSupport.capabilities );
+		swapchainCreateInfo.imageFormat = format.format;
+		swapchainCreateInfo.imageColorSpace = format.colorSpace;
+		swapchainCreateInfo.imageExtent.width = imageSize.x; //TODO use physicaldevicesurfacecapabilities
+		swapchainCreateInfo.imageExtent.height = imageSize.y; //TODO use physicaldevicesurfacecapabilities
 		swapchainCreateInfo.imageArrayLayers = 1;
 		swapchainCreateInfo.imageUsage = usageFlags;
 		swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -34,15 +34,15 @@ namespace Vel
 		swapchainCreateInfo.queueFamilyIndexCount = 1; //TODO maybe more queues
 		swapchainCreateInfo.pQueueFamilyIndices = &queueIndex;
 		swapchainCreateInfo.clipped = VK_TRUE;
-		swapchainCreateInfo.presentMode = _presentMode;
+		swapchainCreateInfo.presentMode = presentMode;
 		swapchainCreateInfo.oldSwapchain = nullptr; 
 
-		CheckResult( vkCreateSwapchainKHR( VulkanCommon::Device, &swapchainCreateInfo, nullptr, &_swapchain ), "fail to create swapchain" );
+		CheckResult( vkCreateSwapchainKHR( VulkanCommon::Device, &swapchainCreateInfo, nullptr, &swapchain ), "fail to create swapchain" );
 
-		vkGetSwapchainImagesKHR( VulkanCommon::Device, _swapchain, &_imageCount, nullptr );
-		_images.resize( _imageCount );
-		VkImage *swapchainImages = new VkImage[_imageCount];
-		CheckResult( vkGetSwapchainImagesKHR( VulkanCommon::Device, _swapchain, &_imageCount, swapchainImages ), "failed to get swapchain images" );
+		vkGetSwapchainImagesKHR( VulkanCommon::Device, swapchain, &imageCount, nullptr );
+		images.resize( imageCount );
+		VkImage *swapchainImages = new VkImage[imageCount];
+		CheckResult( vkGetSwapchainImagesKHR( VulkanCommon::Device, swapchain, &imageCount, swapchainImages ), "failed to get swapchain images" );
 
 		VkComponentMapping mapping;
 		mapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -62,55 +62,53 @@ namespace Vel
 		imageViewCreateInfo.pNext = nullptr;
 		imageViewCreateInfo.flags = 0;
 		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfo.format = _format.format;
+		imageViewCreateInfo.format = format.format;
 		imageViewCreateInfo.components = mapping;
 		imageViewCreateInfo.subresourceRange = subresourceRange;
 
-		for( int i = 0; i < _imageCount; ++i )
+		for( int i = 0; i < imageCount; ++i )
 		{
-			_images[i]._image = swapchainImages[i]; //TODO constructor based on VkImage?
-			imageViewCreateInfo.image = _images[i]._image;
+			images[i].image = swapchainImages[i]; //TODO constructor based on VkImage?
+			imageViewCreateInfo.image = images[i].image;
 
-			CheckResult( vkCreateImageView( VulkanCommon::Device, &imageViewCreateInfo, nullptr, &_images[i]._imageView ), "failed to create image view" );
+			CheckResult( vkCreateImageView( VulkanCommon::Device, &imageViewCreateInfo, nullptr, &images[i].imageView ), "failed to create image view" );
 		}
 		delete[] swapchainImages;
     }
 
-    VkResult VulkanSwapchain::AcquireNextImage( VkSemaphore presentCompleteSemaphore, uint32_t * imageIndex ) //TODO
+    VkResult Swapchain::AcquireNextImage( uint32_t *imageIndex, VkSemaphore imageAcquiredSemaphore, VkFence fence ) //TODO
     {
-        return VkResult();
+		return vkAcquireNextImageKHR( VulkanCommon::Device, swapchain, std::numeric_limits<uint64_t>::max(), imageAcquiredSemaphore, fence, imageIndex );
     }
 
-    VkResult VulkanSwapchain::QueuePresent( VkQueue queue, uint32_t imageIndex, VkSemaphore waitSemaphore ) //TODO
+    void Swapchain::Cleanup()
     {
-        return VkResult();
-    }
-
-    void VulkanSwapchain::Cleanup()
-    {
-        if ( _swapchain != VK_NULL_HANDLE )
+        if ( swapchain != VK_NULL_HANDLE )
         {
-            for ( uint32_t i = 0; i < _imageCount; i++ )
-                vkDestroyImageView( VulkanCommon::Device, _images[i]._imageView, nullptr );
+            for ( uint32_t i = 0; i < imageCount; i++ )
+                vkDestroyImageView( VulkanCommon::Device, images[i].imageView, nullptr );
 
-			vkDestroySwapchainKHR( VulkanCommon::Device, _swapchain, nullptr );
+			vkDestroySwapchainKHR( VulkanCommon::Device, swapchain, nullptr );
         }
-        if ( _surface != VK_NULL_HANDLE )
+        if ( surface != VK_NULL_HANDLE )
         {
-            vkDestroySurfaceKHR( VulkanCommon::Instance, _surface, nullptr );
+            vkDestroySurfaceKHR( VulkanCommon::Instance, surface, nullptr );
         }
-        _surface = VK_NULL_HANDLE;
-        _swapchain = VK_NULL_HANDLE;
+        surface = VK_NULL_HANDLE;
+        swapchain = VK_NULL_HANDLE;
     }
-	uint32_t VulkanSwapchain::GetImagesCount( VkSurfaceCapabilitiesKHR &capabilities )
+
+	uint32_t Swapchain::GetImagesCount( VkSurfaceCapabilitiesKHR &capabilities )
 	{
 		return 2; //TODO maybe check, maybe not, if device can't handle surface won't be created
 	}
-	VkExtent2D VulkanSwapchain::GetAppropriateExtent( VkSurfaceCapabilitiesKHR &capabilities )
+
+	VkExtent2D Swapchain::GetAppropriateExtent( VkSurfaceCapabilitiesKHR &capabilities )
 	{
 		return VkExtent2D();
 	}
-	VkSurfaceFormatKHR VulkanSwapchain::FindAppropriateFormat( std::vector<VkSurfaceFormatKHR> &formats )
+
+	VkSurfaceFormatKHR Swapchain::FindAppropriateFormat( std::vector<VkSurfaceFormatKHR> &formats )
 	{
 		VkFormat desirableFormat = VK_FORMAT_B8G8R8A8_UNORM;
 		if( ( formats.size() == 1 ) && ( formats[0].format == VK_FORMAT_UNDEFINED ) )
@@ -124,7 +122,8 @@ namespace Vel
 
 		return formats[0];
 	}
-	VkImageUsageFlags VulkanSwapchain::FindAppropriateUsageFlags( VkSurfaceCapabilitiesKHR &capabilities )
+
+	VkImageUsageFlags Swapchain::FindAppropriateUsageFlags( VkSurfaceCapabilitiesKHR &capabilities )
 	{
 		if( capabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT )
 			return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -143,22 +142,20 @@ namespace Vel
 
 		return static_cast<VkImageUsageFlags>( -1 );
 	}
-	VkPresentModeKHR VulkanSwapchain::FindAppropriatePresentMode( std::vector<VkPresentModeKHR> &presentModes )
+
+	VkPresentModeKHR Swapchain::FindAppropriatePresentMode( std::vector<VkPresentModeKHR> &presentModes )
 	{
 		VkPresentModeKHR desirablePresentMode = VK_PRESENT_MODE_FIFO_KHR;
+		VkPresentModeKHR fallbackPresentMode = static_cast<VkPresentModeKHR>( -1 );
 		for( auto &presentMode : presentModes )
 		{
 			if( presentMode == desirablePresentMode )
 				return desirablePresentMode;
-		}
-
-		for( auto &presentMode : presentModes )
-		{
 			if( presentMode == VK_PRESENT_MODE_MAILBOX_KHR )
-				return VK_PRESENT_MODE_MAILBOX_KHR;
+				fallbackPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
 		}
 
-		return static_cast<VkPresentModeKHR>( -1 );
+		return fallbackPresentMode;
 	}
 }
 

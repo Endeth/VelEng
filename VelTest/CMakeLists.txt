@@ -24,4 +24,9 @@ configure_file (
 #	"${PROJECT_BINARY_DIR}/VelTest/Debug/glfw3.dll"
 #	COPYONLY
 #)
+configure_file ( #not very platform agnostic, is it?
+	"${DYNAMIC_LIBRARIES_DIR}/lua53.dll"
+	"${PROJECT_BINARY_DIR}/VelTest/Debug/lua53.dll"
+	COPYONLY
+)
 include_directories(${PROJECT_BINARY_DIR}/VelTest/Config)

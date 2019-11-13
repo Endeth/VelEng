@@ -16,26 +16,23 @@
 
 namespace Vel
 {
-    class VulkanSwapchain
+    class Swapchain
     {
     public:
-        void Init( GLFWwindow *window ); //TODO init and create?
-        void Create( SwapchainSupportDetails swapchainSupport, uint32_t queueIndex ); //TODO proper queues
-        VkResult AcquireNextImage( VkSemaphore presentCompleteSemaphore, uint32_t *imageIndex );
-        VkResult QueuePresent( VkQueue queue, uint32_t imageIndex, VkSemaphore waitSemaphore = VK_NULL_HANDLE );
+        void CreateSurface( GLFWwindow *window ); //TODO init and create?
+        void CreateSwapchain( SwapchainSupportDetails swapchainSupport, uint32_t queueIndex ); //TODO proper queues
+        VkResult AcquireNextImage( uint32_t *imageIndex, VkSemaphore imageAcquiredSemaphore, VkFence fence );
         void Cleanup();
 
-		GLFWwindow *_window;
+        VkSurfaceKHR surface;
+		VkSwapchainKHR swapchain = VK_NULL_HANDLE;
 
-        VkSurfaceKHR _surface;
-		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
-
-		VkSurfaceFormatKHR _format;
-		VkPresentModeKHR _presentMode;
+		VkSurfaceFormatKHR format;
+		VkPresentModeKHR presentMode;
         
-		glm::i32vec2 _imageSize;
-        uint32_t _imageCount;
-        std::vector<VulkanImage> _images;
+		glm::i32vec2 imageSize;
+        uint32_t imageCount;
+        std::vector<VulkanImage> images;
 	private:
 		uint32_t GetImagesCount( VkSurfaceCapabilitiesKHR &capabilities );
 		VkExtent2D GetAppropriateExtent( VkSurfaceCapabilitiesKHR &capabilities );

@@ -4,7 +4,7 @@ namespace Vel
 {
     DefferedRenderer::DefferedRenderer( const glm::ivec2& resolution, const ShaderPtr &gPass, const ShaderPtr &lPass ) : _gBuffer( resolution ), _gPassShader( gPass ), _lPassShader( lPass )
     {
-        _quad.SetShader( lPass );
+        //_quad.SetShader( lPass );
     }
 
     //g and l passes
@@ -16,9 +16,9 @@ namespace Vel
 
     void DefferedRenderer::SetLPassShader( const ShaderPtr & shader )
     {
-        _lPassShader = shader;
-        _quad.SetShader( shader );
-        _quad.SetVAO();
+        //_lPassShader = shader;
+        //_quad.SetShader( shader );
+        //_quad.SetVAO();
     }
 
     void DefferedRenderer::BindGBufferForWriting()

@@ -1,7 +1,3 @@
-#include "external/assimp/mesh.h"
-#include "external/assimp/scene.h"
-#include "external/assimp/postprocess.h"
-#include "external/assimp/Importer.hpp"
 #include "vAssets.h"
 
 namespace Vel
@@ -13,8 +9,9 @@ namespace Vel
     AssetsManager::~AssetsManager()
     {
     }
-	std::shared_ptr<Model> AssetsManager::LoadModel(const char * path)
+	std::shared_ptr<Model> AssetsManager::GetModel(const std::string &path )
 	{
-		return std::shared_ptr<Model>();
+		//return _models.Get( path );
+		return std::make_shared<Model>();
 	}
 }
