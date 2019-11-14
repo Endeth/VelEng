@@ -9,6 +9,7 @@ set(SOURCE
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanImage.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanPipeline.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanRenderPass.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanShader.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanSwapchain.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanTexture.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanUtil.cpp
@@ -25,6 +26,7 @@ set(HEADERS
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanImage.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanPipeline.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanRenderPass.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanShader.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanSwapchain.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanTexture.h
    ${CMAKE_CURRENT_SOURCE_DIR}/vVulkanUtil.h

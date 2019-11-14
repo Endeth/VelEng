@@ -176,7 +176,6 @@ namespace Vel
 		subresourceRange.baseArrayLayer = 0;
 		subresourceRange.layerCount = 1;
 
-		/*
 		VkImageMemoryBarrier barrierFromPresentToDraw;
 		barrierFromPresentToDraw.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrierFromPresentToDraw.pNext = nullptr;
@@ -197,7 +196,7 @@ namespace Vel
 		barrierFromDrawToPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 		barrierFromDrawToPresent.srcQueueFamilyIndex = 0;
 		barrierFromDrawToPresent.dstQueueFamilyIndex = 0;
-		barrierFromDrawToPresent.subresourceRange = subresourceRange; */
+		barrierFromDrawToPresent.subresourceRange = subresourceRange;
 
 
 		size_t swapchainImagesCount = swapchain.images.size();
@@ -205,25 +204,25 @@ namespace Vel
 		{
 			auto& frameContext = renderPass.GetFrameContext( imageId );
 			VkCommandBuffer frameCmdBuffer = frameContext.GetCommandBuffer();
-			renderPassBeginInfo.framebuffer = frameContext.GetFramebuffer(); //TODO
-			//barrierFromPresentToDraw.image = swapchain._images[i].image; //TODO this is kind of a hack I guess
-			//barrierFromDrawToPresent.image = swapchain._images[i].image; //TODO this is kind of a hack I guess
+			renderPassBeginInfo.framebuffer = frameContext.GetFramebuffer();
+			barrierFromPresentToDraw.image = swapchain.images[i].image; //TODO this is kind of a hack I guess
+			barrierFromDrawToPresent.image = swapchain.images[i].image; //TODO this is kind of a hack I guess
 
 			CheckResult( vkBeginCommandBuffer( frameCmdBuffer, &beginInfo ), "failed to begin command buffer" );
 
-			//vkCmdPipelineBarrier(frameCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromPresentToDraw );
+			vkCmdPipelineBarrier(frameCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromPresentToDraw );
 			vkCmdBeginRenderPass( frameCmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-			//vkCmdBindPipeline( frameCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPass._graphicsPipeline ); //TODO
+			vkCmdBindPipeline( frameCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPass._graphicsPipeline ); //TODO
 
 			vkCmdBindVertexBuffers( frameCmdBuffer, 0, 1, vertexBuffers, offsets );
 			vkCmdBindIndexBuffer( frameCmdBuffer, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32 );
-			//vkCmdBindDescriptorSets( frameCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr ); //TODO
+			vkCmdBindDescriptorSets( frameCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr ); //TODO
 
 			vkCmdDrawIndexed( frameCmdBuffer, _testingModel->_meshes[0]->GetIndicesCount(), 1, 0, 0, 0 );
 
 			vkCmdEndRenderPass( frameCmdBuffer );
-			//vkCmdPipelineBarrier( frameCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromDrawToPresent );
+			vkCmdPipelineBarrier( frameCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromDrawToPresent );
 
 			CheckResult( vkEndCommandBuffer( frameCmdBuffer ), "failed to end command buffer" );
 		}

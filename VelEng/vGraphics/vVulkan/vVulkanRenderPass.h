@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "vVulkanCommon.h"
 #include "vGeo/vGeo.h"
+#include "vVulkanCommon.h"
 #include "vVulkanImage.h"
 
 namespace Vel
@@ -43,5 +43,6 @@ namespace Vel
 	private:
 		VkRenderPass renderPass;
 		std::vector<FrameContext> frameContexts;
+		Pipeline pipeline;
     };
 }

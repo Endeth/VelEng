@@ -4,7 +4,7 @@
 
 namespace Vel
 {
-	void Pipeline::Create( VkRenderPass renderPass, VkDescriptorSetLayout dscSetLayout )
+	void Pipeline::Create( VkRenderPass renderPass, VulkanShader shader )
 	{
 		VkPipelineCacheCreateInfo pipelineCacheCreateInfo;
 		pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
@@ -13,12 +13,12 @@ namespace Vel
 		pipelineCacheCreateInfo.initialDataSize = 0;
 		pipelineCacheCreateInfo.pInitialData = nullptr;
 
-		//vkCreatePipelineCache( VulkanCommon::Device, &pipelineCacheCreateInfo, nullptr, &_pipelineCache ); //TODO add pipeline cache
+		//vkCreatePipelineCache( VulkanCommon::Device, &pipelineCacheCreateInfo, nullptr, &pipelineCache ); //TODO add pipeline cache
 
 		VkShaderModule vertexShaderModule = CreateShaderModule( "shaders/shader.vert.spv" ); //TODO proper shader loading
 		VkShaderModule fragmentShaderModule = CreateShaderModule( "shaders/shader.frag.spv" );
 
-		CreatePipelineLayout( dscSetLayout );
+		CreatePipelineLayout( shader.dscSetLayout );
 		CreatePipeline( renderPass, vertexShaderModule, fragmentShaderModule );
 
 		vkDestroyShaderModule( VulkanCommon::Device, vertexShaderModule, nullptr );
