@@ -10,23 +10,21 @@
 
 namespace Vel
 {
-	struct VulkanCommon
-	{
-		static VkInstance Instance;
-		static VkDevice Device;
-		static VkPhysicalDevice PhysicalDevice;
-	};
-
-	struct VulkanOptions
-	{
-		static glm::i32vec2 WindowSize;
-	};
+	class VulkanDeviceManager;
 
 	struct SwapchainSupportDetails
 	{
 		VkSurfaceCapabilitiesKHR capabilities;
 		std::vector<VkSurfaceFormatKHR> formats;
 		std::vector<VkPresentModeKHR> presentModes;
+	};
+
+	struct QueueFamilyIndices
+	{
+		uint32_t graphics = 0; //TODO init to -1?
+		uint32_t present = 0;
+		uint32_t compute = 0;
+		uint32_t transfer = 0;
 	};
 
 	struct Semaphores
@@ -39,12 +37,17 @@ namespace Vel
 		VkSemaphore acquireComplete = VK_NULL_HANDLE;
 	};
 
-	struct QueueFamilyIndices
+	struct VulkanCommon
 	{
-		uint32_t graphics = 0; //TODO init to -1?
-		uint32_t present = 0;
-		uint32_t compute = 0;
-		uint32_t transfer = 0;
+		static VulkanDeviceManager DeviceManager;
+		static VkDevice Device;
+		static VkInstance Instance;
+		static VkPhysicalDevice PhysicalDevice;
+	};
+
+	struct VulkanOptions
+	{
+		static glm::i32vec2 WindowSize;
 	};
 
 	class NonCopyable //TODO move to some helpers file

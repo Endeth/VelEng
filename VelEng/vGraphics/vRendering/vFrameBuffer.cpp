@@ -2,22 +2,22 @@
 
 namespace Vel
 {
-	Framebuffer::Framebuffer(const glm::ivec2& size) : _size(size)
+	OpenGLFramebuffer::OpenGLFramebuffer(const glm::ivec2& size) : _size(size)
 	{
 		//glGenFramebuffers(1, &_fboID);
 	}
 
-	Framebuffer::~Framebuffer()
+	OpenGLFramebuffer::~OpenGLFramebuffer()
 	{
 		//glDeleteFramebuffers(1, &_fboID);
 	}
 
-	void Framebuffer::BindFBOWriting()
+	void OpenGLFramebuffer::BindFBOWriting()
 	{
 		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fboID);
 	}
 
-	void Framebuffer::BindTexturesReading()
+	void OpenGLFramebuffer::BindTexturesReading()
 	{
 		for (auto &tex : _colorTextures)
 		{
@@ -31,12 +31,12 @@ namespace Vel
 		}
 	}
 
-	void Framebuffer::UnbindFBOWriting()
+	void OpenGLFramebuffer::UnbindFBOWriting()
 	{
 		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	}
 
-	void Framebuffer::UnbindTexturesReading()
+	void OpenGLFramebuffer::UnbindTexturesReading()
 	{
 		for (auto &tex : _colorTextures)
 		{
@@ -50,7 +50,7 @@ namespace Vel
 		}
 	}
 
-	bool Framebuffer::CheckStatus()
+	bool OpenGLFramebuffer::CheckStatus()
 	{
 		/*auto Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (Status != GL_FRAMEBUFFER_COMPLETE) 
@@ -61,7 +61,7 @@ namespace Vel
 		return true;
 	}
 
-	void Framebuffer::AddColorAttachment(const TexturePtr & texture)
+	void OpenGLFramebuffer::AddColorAttachment(const TexturePtr & texture)
 	{
 		/*_colorTextures.push_back(texture);
 		texture->SetTextureUnit(GL_TEXTURE0 + _texturesCount);
@@ -71,7 +71,7 @@ namespace Vel
 	}
 
 	//fixed precision
-	void Framebuffer::AddDepthTextureAttachment()
+	void OpenGLFramebuffer::AddDepthTextureAttachment()
 	{
 		/*_depthAttachment = std::make_shared<DepthTexture>(_size);
 		_depthAttachment->SetTextureUnit(GL_TEXTURE0 + _texturesCount);
@@ -79,11 +79,11 @@ namespace Vel
 		_texturesCount++;*/
 	}
 
-	void Framebuffer::AddDepthRenderbufferAttachment() //TODO
+	void OpenGLFramebuffer::AddDepthRenderbufferAttachment() //TODO
 	{
 	}
 
-	GBufferFBO::GBufferFBO(const glm::ivec2 & size) : Framebuffer(size)
+	GBufferFBO::GBufferFBO(const glm::ivec2 & size) : OpenGLFramebuffer(size)
 	{
 		/*BindFBOWriting();
 		AddColorAttachment(std::make_shared<AlbedoTexture>(_size));
@@ -106,7 +106,7 @@ namespace Vel
 	{
 	}
 
-	ShadowMap2D::ShadowMap2D(const glm::ivec2& size) : Framebuffer(size)
+	ShadowMap2D::ShadowMap2D(const glm::ivec2& size) : OpenGLFramebuffer(size)
 	{
 		_texturesCount = 4; //TODO erase this nasty hack
 		BindFBOWriting();
@@ -139,7 +139,7 @@ namespace Vel
 	}
 
 
-	ShadowMapCube::ShadowMapCube(const glm::ivec2 & size) : Framebuffer(size)
+	ShadowMapCube::ShadowMapCube(const glm::ivec2 & size) : OpenGLFramebuffer(size)
 	{
 		BindFBOWriting();
 		AddDepthTextureAttachment();

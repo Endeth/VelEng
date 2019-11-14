@@ -6,7 +6,7 @@
 
 namespace Vel
 {
-    bool Device::PhysicalDeviceProperties::IsSuitable( VkPhysicalDevice device )
+    bool VulkanDeviceManager::PhysicalDeviceProperties::IsSuitable( VkPhysicalDevice device )
     {
         vkGetPhysicalDeviceProperties( device, &properties );
         return properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
@@ -15,7 +15,7 @@ namespace Vel
 	/*TODO checking for
     -supported extensions
     -queues*/
-    void Device::PhysicalDeviceProperties::FindDevice()
+    void VulkanDeviceManager::PhysicalDeviceProperties::FindDevice()
     {
 
         std::vector<VkPhysicalDevice> devices;
@@ -34,21 +34,21 @@ namespace Vel
             throw std::runtime_error( "failed to find a suitable GPU" );
     }
 
-    void Device::PhysicalDeviceProperties::QueryDevice()
+    void VulkanDeviceManager::PhysicalDeviceProperties::QueryDevice()
     {
         vkGetPhysicalDeviceFeatures( VulkanCommon::PhysicalDevice, &features );
         vkGetPhysicalDeviceMemoryProperties( VulkanCommon::PhysicalDevice, &memoryProperties );
         VulkanQuery<VkPhysicalDevice, VkQueueFamilyProperties>( VulkanCommon::PhysicalDevice, vkGetPhysicalDeviceQueueFamilyProperties, queueFamilyProperties ); //TODO handle wrong result
     }
 
-	void Device::PhysicalDeviceProperties::QuerySwapchainSupport( VkSurfaceKHR surface )
+	void VulkanDeviceManager::PhysicalDeviceProperties::QuerySwapchainSupport( VkSurfaceKHR surface )
 	{
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR( VulkanCommon::PhysicalDevice, surface, &swapchainSupport.capabilities );
 		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkSurfaceFormatKHR, VkResult>( VulkanCommon::PhysicalDevice, surface, vkGetPhysicalDeviceSurfaceFormatsKHR, swapchainSupport.formats ); //TODO handle wrong result
 		VulkanQuery<VkPhysicalDevice, VkSurfaceKHR, VkPresentModeKHR, VkResult>( VulkanCommon::PhysicalDevice, surface, vkGetPhysicalDeviceSurfacePresentModesKHR, swapchainSupport.presentModes ); //TODO handle wrong result
 	}
 
-	uint32_t Device::PhysicalDeviceProperties::FindMemoryType( uint32_t typeFilter, VkMemoryPropertyFlags properties )
+	uint32_t VulkanDeviceManager::PhysicalDeviceProperties::FindMemoryType( uint32_t typeFilter, VkMemoryPropertyFlags properties )
 	{
 		for( uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i )
 		{
@@ -60,7 +60,7 @@ namespace Vel
 		return -1;
 	}
 
-    uint32_t Device::PhysicalDeviceProperties::GetQueueFamilyIndex( VkQueueFlagBits queueFlags ) //TODO try to find queues that are not already found
+    uint32_t VulkanDeviceManager::PhysicalDeviceProperties::GetQueueFamilyIndex( VkQueueFlagBits queueFlags ) //TODO try to find queues that are not already found
     {
         if ( queueFlags & VK_QUEUE_COMPUTE_BIT )
         {
@@ -102,7 +102,7 @@ namespace Vel
         throw std::runtime_error( "Could not find a matching queue family index" );
     }
 
-    VkBool32 Device::PhysicalDeviceProperties::GetSupportedDepthFormat( VkFormat * depthFormat )
+    VkBool32 VulkanDeviceManager::PhysicalDeviceProperties::GetSupportedDepthFormat( VkFormat * depthFormat )
     {
         std::vector<VkFormat> depthFormats = {
 			VK_FORMAT_D24_UNORM_S8_UINT,
@@ -127,7 +127,7 @@ namespace Vel
     }
 
 
-	void Device::Setup()
+	void VulkanDeviceManager::Setup()
 	{
 		physicalDeviceProperties.FindDevice();
 		physicalDeviceProperties.QueryDevice();
@@ -135,7 +135,7 @@ namespace Vel
 		semaphores.Create();
 	}
 
-	void Device::CreateDevice( bool useSwapChain, VkQueueFlags requestedQueueTypes )
+	void VulkanDeviceManager::CreateDevice( bool useSwapChain, VkQueueFlags requestedQueueTypes )
 	{
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
@@ -175,7 +175,7 @@ namespace Vel
 
 	}
 
-	void Device::Destroy()
+	void VulkanDeviceManager::Destroy()
 	{
 		semaphores.Cleanup();
 
@@ -183,7 +183,7 @@ namespace Vel
 		VulkanCommon::Device = VK_NULL_HANDLE;
 	}
 
-    void Device::SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType )
+    void VulkanDeviceManager::SetRequestedQueues( std::vector<VkDeviceQueueCreateInfo> &queueCreateInfos, VkQueueFlags queueType )
     {
         if ( queueType & VK_QUEUE_GRAPHICS_BIT )
         {

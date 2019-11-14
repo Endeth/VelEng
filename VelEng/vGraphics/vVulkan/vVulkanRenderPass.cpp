@@ -1,5 +1,6 @@
 #include "vVulkanRenderPass.h"
 #include "vVulkanCommands.h"
+#include "vVulkanDevice.h"
 
 namespace Vel
 {
@@ -31,7 +32,7 @@ namespace Vel
 
 	FrameContext::FrameContext( VkRenderPass renderPass, const std::vector<VulkanImage> &images, glm::u32vec2 size ) : swapchainFramebuffer( renderPass, images, size )
 	{
-		CreateCommandPool( 0, deviceManager.queueFamilyIndices.graphics, &commandPool );
+		CreateCommandPool( 0, VulkanCommon::DeviceManager.queueFamilyIndices.graphics, &commandPool );
 		AllocateCommandBuffers( 1, &commandBuffer, commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY );
 		semaphores.Create();
 	}

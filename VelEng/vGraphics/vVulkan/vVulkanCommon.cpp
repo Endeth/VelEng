@@ -1,4 +1,5 @@
 #include "vVulkanCommon.h"
+#include "vVulkanDevice.h"
 
 namespace Vel
 {
@@ -6,6 +7,7 @@ namespace Vel
 	VkInstance VulkanCommon::Instance = VK_NULL_HANDLE;
 	VkDevice VulkanCommon::Device = VK_NULL_HANDLE;
 	VkPhysicalDevice VulkanCommon::PhysicalDevice = VK_NULL_HANDLE;
+	VulkanDeviceManager VulkanCommon::DeviceManager = VulkanDeviceManager();
 
 	void Semaphores::Create() //TODO create proper semaphores
 	{

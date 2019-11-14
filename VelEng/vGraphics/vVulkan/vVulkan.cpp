@@ -57,7 +57,7 @@ namespace Vel
 			throw std::runtime_error( "failed to set up debug callback" );
 #endif
 
-        deviceManager.Setup();
+		VulkanCommon::DeviceManager.Setup();
 
 		CreateSwapchain( window );
 		CreateCommandBuffers();
@@ -102,7 +102,7 @@ namespace Vel
 
 		swapchain.Cleanup();
 		renderPass.Cleanup();
-		deviceManager.Destroy();
+		VulkanCommon::DeviceManager.Destroy();
 
 #ifdef _DEBUG
 		VulkanDebug::Instance()->DisableCallback();
@@ -117,16 +117,16 @@ namespace Vel
 		swapchain.CreateSurface( window );
 
 		VkBool32 presentSupported = 0; //Create Proper Present Queue
-		vkGetPhysicalDeviceSurfaceSupportKHR( VulkanCommon::PhysicalDevice, deviceManager.queueFamilyIndices.graphics, swapchain.surface, &presentSupported );
+		vkGetPhysicalDeviceSurfaceSupportKHR( VulkanCommon::PhysicalDevice, VulkanCommon::DeviceManager.queueFamilyIndices.graphics, swapchain.surface, &presentSupported );
 
-		deviceManager.physicalDeviceProperties.QuerySwapchainSupport( swapchain.surface );
-		swapchain.CreateSwapchain( deviceManager.physicalDeviceProperties.swapchainSupport, deviceManager.queueFamilyIndices.graphics );
+		VulkanCommon::DeviceManager.physicalDeviceProperties.QuerySwapchainSupport( swapchain.surface );
+		swapchain.CreateSwapchain( VulkanCommon::DeviceManager.physicalDeviceProperties.swapchainSupport, VulkanCommon::DeviceManager.queueFamilyIndices.graphics );
 	}
 
 	void VulkanRenderer::CreateCommandBuffers()
 	{
-		CreateCommandPool( 0, deviceManager.queueFamilyIndices.graphics, &commandPoolGraphics );
-		CreateCommandPool( VK_COMMAND_POOL_CREATE_TRANSIENT_BIT, deviceManager.queueFamilyIndices.transfer, &commandPoolTransfer );
+		CreateCommandPool( 0, VulkanCommon::DeviceManager.queueFamilyIndices.graphics, &commandPoolGraphics );
+		CreateCommandPool( VK_COMMAND_POOL_CREATE_TRANSIENT_BIT, VulkanCommon::DeviceManager.queueFamilyIndices.transfer, &commandPoolTransfer );
 
 		size_t imagesCount = swapchain.images.size();
 
@@ -384,9 +384,9 @@ namespace Vel
 	void VulkanRenderer::CreateStagingBuffer()
 	{
 		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		std::vector<uint32_t> queueFamilyIndices( { deviceManager.queueFamilyIndices.transfer, deviceManager.queueFamilyIndices.graphics } );
+		std::vector<uint32_t> queueFamilyIndices( { VulkanCommon::DeviceManager.queueFamilyIndices.transfer, VulkanCommon::DeviceManager.queueFamilyIndices.graphics } );
 		stagingBuffer.CreateBuffer( 0, 4096 * 4096 * 4, usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices ); //TODO different size - current = size of 4096x4096 image with 4 channels
-		auto memTypeIndex = deviceManager.physicalDeviceProperties.FindMemoryType( stagingBuffer.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ); //For debugging flush may be better
+		auto memTypeIndex = VulkanCommon::DeviceManager.physicalDeviceProperties.FindMemoryType( stagingBuffer.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ); //For debugging flush may be better
 		stagingBuffer.AllocateMemory( memTypeIndex );
 	}
 
@@ -397,27 +397,27 @@ namespace Vel
 		auto indicesSize = sizeof( unsigned int ) * testMesh->GetIndicesSize();
 
 		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		std::vector<uint32_t> queueFamilyIndices( { deviceManager.queueFamilyIndices.transfer, deviceManager.queueFamilyIndices.graphics } );
+		std::vector<uint32_t> queueFamilyIndices( { VulkanCommon::DeviceManager.queueFamilyIndices.transfer, VulkanCommon::DeviceManager.queueFamilyIndices.graphics } );
 		VulkanBuffer modelStagingBuffer;
 		modelStagingBuffer.CreateBuffer( 0, modelSize, usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices ); //TODO different size - current = size of 4096x4096 image with 4 channels
-		auto memTypeIndex = deviceManager.physicalDeviceProperties.FindMemoryType( modelStagingBuffer.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+		auto memTypeIndex = VulkanCommon::DeviceManager.physicalDeviceProperties.FindMemoryType( modelStagingBuffer.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
 		modelStagingBuffer.AllocateMemory( memTypeIndex );
 
 		usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		vertexBuffer.CreateBuffer( 0, modelSize, usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
-		memTypeIndex = deviceManager.physicalDeviceProperties.FindMemoryType( vertexBuffer.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+		memTypeIndex = VulkanCommon::DeviceManager.physicalDeviceProperties.FindMemoryType( vertexBuffer.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 		vertexBuffer.AllocateMemory( memTypeIndex );
 
 		modelStagingBuffer.CopyDataToBuffer( testMesh->_vertices.data(), modelSize );
-		CopyBuffer( modelStagingBuffer, vertexBuffer, modelSize, commandPoolTransfer, deviceManager.tQueue );
+		CopyBuffer( modelStagingBuffer, vertexBuffer, modelSize, commandPoolTransfer, VulkanCommon::DeviceManager.tQueue );
 
 		usageFlags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;;
 		indexBuffer.CreateBuffer( 0, indicesSize, usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
-		memTypeIndex = deviceManager.physicalDeviceProperties.FindMemoryType( indexBuffer.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ); //TODO might move this to createbuffer
+		memTypeIndex = VulkanCommon::DeviceManager.physicalDeviceProperties.FindMemoryType( indexBuffer.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ); //TODO might move this to createbuffer
 		indexBuffer.AllocateMemory( memTypeIndex );
 
 		modelStagingBuffer.CopyDataToBuffer( testMesh->_indices.data(), indicesSize );
-		CopyBuffer( modelStagingBuffer, indexBuffer, indicesSize, commandPoolTransfer, deviceManager.tQueue );
+		CopyBuffer( modelStagingBuffer, indexBuffer, indicesSize, commandPoolTransfer, VulkanCommon::DeviceManager.tQueue );
 
 		modelStagingBuffer.Destroy();
 	}
@@ -427,27 +427,27 @@ namespace Vel
 		TexelData testImg( "assets/chalet.png" ); //TODO check for errors during loading
 		stagingBuffer.CopyDataToBuffer( testImg.data, testImg.GetSize() );
 		 
-		std::vector<uint32_t> queueFamilyIndices( { deviceManager.queueFamilyIndices.transfer, deviceManager.queueFamilyIndices.graphics } );
+		std::vector<uint32_t> queueFamilyIndices( { VulkanCommon::DeviceManager.queueFamilyIndices.transfer, VulkanCommon::DeviceManager.queueFamilyIndices.graphics } );
 		sampledImage.Create( testImg.imageSize, testImg.GetSize(), VK_FORMAT_R8G8B8A8_UNORM, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
 
-		auto memTypeIndex = deviceManager.physicalDeviceProperties.FindMemoryType( sampledImage.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+		auto memTypeIndex = VulkanCommon::DeviceManager.physicalDeviceProperties.FindMemoryType( sampledImage.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 		sampledImage.AllocateMemory( memTypeIndex );
 
-		sampledImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandPoolTransfer, deviceManager.tQueue );
-		CopyImage( stagingBuffer, sampledImage, testImg.GetSize(), commandPoolTransfer, deviceManager.tQueue );
-		sampledImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandPoolGraphics, deviceManager.gQueue );
+		sampledImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandPoolTransfer, VulkanCommon::DeviceManager.tQueue );
+		CopyImage( stagingBuffer, sampledImage, testImg.GetSize(), commandPoolTransfer, VulkanCommon::DeviceManager.tQueue );
+		sampledImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandPoolGraphics, VulkanCommon::DeviceManager.gQueue );
 	}
 
 	void VulkanRenderer::CreateDepthImage()
 	{
-		std::vector<uint32_t> queueFamilyIndices( { deviceManager.queueFamilyIndices.graphics } );
+		std::vector<uint32_t> queueFamilyIndices( { VulkanCommon::DeviceManager.queueFamilyIndices.graphics } );
 		VkDeviceSize deviceSize = swapchain.imageSize.x * swapchain.imageSize.y * 4;
 		depthImage.Create( swapchain.imageSize, deviceSize, VK_FORMAT_D32_SFLOAT_S8_UINT, 0, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_SHARING_MODE_EXCLUSIVE, queueFamilyIndices );
 
-		auto memTypeIndex = deviceManager.physicalDeviceProperties.FindMemoryType( depthImage.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+		auto memTypeIndex = VulkanCommon::DeviceManager.physicalDeviceProperties.FindMemoryType( depthImage.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 		depthImage.AllocateMemory( memTypeIndex );
 
-		depthImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, commandPoolGraphics, deviceManager.gQueue );
+		depthImage.AdjustMemoryBarrier( VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, commandPoolGraphics, VulkanCommon::DeviceManager.gQueue );
 	}
 
 	void VulkanRenderer::CreateUniformBuffers()
@@ -455,12 +455,12 @@ namespace Vel
 		uniformBuffers.resize( swapchain.images.size() );
 		
 		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		std::vector<uint32_t> queueFamilyIndices( { deviceManager.queueFamilyIndices.transfer, deviceManager.queueFamilyIndices.graphics } );
+		std::vector<uint32_t> queueFamilyIndices( { VulkanCommon::DeviceManager.queueFamilyIndices.transfer, VulkanCommon::DeviceManager.queueFamilyIndices.graphics } );
 		
 		for( auto &buffer : uniformBuffers )
 			buffer.CreateBuffer( 0, sizeof( CameraMatrices ), usageFlags, VK_SHARING_MODE_CONCURRENT, queueFamilyIndices );
 
-		auto memTypeIndex = deviceManager.physicalDeviceProperties.FindMemoryType( uniformBuffers.front().memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+		auto memTypeIndex = VulkanCommon::DeviceManager.physicalDeviceProperties.FindMemoryType( uniformBuffers.front().memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
 
 		for( auto &buffer : uniformBuffers )
 			buffer.AllocateMemory( memTypeIndex );
@@ -488,7 +488,7 @@ namespace Vel
 	void VulkanRenderer::Draw()
 	{
 		uint32_t swapchainImageIndex = 0;
-		CheckResult( swapchain.AcquireNextImage( &swapchainImageIndex, deviceManager.semaphores.acquireComplete, VK_NULL_HANDLE ), "failed to acquire next image" );
+		CheckResult( swapchain.AcquireNextImage( &swapchainImageIndex, VulkanCommon::DeviceManager.semaphores.acquireComplete, VK_NULL_HANDLE ), "failed to acquire next image" );
 		auto& frameContext = renderPass.GetFrameContext( swapchainImageIndex );
 		UpdateUniformBuffers( swapchainImageIndex ); //TODO move this kind of uniforms to frame context
 		VkCommandBuffer cmdbuffer = frameContext.GetCommandBuffer();
@@ -497,26 +497,26 @@ namespace Vel
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.pNext = nullptr;
 		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = &deviceManager.semaphores.acquireComplete;
+		submitInfo.pWaitSemaphores = &VulkanCommon::DeviceManager.semaphores.acquireComplete;
 		submitInfo.pWaitDstStageMask = &submitStageFlags;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &cmdbuffer;
 		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &deviceManager.semaphores.renderComplete;
+		submitInfo.pSignalSemaphores = &VulkanCommon::DeviceManager.semaphores.renderComplete;
 
-		vkQueueSubmit( deviceManager.gQueue, 1, &submitInfo, VK_NULL_HANDLE );
+		vkQueueSubmit( VulkanCommon::DeviceManager.gQueue, 1, &submitInfo, VK_NULL_HANDLE );
 
 		VkPresentInfoKHR presentInfo;
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;
 		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = &deviceManager.semaphores.renderComplete;
+		presentInfo.pWaitSemaphores = &VulkanCommon::DeviceManager.semaphores.renderComplete;
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = &swapchain.swapchain;
 		presentInfo.pImageIndices = &swapchainImageIndex;
 		presentInfo.pResults = nullptr;
 
-		CheckResult( vkQueuePresentKHR( deviceManager.gQueue, &presentInfo ), "failed to queue present" );
+		CheckResult( vkQueuePresentKHR( VulkanCommon::DeviceManager.gQueue, &presentInfo ), "failed to queue present" );
 		CheckResult( vkDeviceWaitIdle( VulkanCommon::Device ), "failed to device wait idle" ); //TODO work on max 2 frames at the same time
 	}
 }

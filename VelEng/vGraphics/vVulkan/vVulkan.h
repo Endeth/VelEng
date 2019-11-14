@@ -39,7 +39,6 @@ namespace Vel
 		void UpdateCamera( glm::mat4 &view, glm::mat4 &proj );
 		void Draw();
 
-        Device deviceManager;
         Swapchain swapchain;
 		RenderPass renderPass;
 

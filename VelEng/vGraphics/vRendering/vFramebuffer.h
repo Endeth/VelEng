@@ -9,13 +9,13 @@
 namespace Vel
 {
 	//flexible but requires manual work
-	class Framebuffer
+	class OpenGLFramebuffer
 	{
 		using TexturePtr = std::shared_ptr<FramebufferTexture>;
 		using DepthTexturePtr = std::shared_ptr<DepthTexture>;
 	public:
-		Framebuffer(const glm::ivec2& size);
-		virtual ~Framebuffer();
+		OpenGLFramebuffer(const glm::ivec2& size);
+		virtual ~OpenGLFramebuffer();
 
 		virtual void BindFBOWriting();
 		virtual void BindTexturesReading();
@@ -42,7 +42,7 @@ namespace Vel
 	};
 
 	//construct and use for deferred rendering
-	class GBufferFBO : public Framebuffer
+	class GBufferFBO : public OpenGLFramebuffer
 	{
 	public:
 		GBufferFBO(const glm::ivec2& size);
@@ -50,7 +50,7 @@ namespace Vel
 	};
 
 	//construct and use for 2D only depth rendering
-	class ShadowMap2D : public Framebuffer
+	class ShadowMap2D : public OpenGLFramebuffer
 	{
 	public:
 		ShadowMap2D(const glm::ivec2& size = glm::ivec2(1024, 1024));
@@ -62,7 +62,7 @@ namespace Vel
 	};
 
 	//construct and use for rendering depth cube
-	class ShadowMapCube : public Framebuffer
+	class ShadowMapCube : public OpenGLFramebuffer
 	{
 	public:
 		ShadowMapCube(const glm::ivec2& size = glm::ivec2(512, 512));

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "vVulkanCommon.h"
 #include "external/glfw/glfw3.h"
 #include "external/glm/glm.hpp"
 
@@ -8,10 +7,11 @@
 #include "vVulkanDebug.h"
 #endif
 
+#include "vVulkanCommon.h"
 
 namespace Vel
 {
-    class Device
+    class VulkanDeviceManager
     {
     public:
         void Setup();
