@@ -60,9 +60,9 @@ namespace Vel
         }
     }
 
-	void VulkanDebug::SetValidationLayers( std::vector<const char*>& validationLayers )
+	void VulkanDebug::SetValidationLayers( std::vector<const char*>& layers )
 	{
-		validationLayers = validationLayers;
+		validationLayers = layers;
 		validationLayersSet = true;
 	}
 
