@@ -2,7 +2,6 @@
 
 #include <vector>
 
-#include "vGeo/vGeo.h"
 #include "vVulkanCommon.h"
 #include "vVulkanImage.h"
 #include "vVulkanShader.h"
@@ -12,13 +11,12 @@ namespace Vel
 	class Pipeline
 	{
 	public:
-		void Create( VkRenderPass renderPass, VulkanShader shader );
+		void Create( VkRenderPass renderPass, ShaderDescription shader );
 		void Cleanup();
 
 		const VkPipeline Get() const { return pipeline; }
 	private:
-		void CreatePipelineLayout( VkDescriptorSetLayout dscSetLayout );
-		void CreatePipeline( VkRenderPass renderPass, VkShaderModule vertex, VkShaderModule fragment );
+		void CreatePipeline( VkRenderPass renderPass, ShaderDescription shader );
 
 		VkPipeline pipeline;
 		VkPipelineLayout pipelineLayout;

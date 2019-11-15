@@ -71,8 +71,8 @@ namespace Vel
 		CreateDescriptorPool();
 		CreateDescriptorSets();
 		renderPass.Create();
-		_testingMaterial = std::make_shared<Material>( /*std::string( "assets/cube.obj" )*/ );
-		_testingMaterial->pipeline.Create( renderPass.GetRenderPass(), descriptorSetLayout );
+		//_testingMaterial = std::make_shared<Material>( /*std::string( "assets/cube.obj" )*/ ); //TODO decide whether materialpipeline makes sense
+		//_testingMaterial->pipeline.Create( renderPass.GetRenderPass(), descriptorSetLayout );
 		//renderPass.CreatePipeline( descriptorSetLayout, pipelineLayout ); //TODO create defined pipelines - define sample material with sample pipeline
 		renderPass.CreateFrameContexts( swapchain.images, depthImage, swapchain.imageSize );
 		RecordCommandBuffers();
@@ -95,8 +95,6 @@ namespace Vel
 		vkDestroyCommandPool( VulkanCommon::Device, commandPoolTransfer, nullptr );
 		commandPoolTransfer = VK_NULL_HANDLE;
 		commandPoolGraphics = VK_NULL_HANDLE;
-		vkDestroyDescriptorSetLayout( VulkanCommon::Device, descriptorSetLayout, nullptr );
-		descriptorSetLayout = VK_NULL_HANDLE;
 		vkDestroyDescriptorPool( VulkanCommon::Device, descriptorPool, nullptr );
 		descriptorPool = VK_NULL_HANDLE;
 
@@ -230,34 +228,6 @@ namespace Vel
 
 	void VulkanRenderer::CreateDescriptorPool()
 	{
-		std::array<VkDescriptorSetLayoutBinding, 3> descriptorSetsLayoutsBindings;
-		descriptorSetsLayoutsBindings[0].binding = 0;
-		descriptorSetsLayoutsBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorSetsLayoutsBindings[0].descriptorCount = 1;
-		descriptorSetsLayoutsBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		descriptorSetsLayoutsBindings[0].pImmutableSamplers = nullptr;
-
-		descriptorSetsLayoutsBindings[1].binding = 1;
-		descriptorSetsLayoutsBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorSetsLayoutsBindings[1].descriptorCount = 1;
-		descriptorSetsLayoutsBindings[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		descriptorSetsLayoutsBindings[1].pImmutableSamplers = nullptr;
-
-		descriptorSetsLayoutsBindings[2].binding = 2;
-		descriptorSetsLayoutsBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorSetsLayoutsBindings[2].descriptorCount = 1;
-		descriptorSetsLayoutsBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		descriptorSetsLayoutsBindings[2].pImmutableSamplers = nullptr;
-
-		VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo;
-		descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptorSetLayoutCreateInfo.pNext = nullptr;
-		descriptorSetLayoutCreateInfo.flags = 0;
-		descriptorSetLayoutCreateInfo.bindingCount = descriptorSetsLayoutsBindings.size();
-		descriptorSetLayoutCreateInfo.pBindings = descriptorSetsLayoutsBindings.data();
-
-		CheckResult( vkCreateDescriptorSetLayout( VulkanCommon::Device, &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout ), "failed to create descriptor set" ); //TODO move this to a place where it can be reused
-
 		std::array<VkDescriptorPoolSize, descriptorSetsLayoutsBindings.size()> descriptorPoolsSizes;
 		descriptorPoolsSizes[0].descriptorCount = static_cast<uint32_t>( swapchain.images.size() );
 		descriptorPoolsSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -292,7 +262,7 @@ namespace Vel
 
 		VkDescriptorBufferInfo descriptorBufferInfo;
 		descriptorBufferInfo.offset = 0;
-		descriptorBufferInfo.range = sizeof( CameraMatrices );
+		descriptorBufferInfo.range = sizeof( CameraMatrices ); //TODO i dont think 0 and 1 both need whole cameramatrices.range
 
 		VkDescriptorImageInfo descriptorImageInfo;
 		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

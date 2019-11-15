@@ -44,7 +44,6 @@ namespace Vel
 
 		VkCommandPool commandPoolGraphics = VK_NULL_HANDLE; //TODO get rid of this test cmdpool
 		VkCommandPool commandPoolTransfer = VK_NULL_HANDLE; //TODO get rid of this test cmdpool
-		VkDescriptorSetLayout descriptorSetLayout; //TODO move descriptors to a single class ( shader -> attributes + descriptors )
 		VkDescriptorPool descriptorPool = VK_NULL_HANDLE; // test dsptrPool
 		std::vector<VkDescriptorSet> descriptorSets;
 		std::vector<VkCommandBuffer> commandBuffers;
