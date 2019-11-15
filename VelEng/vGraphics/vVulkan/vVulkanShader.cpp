@@ -80,6 +80,49 @@ namespace Vel
 		descriptorSetLayoutCreateInfo.pBindings = descriptorSetsLayoutsBindings.data();
 
 		CheckResult( vkCreateDescriptorSetLayout( VulkanCommon::Device, &descriptorSetLayoutCreateInfo, nullptr, &dscSetLayout ), "failed to create descriptor set" ); //TODO move this to a place where it can be reused
+
+		VkDescriptorBufferInfo descriptorBufferInfo;
+		descriptorBufferInfo.offset = 0;
+		descriptorBufferInfo.range = sizeof( CameraMatrices ); //TODO i dont think 0 and 1 both need whole cameramatrices.range
+
+		VkDescriptorImageInfo descriptorImageInfo;
+		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		descriptorImageInfo.imageView = sampledImage.imageView;
+		descriptorImageInfo.sampler = Samplers.GetSampler( VulkanSamplers::Type::BasicSampler );
+
+		std::array<VkWriteDescriptorSet, 3> writeDescriptorSets; //TODO this might be best done in shaderdescription, define writedescriptor in constructor, update (given right buffers) from shaderinstance
+		writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSets[0].pNext = nullptr;
+		writeDescriptorSets[0].dstBinding = 0;
+		writeDescriptorSets[0].dstSet = nullptr;
+		writeDescriptorSets[0].dstArrayElement = 0;
+		writeDescriptorSets[0].descriptorCount = 1;
+		writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writeDescriptorSets[0].pImageInfo = nullptr;
+		writeDescriptorSets[0].pBufferInfo = &descriptorBufferInfo;
+		writeDescriptorSets[0].pTexelBufferView = nullptr;
+
+		writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSets[1].pNext = nullptr;
+		writeDescriptorSets[1].dstBinding = 1;
+		writeDescriptorSets[1].dstSet = nullptr;
+		writeDescriptorSets[1].dstArrayElement = 0;
+		writeDescriptorSets[1].descriptorCount = 1;
+		writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writeDescriptorSets[1].pImageInfo = nullptr;
+		writeDescriptorSets[1].pBufferInfo = &descriptorBufferInfo;
+		writeDescriptorSets[1].pTexelBufferView = nullptr;
+
+		writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSets[2].pNext = nullptr;
+		writeDescriptorSets[2].dstBinding = 2;
+		writeDescriptorSets[2].dstSet = nullptr;
+		writeDescriptorSets[2].dstArrayElement = 0;
+		writeDescriptorSets[2].descriptorCount = 1;
+		writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writeDescriptorSets[2].pImageInfo = &descriptorImageInfo;
+		writeDescriptorSets[2].pBufferInfo = nullptr;
+		writeDescriptorSets[2].pTexelBufferView = nullptr;
 	}
 
 	ShaderDescription::~ShaderDescription()

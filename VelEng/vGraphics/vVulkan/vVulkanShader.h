@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vVulkanCommon.h"
+#include "vVulkanImage.h"
 
 #ifdef _DEBUG
 #include "vVulkanDebug.h"
@@ -14,7 +15,7 @@ namespace Vel
 		ShaderDescription( VkShaderModule vertex, VkShaderModule fragment );
 		~ShaderDescription();
 		VkShaderModule CreateShaderModule( const char *filepath );
-		bool DestroyShaderModules();
+		void DestroyShaderModules();
 
 		VkShaderModule vertexShader;
 		VkShaderModule fragmentShader;
@@ -29,6 +30,9 @@ namespace Vel
 	class ShaderInstance
 	{
 	public:
+		ShaderInstance( std::shared_ptr<ShaderDescription> shaderDesc );
+		bool UpdateDescriptorSets();
 		std::shared_ptr<ShaderDescription> shaderDescription;
+		VkImageView sampledImage;
 	};
 }
