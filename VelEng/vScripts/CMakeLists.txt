@@ -8,3 +8,5 @@ set(HEADERS
    ${CMAKE_CURRENT_SOURCE_DIR}/vScripts.h
    PARENT_SCOPE
 )
+
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/lua535 )

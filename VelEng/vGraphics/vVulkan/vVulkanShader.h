@@ -25,6 +25,14 @@ namespace Vel
 		VkVertexInputAttributeDescription vertexInputAttributeDescription[3];
 		VkPipelineVertexInputStateCreateInfo vertexInputStateInfo;
 		VkDescriptorSetLayout dscSetLayout;
+		VkDescriptorPool descriptorPool;
+
+		int32_t bindings = 2;
+	};
+
+	class DecriptorSet
+	{
+
 	};
 
 	class ShaderInstance

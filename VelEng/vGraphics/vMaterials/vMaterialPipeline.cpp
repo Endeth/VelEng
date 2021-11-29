@@ -9,7 +9,7 @@ namespace Vel
 
 	void MaterialPipeline::Create( VkRenderPass renderPass, VkDescriptorSetLayout dscSetLayout )
 	{
-		pipeline.Create( renderPass, dscSetLayout );
+		//pipeline.Create( renderPass, dscSetLayout );
 	}
 
 	void MaterialPipeline::Bind()

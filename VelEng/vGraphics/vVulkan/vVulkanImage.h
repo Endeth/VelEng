@@ -39,7 +39,7 @@ namespace Vel
 	};
 	static VulkanSamplers Samplers; //TODO
 
-	class VulkanImage //TODO create children for sampled texture, depthbuffer etc
+	class VulkanImage //TODO create children for sampled texture, depthbuffer etc; general uniform type? For write descriptors?
 	{
 	public:
 		void Create( glm::ivec2 size, VkDeviceSize deviceSize, VkFormat imageFormat, VkImageCreateFlags flags, VkImageUsageFlags usage, VkSharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices );
@@ -48,6 +48,7 @@ namespace Vel
 
 		//TODO This sucks. Maybe add respective VkMemoryBarriers to arrays which we use in a single vkCmdPipelineBarrier each frame and get rid of cmdPool and queue
 		void AdjustMemoryBarrier( VkImageLayout newLayout, VkCommandPool cmdPool, VkQueue queue );
+		void GetWriteDescriptor();
 
 		glm::ivec2 imageSize = glm::ivec2( 0 );
 

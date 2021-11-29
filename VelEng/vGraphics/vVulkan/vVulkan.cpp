@@ -135,100 +135,12 @@ namespace Vel
 
 	void VulkanRenderer::RecordCommandBuffers()
 	{
-		VkCommandBufferBeginInfo beginInfo;
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.pNext = nullptr;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-		beginInfo.pInheritanceInfo = nullptr;
-
-		std::array<VkClearValue, 2> clearValues;
-		clearValues[0].color = { 48.f / 256.f, 10 / 256.f, 36 / 256.f, 1.f };
-		clearValues[1].depthStencil = { 1.0f, 0 };
-
-		VkImageSubresourceRange range;
-		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.baseMipLevel = 0;
-		range.levelCount = 1;
-		range.baseArrayLayer = 0;
-		range.layerCount = 1;
-
-		VkRect2D renderArea;
-		renderArea.offset = { 0, 0 };
-		renderArea.extent = { static_cast<uint32_t>( VulkanOptions::WindowSize.x ), static_cast<uint32_t>( VulkanOptions::WindowSize.y ) };
-
-		VkRenderPassBeginInfo renderPassBeginInfo;
-		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassBeginInfo.pNext = nullptr;
-		renderPassBeginInfo.renderPass = renderPass.GetRenderPass(); //TODO
-		renderPassBeginInfo.renderArea = renderArea;
-		renderPassBeginInfo.clearValueCount = clearValues.size();
-		renderPassBeginInfo.pClearValues = clearValues.data();
-
-		VkBuffer vertexBuffers[] = { vertexBuffer._buffer };
-		VkDeviceSize offsets[] = { 0 };
-
-		VkImageSubresourceRange subresourceRange;
-		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		subresourceRange.baseMipLevel = 0;
-		subresourceRange.levelCount = 1;
-		subresourceRange.baseArrayLayer = 0;
-		subresourceRange.layerCount = 1;
-
-		VkImageMemoryBarrier barrierFromPresentToDraw;
-		barrierFromPresentToDraw.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrierFromPresentToDraw.pNext = nullptr;
-		barrierFromPresentToDraw.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		barrierFromPresentToDraw.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		barrierFromPresentToDraw.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		barrierFromPresentToDraw.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		barrierFromPresentToDraw.srcQueueFamilyIndex = 0;
-		barrierFromPresentToDraw.dstQueueFamilyIndex = 0;
-		barrierFromPresentToDraw.subresourceRange = subresourceRange;
-
-		VkImageMemoryBarrier barrierFromDrawToPresent;
-		barrierFromDrawToPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrierFromDrawToPresent.pNext = nullptr;
-		barrierFromDrawToPresent.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		barrierFromDrawToPresent.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		barrierFromDrawToPresent.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		barrierFromDrawToPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		barrierFromDrawToPresent.srcQueueFamilyIndex = 0;
-		barrierFromDrawToPresent.dstQueueFamilyIndex = 0;
-		barrierFromDrawToPresent.subresourceRange = subresourceRange;
-
-
-		size_t swapchainImagesCount = swapchain.images.size();
-		for( int imageId = 0; imageId < swapchainImagesCount; ++imageId )
-		{
-			auto& frameContext = renderPass.GetFrameContext( imageId );
-			VkCommandBuffer frameCmdBuffer = frameContext.GetCommandBuffer();
-			renderPassBeginInfo.framebuffer = frameContext.GetFramebuffer();
-			barrierFromPresentToDraw.image = swapchain.images[i].image; //TODO this is kind of a hack I guess
-			barrierFromDrawToPresent.image = swapchain.images[i].image; //TODO this is kind of a hack I guess
-
-			CheckResult( vkBeginCommandBuffer( frameCmdBuffer, &beginInfo ), "failed to begin command buffer" );
-
-			vkCmdPipelineBarrier(frameCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromPresentToDraw );
-			vkCmdBeginRenderPass( frameCmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
-
-			vkCmdBindPipeline( frameCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPass._graphicsPipeline ); //TODO
-
-			vkCmdBindVertexBuffers( frameCmdBuffer, 0, 1, vertexBuffers, offsets );
-			vkCmdBindIndexBuffer( frameCmdBuffer, indexBuffer._buffer, 0, VK_INDEX_TYPE_UINT32 );
-			vkCmdBindDescriptorSets( frameCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr ); //TODO
-
-			vkCmdDrawIndexed( frameCmdBuffer, _testingModel->_meshes[0]->GetIndicesCount(), 1, 0, 0, 0 );
-
-			vkCmdEndRenderPass( frameCmdBuffer );
-			vkCmdPipelineBarrier( frameCmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromDrawToPresent );
-
-			CheckResult( vkEndCommandBuffer( frameCmdBuffer ), "failed to end command buffer" );
-		}
+		renderPass.RecordFrameDraw();
 	}
 
 	void VulkanRenderer::CreateDescriptorPool()
 	{
-		std::array<VkDescriptorPoolSize, descriptorSetsLayoutsBindings.size()> descriptorPoolsSizes;
+		/*std::array<VkDescriptorPoolSize, descriptorSetsLayoutsBindings.size()> descriptorPoolsSizes;
 		descriptorPoolsSizes[0].descriptorCount = static_cast<uint32_t>( swapchain.images.size() );
 		descriptorPoolsSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptorPoolsSizes[1].descriptorCount = static_cast<uint32_t>( swapchain.images.size() ); //TODO
@@ -244,12 +156,12 @@ namespace Vel
 		descriptorPoolCreateInfo.poolSizeCount = descriptorPoolsSizes.size();
 		descriptorPoolCreateInfo.pPoolSizes = descriptorPoolsSizes.data();
 
-		CheckResult( vkCreateDescriptorPool( VulkanCommon::Device, &descriptorPoolCreateInfo, nullptr, &descriptorPool ), "failed to create descriptor pool" );
+		CheckResult( vkCreateDescriptorPool( VulkanCommon::Device, &descriptorPoolCreateInfo, nullptr, &descriptorPool ), "failed to create descriptor pool" );*/
 	}
 
 	void VulkanRenderer::CreateDescriptorSets()
 	{
-		std::vector<VkDescriptorSetLayout> layouts( swapchain.images.size(), descriptorSetLayout );
+		/*std::vector<VkDescriptorSetLayout> layouts( swapchain.images.size(), descriptorSetLayout );
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
 		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		descriptorSetAllocateInfo.pNext = nullptr;
@@ -268,12 +180,12 @@ namespace Vel
 			writeDescriptorSets[2].dstSet = descriptorSets[i];
 
 			vkUpdateDescriptorSets( VulkanCommon::Device, static_cast<uint32_t>( writeDescriptorSets.size() ), writeDescriptorSets.data(), 0, nullptr );
-		}
+		}*/
 	}
 
 	void VulkanRenderer::LoadOBJ()
 	{
-		_testingModel = std::make_shared<Model>( std::string( "assets/cube.obj" ) );
+		testingModel = std::make_shared<Model>( std::string( "assets/cube.obj" ) );
 		/*tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
@@ -318,7 +230,7 @@ namespace Vel
 
 	void VulkanRenderer::CreateBuffer()
 	{
-		auto testMesh = _testingModel->_meshes[0]; //TODO UGLY TESTS TESTS TESTS
+		auto testMesh = testingModel->_meshes[0]; //TODO UGLY TESTS
 		auto modelSize = sizeof( VertexUVColor ) * testMesh->GetVerticesSize();
 		auto indicesSize = sizeof( unsigned int ) * testMesh->GetIndicesSize();
 

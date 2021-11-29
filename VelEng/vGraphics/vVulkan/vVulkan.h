@@ -59,7 +59,7 @@ namespace Vel
 		CameraMatrices internalCamera;
 
 
-		std::shared_ptr<Model> _testingModel;
+		std::shared_ptr<Model> testingModel;
 		std::shared_ptr<Material> _testingMaterial;
     };
 }

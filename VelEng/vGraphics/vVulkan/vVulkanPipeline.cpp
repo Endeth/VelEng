@@ -162,4 +162,8 @@ namespace Vel
 		pipeline = VK_NULL_HANDLE;
 		//_pipelineCache = VK_NULL_HANDLE;
 	}
+	void Pipeline::Bind( VkCommandBuffer & cmdBuffer )
+	{
+		vkCmdBindPipeline( cmdBuffer, bindPoint, pipeline );
+	}
 }

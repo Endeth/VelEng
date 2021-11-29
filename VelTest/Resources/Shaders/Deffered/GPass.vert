@@ -14,7 +14,6 @@ out vec2 verUV;
 
 void main()
 {
-
 	vec4 worldPos = M * vec4(vVertex, 1.0f);
 	verVertex = worldPos.xyz;
 

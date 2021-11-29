@@ -12,7 +12,6 @@
 
 #include "../VelUti/VTime.h"
 
-#include <vulkan/vulkan.hpp>
 #include "vAssets/vAssets.h"
 #include "vInput/vInput.h"
 #include "vGraphics/vVulkan/vVulkan.h"

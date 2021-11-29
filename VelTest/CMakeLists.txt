@@ -3,7 +3,7 @@ add_executable (VelTest ${CMAKE_CURRENT_SOURCE_DIR}/VelTest.cpp)
 target_link_libraries(VelTest
 	VelEng
 	#${LIBRARIES_DIR}/SOIL.lib
-	${LIBRARIES_DIR}/x64/glfw3.lib
+	#${LIBRARIES_DIR}/x64/glfw3.lib
 	#${LIBRARIES_DIR}/assimp.lib
 	#${OPENGL_LIBRARIES}
 )
@@ -24,9 +24,9 @@ configure_file (
 #	"${PROJECT_BINARY_DIR}/VelTest/Debug/glfw3.dll"
 #	COPYONLY
 #)
-configure_file ( #not very platform agnostic, is it?
-	"${DYNAMIC_LIBRARIES_DIR}/lua53.dll"
-	"${PROJECT_BINARY_DIR}/VelTest/Debug/lua53.dll"
-	COPYONLY
-)
+#configure_file ( #not very platform agnostic, is it?
+#	"${DYNAMIC_LIBRARIES_DIR}/lua53.dll"
+#	"${PROJECT_BINARY_DIR}/VelTest/Debug/lua53.dll"
+#	COPYONLY
+#)
 include_directories(${PROJECT_BINARY_DIR}/VelTest/Config)

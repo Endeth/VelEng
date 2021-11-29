@@ -8,11 +8,13 @@
 
 namespace Vel
 {
-	class Pipeline
+	class Pipeline : public NonCopyable
 	{
 	public:
 		void Create( VkRenderPass renderPass, ShaderDescription shader );
 		void Cleanup();
+
+		void Bind( VkCommandBuffer &cmdBuffer );
 
 		const VkPipeline Get() const { return pipeline; }
 	private:
@@ -21,6 +23,8 @@ namespace Vel
 		VkPipeline pipeline;
 		VkPipelineLayout pipelineLayout;
 		VkShaderModule CreateShaderModule( const char *filepath );
+
+		VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
 		//static void CreatePipelines( std::vector<Pipeline> &pipelines );
 	};
