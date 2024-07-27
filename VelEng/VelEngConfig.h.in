@@ -1,7 +1,7 @@
-#ifndef VELENGCONFIG
-#define VELENGCONFIG
+#pragma once
 
 #define VelEngine_VERSION_MAJOR "${VelEngine_VERSION_MAJOR}"
 #define VelEngine_VERSION_MINOR "${VelEngine_VERSION_MINOR}"
 
-#endif
+#define SHADERS_PATH "${SHADERS_PATH_SPV}"
+#define MESH_PATH "${MESH_PATH}"

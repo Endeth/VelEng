@@ -1,2 +1,1 @@
-#define V_RESPATH "${V_RESPATH}"
-#define V_ASSETPATH(path) (V_RESPATH ## path)
+#pragma once

@@ -1,5 +1,0 @@
-set(UTIHEADERS ${UTIHEADERS}
-	${CMAKE_CURRENT_SOURCE_DIR}/VSignal.h
-	${CMAKE_CURRENT_SOURCE_DIR}/VTime.h
- )
-add_library (VelUti VTime.cpp ${UTIHEADERS})
