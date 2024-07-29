@@ -62,10 +62,10 @@ namespace Vel
     {
         GPUMeshBuffers rect;
         AllocatedImage drawImage;
-        AllocatedBuffer lightsDataBuffer;
-        AllocatedBuffer pointLightsBuffer;
-        VkDeviceAddress pointLightsBufferAddress;
-        PointLight* pointLightsGPUData;
+        //AllocatedBuffer lightsDataBuffer;
+        //AllocatedBuffer pointLightsBuffer;
+        //VkDeviceAddress pointLightsBufferAddress;
+        //PointLight* pointLightsGPUData;
         VkSampler sampler;
 
         VkDescriptorSetLayout gBufferDescriptorLayout;
@@ -77,7 +77,16 @@ namespace Vel
         LPassPipeline pipeline;
 
         VkSemaphore finishDrawing;
-        LightData lights;
+        //LightData lights;
+    };
+
+    struct Lights
+    {
+        LightData lights; //LightData on CPU
+        AllocatedBuffer lightsDataBuffer; //LightData on GPU
+        AllocatedBuffer pointLightsBuffer; //LPass only needs address and count
+        VkDeviceAddress pointLightsBufferAddress; //LPass necessary
+        PointLight* pointLightsGPUData; //Needed for cpu updates
     };
 
     class Renderer
@@ -89,9 +98,8 @@ namespace Vel
         void Draw();
         void DrawCompute(VkCommandBuffer cmdBuffer);
         void DrawGeometry(VkCommandBuffer cmdBuffer);
+        void DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout);
         void OnWindowResize();
-
-        VkImageSubresourceRange CreateImageSubresourceRangeAll(VkImageAspectFlags aspect);
 
         VkSemaphoreSubmitInfo CreateSemaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
         VkCommandBufferSubmitInfo CreateCommandBufferSubmitInfo(VkCommandBuffer cmdBuffer);
@@ -169,6 +177,7 @@ namespace Vel
         DrawContext mainDrawContext;
 
         //Deferred rendering
+        DeferredRenderer deferred;
         GPass gPassData;
         LPass lPassData;
 
@@ -181,10 +190,12 @@ namespace Vel
         uint32_t blitTarget = 0;
         std::unordered_map<std::string, std::shared_ptr<RenderableNode>> loadedNodes;
         std::unordered_map<std::string, std::shared_ptr<RenderableGLTF>> loadedScenes;
+        Lights testLights;
 
         void InitDeferred();
         void InitTestTextures();
         void InitTestData();
+        void InitTestLightData();
         GPUMeshBuffers CreateRectangle();
 
         //Debug
@@ -216,8 +227,5 @@ namespace Vel
         void DestroySwapchain();
 
         FrameData& GetCurrentFrame();
-
-        void ClearBackground(VkCommandBuffer cmdBuffer);
-        void BlitImage(VkCommandBuffer cmdBuffer, VkImage src, VkImage dst, VkExtent2D srcSize, VkExtent2D dstSize);
     };
 }

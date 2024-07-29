@@ -20,12 +20,12 @@ bool Vel::LoadShaderModule(const char* spvPath, VkDevice device, VkShaderModule*
     file.read((char*)buffer.data(), fileSize);
     file.close();
 
-    VkShaderModuleCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.pNext = nullptr;
-
-    createInfo.codeSize = buffer.size() * sizeof(uint32_t);
-    createInfo.pCode = buffer.data();
+    VkShaderModuleCreateInfo createInfo {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = nullptr,
+        .codeSize = buffer.size() * sizeof(uint32_t),
+        .pCode = buffer.data()
+    };
 
     if (vkCreateShaderModule(device, &createInfo, nullptr, shaderModule) != VK_SUCCESS)
     {
@@ -60,13 +60,14 @@ const VkPipelineLayout& Vel::VulkanPipeline::GetPipelineLayout()
 
 void Vel::VulkanComputePipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t layoutsCount)
 {
-    VkPipelineLayoutCreateInfo computeLayoutInfo = {};
-    computeLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    computeLayoutInfo.pNext = nullptr;
-    computeLayoutInfo.pSetLayouts = layouts;
-    computeLayoutInfo.setLayoutCount = layoutsCount;
-    computeLayoutInfo.pushConstantRangeCount = 0;
-    computeLayoutInfo.pPushConstantRanges = nullptr;
+    VkPipelineLayoutCreateInfo computeLayoutInfo {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .setLayoutCount = layoutsCount,
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = nullptr
+    };
 
     VK_CHECK(vkCreatePipelineLayout(device, &computeLayoutInfo, nullptr, &pipelineLayout));
 
@@ -76,18 +77,20 @@ void Vel::VulkanComputePipeline::CreatePipeline(VkDescriptorSetLayout* layouts, 
         fmt::print("Error when building the compute shader \n");
     }
 
-    VkPipelineShaderStageCreateInfo stageInfo = {};
-    stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stageInfo.pNext = nullptr;
-    stageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-    stageInfo.module = computeDrawShader;
-    stageInfo.pName = "main";
+    VkPipelineShaderStageCreateInfo stageInfo {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+        .module = computeDrawShader,
+        .pName = "main"
+    };
 
-    VkComputePipelineCreateInfo pipelineCreateInfo{};
-    pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-    pipelineCreateInfo.pNext = nullptr;
-    pipelineCreateInfo.layout = pipelineLayout;
-    pipelineCreateInfo.stage = stageInfo;
+    VkComputePipelineCreateInfo pipelineCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .stage = stageInfo,
+        .layout = pipelineLayout
+    };
 
     VK_CHECK(vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
 

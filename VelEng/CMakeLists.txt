@@ -28,6 +28,15 @@ set(HEADERS ${HEADERS} ${PROJECT_BINARY_DIR}/VelEng/generated/config/VelEngConfi
 
 add_library(VelEng ${SOURCE} ${HEADERS})
 set_property(TARGET VelEng PROPERTY CXX_STANDARD 20)
+
+if(MSVC)
+	target_compile_options(VelEng PRIVATE "/MP")
+	#4244 assign type mismatch
+	target_compile_options(VelEng PRIVATE "/wd 4244")
+	#4267 argument type mismatch
+	target_compile_options(VelEng PRIVATE "/wd 4267")
+endif()
+
 target_link_libraries(VelEng PUBLIC
 	Vulkan::Vulkan
 	vkbootstrap

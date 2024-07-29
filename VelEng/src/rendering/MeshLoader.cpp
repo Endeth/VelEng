@@ -225,14 +225,16 @@ std::optional<std::shared_ptr<Vel::RenderableGLTF>> Vel::loadGltf(VkDevice devic
     for (fastgltf::Sampler& sampler : gltf.samplers)
     {
 
-        VkSamplerCreateInfo sampl = { .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO, .pNext = nullptr };
-        sampl.maxLod = VK_LOD_CLAMP_NONE;
-        sampl.minLod = 0;
+        VkSamplerCreateInfo sampl {
+            .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+            .pNext = nullptr,
+            .magFilter = ExtractFilter(sampler.magFilter.value_or(fastgltf::Filter::Nearest)),
+            .minFilter = ExtractFilter(sampler.minFilter.value_or(fastgltf::Filter::Nearest)),
+            .mipmapMode = ExtractMipmapMode(sampler.minFilter.value_or(fastgltf::Filter::Nearest)),
+            .minLod = 0,
+            .maxLod = VK_LOD_CLAMP_NONE
+        };
 
-        sampl.magFilter = ExtractFilter(sampler.magFilter.value_or(fastgltf::Filter::Nearest));
-        sampl.minFilter = ExtractFilter(sampler.minFilter.value_or(fastgltf::Filter::Nearest));
-
-        sampl.mipmapMode = ExtractMipmapMode(sampler.minFilter.value_or(fastgltf::Filter::Nearest));
 
         VkSampler newSampler;
         vkCreateSampler(device, &sampl, nullptr, &newSampler);

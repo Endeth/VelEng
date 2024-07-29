@@ -32,25 +32,25 @@ void Vel::Imgui::HandleSDLEvent(SDL_Event* sdlEvent)
 
 void Vel::Imgui::Draw(VkCommandBuffer cmd, VkImageView targetImageView, VkExtent2D &swapchainExtent)
 {
-	VkRenderingAttachmentInfo colorAttachment = {};
-	colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-	colorAttachment.pNext = nullptr;
+	VkRenderingAttachmentInfo colorAttachment {
+		.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+		.pNext = nullptr,
+		.imageView = targetImageView,
+		.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE
+	};
 
-	colorAttachment.imageView = targetImageView;
-	colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-
-	VkRenderingInfo renderInfo = {};
-	renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-	renderInfo.pNext = nullptr;
-
-	renderInfo.renderArea = VkRect2D{ VkOffset2D { 0, 0 }, swapchainExtent };
-	renderInfo.layerCount = 1;
-	renderInfo.colorAttachmentCount = 1;
-	renderInfo.pColorAttachments = &colorAttachment;
-	renderInfo.pDepthAttachment = nullptr;
-	renderInfo.pStencilAttachment = nullptr;
+	VkRenderingInfo renderInfo {
+		.sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+		.pNext = nullptr,
+		.renderArea = { VkOffset2D { 0, 0 }, swapchainExtent },
+		.layerCount = 1,
+		.colorAttachmentCount = 1,
+		.pColorAttachments = &colorAttachment,
+		.pDepthAttachment = nullptr,
+		.pStencilAttachment = nullptr,
+	};
 
 	vkCmdBeginRendering(cmd, &renderInfo);
 

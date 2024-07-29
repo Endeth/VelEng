@@ -5,7 +5,7 @@
 
 namespace Vel
 {
-    struct RenderData
+    struct RenderData //Dedicated Material
     {
         uint32_t indexCount;
         uint32_t firstIndex;
@@ -17,13 +17,9 @@ namespace Vel
         VkDeviceAddress vertexBufferAddress;
     };
 
-    struct DrawContext
+    struct DrawContext //Dedicated Material
     {
-        //std::vector<RenderData> opaqueSurfaces;
-        //std::multimap<size_t, RenderData> opaqueSurfaces;
         std::vector<std::vector<RenderData>> opaqueSurfaces;
-        //std::vector<RenderData> transparentSurfaces;
-        //std::multimap<size_t, RenderData> transparentSurfaces;
         std::vector<std::vector<RenderData>> transparentSurfaces;
     };
 

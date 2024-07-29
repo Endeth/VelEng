@@ -34,19 +34,22 @@ void Vel::VkPipelineBuilder::SetShaders(VkShaderModule vertex, VkShaderModule fr
 {
     shaderStages.clear();
 
-    VkPipelineShaderStageCreateInfo vertStageInfo = {};
-    vertStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertStageInfo.pNext = nullptr;
-    vertStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertStageInfo.module = vertex;
-    vertStageInfo.pName = "main";
+    VkPipelineShaderStageCreateInfo vertStageInfo {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = vertex,
+        .pName = "main"
+    };
 
-    VkPipelineShaderStageCreateInfo fragStageInfo = {};
-    fragStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragStageInfo.pNext = nullptr;
-    fragStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragStageInfo.module = fragment;
-    fragStageInfo.pName = "main";
+    VkPipelineShaderStageCreateInfo fragStageInfo {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = fragment,
+        .pName = "main"
+    };
+
     shaderStages.push_back(vertStageInfo);
     shaderStages.push_back(fragStageInfo);
 }
@@ -160,18 +163,19 @@ VkPipeline Vel::VkPipelineBuilder::BuildGfxPipeline(VkDevice device)
     VkPipeline pipeline;
 
     //Constant
-    VkPipelineViewportStateCreateInfo viewportState = {};
-    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.pNext = nullptr;
+    VkPipelineViewportStateCreateInfo viewportState {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .viewportCount = 1,
+        .scissorCount = 1,
+    };
 
-    viewportState.viewportCount = 1;
-    viewportState.scissorCount = 1;
+    VkPipelineColorBlendStateCreateInfo colorBlending {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .pNext = nullptr
+    };
 
-    VkPipelineColorBlendStateCreateInfo colorBlending = {};
-    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlending.pNext = nullptr;
-
-    for (int i = 1; i < colorAttachmentsCount; ++i)
+    for (uint32_t i = 1; i < colorAttachmentsCount; ++i)
     {
         memcpy(colorBlendAttachment + i, colorBlendAttachment, sizeof(VkPipelineColorBlendAttachmentState));
     }
@@ -183,28 +187,33 @@ VkPipeline Vel::VkPipelineBuilder::BuildGfxPipeline(VkDevice device)
 
     VkDynamicState state[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
-    VkPipelineDynamicStateCreateInfo dynamicInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
-    dynamicInfo.pDynamicStates = &state[0];
-    dynamicInfo.dynamicStateCount = 2;
+    VkPipelineDynamicStateCreateInfo dynamicInfo { 
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .dynamicStateCount = 2,
+        .pDynamicStates = &state[0]
+    };
 
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO
+    };
 
 
-    VkGraphicsPipelineCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    createInfo.pNext = &renderInfo;
+    VkGraphicsPipelineCreateInfo createInfo {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = &renderInfo,
 
-    createInfo.stageCount = (uint32_t)shaderStages.size();
-    createInfo.pStages = shaderStages.data();
-    createInfo.layout = pipelineLayout;
-    createInfo.pVertexInputState = &vertexInputInfo;
-    createInfo.pInputAssemblyState = &inputAssembly;
-    createInfo.pViewportState = &viewportState;
-    createInfo.pRasterizationState = &rasterizer;
-    createInfo.pMultisampleState = &multisampling;
-    createInfo.pColorBlendState = &colorBlending;
-    createInfo.pDepthStencilState = &depthStencil;
-    createInfo.pDynamicState = &dynamicInfo;
+        .stageCount = (uint32_t)shaderStages.size(),
+        .pStages = shaderStages.data(),
+        .pVertexInputState = &vertexInputInfo,
+        .pInputAssemblyState = &inputAssembly,
+        .pViewportState = &viewportState,
+        .pRasterizationState = &rasterizer,
+        .pMultisampleState = &multisampling,
+        .pDepthStencilState = &depthStencil,
+        .pColorBlendState = &colorBlending,
+        .pDynamicState = &dynamicInfo,
+        .layout = pipelineLayout
+    };
 
     VK_CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &createInfo, nullptr, &pipeline));
     return pipeline;

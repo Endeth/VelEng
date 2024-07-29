@@ -22,7 +22,7 @@ void Vel::GLTFMetallicRoughness::BuildPipelines()
         fmt::print("Error when building the fragment shader \n");
     }
 
-    VkPushConstantRange matrixRange = {
+    VkPushConstantRange matrixRange {
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
         .offset = 0,
         .size = sizeof(GPUDrawPushConstants)
@@ -36,7 +36,7 @@ void Vel::GLTFMetallicRoughness::BuildPipelines()
 
     VkDescriptorSetLayout layouts[] = { sceneLayout, materialLayout };
 
-    VkPipelineLayoutCreateInfo meshLayoutInfo = {
+    VkPipelineLayoutCreateInfo meshLayoutInfo {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .setLayoutCount = 2,

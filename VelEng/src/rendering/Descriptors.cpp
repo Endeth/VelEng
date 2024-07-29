@@ -4,7 +4,7 @@
 
 void Vel::DescriptorLayoutBuilder::AddBinding(uint32_t binding, VkDescriptorType type)
 {
-    VkDescriptorSetLayoutBinding bind = {
+    VkDescriptorSetLayoutBinding bind {
         .binding = binding,
         .descriptorType = type,
         .descriptorCount = 1
@@ -26,7 +26,7 @@ VkDescriptorSetLayout Vel::DescriptorLayoutBuilder::Build(VkDevice device, VkSha
         binding.stageFlags |= shaderStages;
     }
 
-    VkDescriptorSetLayoutCreateInfo createInfo = {
+    VkDescriptorSetLayoutCreateInfo createInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = pNext,
 
@@ -53,13 +53,14 @@ void Vel::DescriptorAllocator::InitPool(VkDevice dev, uint32_t maxSets, std::spa
         });
     }
 
-    VkDescriptorPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.pNext = nullptr;
-    poolInfo.flags = 0;
-    poolInfo.maxSets = maxSets;
-    poolInfo.poolSizeCount = (uint32_t)poolSizes.size();
-    poolInfo.pPoolSizes = poolSizes.data();
+    VkDescriptorPoolCreateInfo poolInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .maxSets = maxSets,
+        .poolSizeCount = (uint32_t)poolSizes.size(),
+        .pPoolSizes = poolSizes.data()
+    };
 
     VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &pool));
 }
@@ -76,12 +77,13 @@ void Vel::DescriptorAllocator::Cleanup()
 
 VkDescriptorSet Vel::DescriptorAllocator::Allocate(VkDescriptorSetLayout layout)
 {
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.pNext = nullptr;
-    allocInfo.descriptorPool = pool;
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &layout;
+    VkDescriptorSetAllocateInfo allocInfo {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = pool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &layout
+    };
 
     VkDescriptorSet set;
     VK_CHECK(vkAllocateDescriptorSets(device, &allocInfo, &set));
@@ -102,7 +104,7 @@ void Vel::DescriptorAllocatorDynamic::InitPool(VkDevice vkDevice, uint32_t maxSe
 
     VkDescriptorPool newPool = CreatePool(maxSets, poolRatios);
 
-    setsPerPool = maxSets * 1.5f;
+    setsPerPool = static_cast<uint32_t>(maxSets * 1.5f);
     readyPools.push_back(newPool);
 }
 
@@ -140,7 +142,7 @@ VkDescriptorSet Vel::DescriptorAllocatorDynamic::Allocate(VkDescriptorSetLayout 
 {
     VkDescriptorPool poolToUse = GetPool();
 
-    VkDescriptorSetAllocateInfo allocInfo = {
+    VkDescriptorSetAllocateInfo allocInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = poolToUse,
@@ -196,7 +198,7 @@ VkDescriptorPool Vel::DescriptorAllocatorDynamic::CreatePool(uint32_t setCount, 
         });
     }
 
-    VkDescriptorPoolCreateInfo poolCreateInfo = {
+    VkDescriptorPoolCreateInfo poolCreateInfo {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
@@ -219,7 +221,7 @@ void Vel::DescriptorWriter::WriteImage(uint32_t binding, VkImageView imageView, 
         .imageLayout = layout
     });
 
-    VkWriteDescriptorSet write = {
+    VkWriteDescriptorSet write {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
 
@@ -241,7 +243,7 @@ void Vel::DescriptorWriter::WriteBuffer(uint32_t binding, VkBuffer buffer, size_
         .range = size
     });
 
-    VkWriteDescriptorSet write = {
+    VkWriteDescriptorSet write {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
 

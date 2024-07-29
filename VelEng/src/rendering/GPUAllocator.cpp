@@ -16,16 +16,18 @@ void Vel::GPUAllocator::Cleanup()
 
 Vel::AllocatedBuffer Vel::GPUAllocator::CreateBuffer(size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage)
 {
-    VkBufferCreateInfo bufferInfo = {};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.pNext = nullptr;
-    bufferInfo.size = size;
+    VkBufferCreateInfo bufferInfo {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.pNext = nullptr,
+		.size = size,
 
-    bufferInfo.usage = usage;
+		.usage = usage
+	};
 
-    VmaAllocationCreateInfo vmaallocInfo = {};
-    vmaallocInfo.usage = memoryUsage;
-    vmaallocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+    VmaAllocationCreateInfo vmaallocInfo {
+		.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		.usage = memoryUsage
+	};
 
     AllocatedBuffer newBuffer;
     // allocate the buffer
@@ -41,36 +43,40 @@ void Vel::GPUAllocator::DestroyBuffer(const AllocatedBuffer& buffer)
 
 VkImageCreateInfo Vel::GPUAllocator::BuildImageCreateInfo(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
 {
-	VkImageCreateInfo createdImgInfo = {};
-	createdImgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	createdImgInfo.pNext = nullptr;
-	createdImgInfo.imageType = VK_IMAGE_TYPE_2D;
-	createdImgInfo.mipLevels = 1;
-	createdImgInfo.arrayLayers = 1;
-	createdImgInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	createdImgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	VkImageCreateInfo createdImgInfo {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+		.pNext = nullptr,
 
-	createdImgInfo.extent = extent;
-	createdImgInfo.format = format;
-	createdImgInfo.usage = usage;
+		.imageType = VK_IMAGE_TYPE_2D,
+		.format = format,
+		.extent = extent,
+		.mipLevels = 1,
+		.arrayLayers = 1,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.tiling = VK_IMAGE_TILING_OPTIMAL,
+		.usage = usage
+	};
 
 	return createdImgInfo;
 }
 
 VkImageViewCreateInfo Vel::GPUAllocator::BuildImageViewCreateInfo(VkFormat format, VkImageAspectFlags usage, VkImage image)
 {
-	VkImageViewCreateInfo createdImgViewInfo = {};
-	createdImgViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	createdImgViewInfo.pNext = nullptr;
-	createdImgViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	createdImgViewInfo.subresourceRange.baseMipLevel = 0;
-	createdImgViewInfo.subresourceRange.levelCount = 1;
-	createdImgViewInfo.subresourceRange.baseArrayLayer = 0;
-	createdImgViewInfo.subresourceRange.layerCount = 1;
+	VkImageViewCreateInfo createdImgViewInfo {
 
-	createdImgViewInfo.format = format;
-	createdImgViewInfo.image = image;
-	createdImgViewInfo.subresourceRange.aspectMask = usage;
+		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+		.pNext = nullptr,
+		.image = image,
+		.viewType = VK_IMAGE_VIEW_TYPE_2D,
+		.format = format,
+		.subresourceRange = {
+			.aspectMask = usage,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1
+		}
+	};
 
 	return createdImgViewInfo;
 }
@@ -87,9 +93,10 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateImage(VkExtent3D extent, VkFormat f
 		imageCreateInfo.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(extent.width, extent.height)))) + 1;
 	}
 
-	VmaAllocationCreateInfo allocinfo = {};
-	allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-	allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VmaAllocationCreateInfo allocinfo {
+		.usage = VMA_MEMORY_USAGE_GPU_ONLY,
+		.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+	};
 
 	VK_CHECK(vmaCreateImage(vmaAllocator, &imageCreateInfo, &allocinfo, &newImage.image, &newImage.allocation, nullptr));
 
@@ -105,7 +112,7 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateImage(VkExtent3D extent, VkFormat f
 
 Vel::AllocatedImage Vel::GPUAllocator::CreateImage(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped)
 {
-	size_t data_size = size.depth * size.width * size.height * 4;
+	size_t data_size = size.depth * size.width * size.height * 4U;
 	AllocatedBuffer uploadbuffer = CreateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	memcpy(uploadbuffer.info.pMappedData, data, data_size);
@@ -115,16 +122,18 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateImage(void* data, VkExtent3D size, 
 	submitter.Submit([&](VkCommandBuffer cmd) {
 		TransitionImage(cmd, newImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-		VkBufferImageCopy copyRegion = {};
-		copyRegion.bufferOffset = 0;
-		copyRegion.bufferRowLength = 0;
-		copyRegion.bufferImageHeight = 0;
-
-		copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		copyRegion.imageSubresource.mipLevel = 0;
-		copyRegion.imageSubresource.baseArrayLayer = 0;
-		copyRegion.imageSubresource.layerCount = 1;
-		copyRegion.imageExtent = size;
+		VkBufferImageCopy copyRegion {
+			.bufferOffset = 0,
+			.bufferRowLength = 0,
+			.bufferImageHeight = 0,
+			.imageSubresource = {
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.mipLevel = 0,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			},
+			.imageExtent = size
+		};
 
 		vkCmdCopyBufferToImage(cmd, uploadbuffer.buffer, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
@@ -152,27 +161,31 @@ void Vel::ImmediateSubmitter::Init(VkDevice dev, uint32_t graphicsQueueFamily, V
 	device = dev;
 	queue = targetQueue;
 
-	VkFenceCreateInfo fenceInfo = {};
-	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	fenceInfo.pNext = nullptr;
-	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+	VkFenceCreateInfo fenceInfo {
+		.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = VK_FENCE_CREATE_SIGNALED_BIT
+	};
+
 
 	VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &immediateFence));
 
-	VkCommandPoolCreateInfo commandPoolInfo = {};
-	commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	commandPoolInfo.pNext = nullptr;
-	commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	commandPoolInfo.queueFamilyIndex = graphicsQueueFamily;
+	VkCommandPoolCreateInfo commandPoolInfo {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+		.queueFamilyIndex = graphicsQueueFamily
+	};
 
 	VK_CHECK(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &immediateCommandPool));
 
-	VkCommandBufferAllocateInfo cmdAllocateInfo = {};
-	cmdAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	cmdAllocateInfo.pNext = nullptr;
-	cmdAllocateInfo.commandBufferCount = 1;
-	cmdAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	cmdAllocateInfo.commandPool = immediateCommandPool;
+	VkCommandBufferAllocateInfo cmdAllocateInfo {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.pNext = nullptr,
+		.commandPool = immediateCommandPool,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		.commandBufferCount = 1
+	};
 
 	VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &immediateCommandBuffer));
 }
@@ -188,11 +201,12 @@ void Vel::ImmediateSubmitter::Submit(std::function<void(VkCommandBuffer cmd)>&& 
 	VK_CHECK(vkResetFences(device, 1, &immediateFence));
 	VK_CHECK(vkResetCommandBuffer(immediateCommandBuffer, 0));
 
-	VkCommandBufferBeginInfo cmdBeginInfo = {};
-	cmdBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	cmdBeginInfo.pNext = nullptr;
-	cmdBeginInfo.pInheritanceInfo = nullptr;
-	cmdBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	VkCommandBufferBeginInfo cmdBeginInfo {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.pNext = nullptr,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+		.pInheritanceInfo = nullptr
+	};
 
 	VK_CHECK(vkBeginCommandBuffer(immediateCommandBuffer, &cmdBeginInfo));
 
@@ -200,23 +214,23 @@ void Vel::ImmediateSubmitter::Submit(std::function<void(VkCommandBuffer cmd)>&& 
 
 	VK_CHECK(vkEndCommandBuffer(immediateCommandBuffer));
 
-	VkCommandBufferSubmitInfo cmdSubmitInfo = {};
-	cmdSubmitInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
-	cmdSubmitInfo.pNext = nullptr;
-	cmdSubmitInfo.commandBuffer = immediateCommandBuffer;
-	cmdSubmitInfo.deviceMask = 0;
+	VkCommandBufferSubmitInfo cmdSubmitInfo {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+		.pNext = nullptr,
+		.commandBuffer = immediateCommandBuffer,
+		.deviceMask = 0
+	};
 
-	VkSubmitInfo2 submit = {};
-	submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
-	submit.pNext = nullptr;
-
-	submit.waitSemaphoreInfoCount = 0;
-	submit.pWaitSemaphoreInfos = nullptr;
-	submit.signalSemaphoreInfoCount = 0;
-	submit.pSignalSemaphoreInfos = nullptr;
-
-	submit.commandBufferInfoCount = 1;
-	submit.pCommandBufferInfos = &cmdSubmitInfo;
+	VkSubmitInfo2 submit {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+		.pNext = nullptr,
+		.waitSemaphoreInfoCount = 0,
+		.pWaitSemaphoreInfos = nullptr,
+		.commandBufferInfoCount = 1,
+		.pCommandBufferInfos = &cmdSubmitInfo,
+		.signalSemaphoreInfoCount = 0,
+		.pSignalSemaphoreInfos = nullptr
+	};
 
 	VK_CHECK(vkQueueSubmit2(queue, 1, &submit, immediateFence));
 
