@@ -32,6 +32,7 @@ namespace Vel
         VkImageViewCreateInfo BuildImageViewCreateInfo(VkFormat format, VkImageAspectFlags usage, VkImage image);
         AllocatedImage CreateImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage, bool mipmapped);
         AllocatedImage CreateImage(void* data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage, bool mipmapped);
+        GPUMeshBuffers UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
         void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
         void DestroyImage(const AllocatedImage& image);
     private:

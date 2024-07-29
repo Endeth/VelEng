@@ -23,101 +23,35 @@ namespace Vel
         float lPassDrawTime;
     };
 
-    struct GPass
-    {
-        AllocatedImage position;
-        AllocatedImage color;
-        AllocatedImage normals;
-
-        VkDescriptorSetLayout descriptorLayout;
-        //Material
-        GPassPipeline pipeline;
-
-        VkSemaphore finishDrawing;
-        AllocatedImage defaultNormalMap;
-        AllocatedImage defaultSpecularMap;
-        VkSampler sampler;
-
-        DescriptorAllocatorDynamic descriptorPool;
-        DescriptorWriter writer;
-
-        VkDescriptorSet testSet;
-
-        VkImage GetImage(uint32_t idx)
-        {
-            switch (idx)
-            {
-            case 0:
-                return position.image;
-            case 1:
-                return color.image;
-            case 2:
-                return normals.image;
-            }
-
-        }
-    };
-
-    struct LPass
-    {
-        GPUMeshBuffers rect;
-        AllocatedImage drawImage;
-        //AllocatedBuffer lightsDataBuffer;
-        //AllocatedBuffer pointLightsBuffer;
-        //VkDeviceAddress pointLightsBufferAddress;
-        //PointLight* pointLightsGPUData;
-        VkSampler sampler;
-
-        VkDescriptorSetLayout gBufferDescriptorLayout;
-        VkDescriptorSetLayout lightsDescriptorLayout;
-        DescriptorAllocatorDynamic descriptorPool;
-        VkDescriptorSet gBufferDescriptorSet;
-        VkDescriptorSet lightsDescriptorSet;
-        DescriptorWriter writer;
-        LPassPipeline pipeline;
-
-        VkSemaphore finishDrawing;
-        //LightData lights;
-    };
-
     struct Lights
     {
-        LightData lights; //LightData on CPU
-        AllocatedBuffer lightsDataBuffer; //LightData on GPU
-        AllocatedBuffer pointLightsBuffer; //LPass only needs address and count
-        VkDeviceAddress pointLightsBufferAddress; //LPass necessary
-        PointLight* pointLightsGPUData; //Needed for cpu updates
+        LightData lights;
+        AllocatedBuffer lightsDataBuffer;
+        AllocatedBuffer pointLightsBuffer;
+        VkDeviceAddress pointLightsBufferAddress;
+        PointLight* pointLightsGPUData;
     };
 
     class Renderer
     {
     public:
+        constexpr static uint32_t FRAME_TIMEOUT = 1000000000;
+
         void Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent);
 
         void HandleSDLEvent(SDL_Event* sdlEvent);
         void Draw();
-        void DrawCompute(VkCommandBuffer cmdBuffer);
-        void DrawGeometry(VkCommandBuffer cmdBuffer);
-        void DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout);
         void OnWindowResize();
 
-        VkSemaphoreSubmitInfo CreateSemaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
-        VkCommandBufferSubmitInfo CreateCommandBufferSubmitInfo(VkCommandBuffer cmdBuffer);
-        VkSubmitInfo2 CreateSubmitInfo(VkCommandBufferSubmitInfo& cmdBufferInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo, VkSemaphoreSubmitInfo* signalSemaphoreInfo);
-
-        GPUMeshBuffers UploadMesh(std::span<uint32_t> idices, std::span<Vertex> vertices);
         GPUAllocator* GetAllocator(){ return &gpuAllocator; }
 
         AllocatedImage whiteImage;
         AllocatedImage errorCheckerboardImage;
         VkSampler defaultSamplerLinear;
-        VkSampler defaultSamplerNearest;
-        GLTFMetallicRoughness gltfMaterialPipeline;
 
         void Cleanup();
-    private:
 
-        //GlobalStructures
+    private:
         SDL_Window* window;
         bool isInitialized = false;
 
@@ -125,7 +59,10 @@ namespace Vel
         VkPhysicalDevice physicalDevice;
         VkDevice device;
         VkSurfaceKHR surface;
+        VkQueue graphicsQueue;
+        uint32_t graphicsQueueFamily;
 
+        //TODO swapchain handler
         VkSwapchainKHR swapchain;
         VkFormat swapchainImageFormat;
         std::vector<VkImage> swapchainImages;
@@ -133,10 +70,6 @@ namespace Vel
         VkExtent2D swapchainExtent;
         bool resizeRequested = false;
 
-        VkQueue graphicsQueue;
-        uint32_t graphicsQueueFamily;
-
-        DeletionQueue delQueue;
 
         GPUAllocator gpuAllocator;
 
@@ -149,7 +82,6 @@ namespace Vel
             VkCommandBuffer commandBuffer;
             VkCommandBuffer lPassCommands;
             VkSemaphore swapchainSemaphore;
-            VkSemaphore renderSemaphore;
             VkFence renderFence;
 
             DescriptorAllocatorDynamic frameDescriptors;
@@ -157,75 +89,53 @@ namespace Vel
             DeletionQueue cleanupQueue;
         };
         FrameData frames[FRAME_DATA_SIZE];
-        AllocatedImage drawImage;
-        AllocatedImage depthImage;
+
+        DeferredRenderer deferred;
+        DrawContext mainDrawContext;
         VkExtent2D drawExtent;
         float renderScale = 1.f;
-
-        //Pipeline
-        DescriptorAllocatorDynamic globalDescriptorAllocator;
-        VkDescriptorSetLayout drawImageDescriptorLayout;
-        VkDescriptorSet drawImageDescriptors;
 
         Camera mainCamera;
         SceneCameraData sceneData;
         VkDescriptorSetLayout sceneCameraDataDescriptorLayout;
         VkDescriptorSet sceneCameraDataDescriptorSet;
 
-        VulkanComputePipeline gradientPipeline;
-
-        DrawContext mainDrawContext;
-
-        //Deferred rendering
-        DeferredRenderer deferred;
-        GPass gPassData;
-        LPass lPassData;
-
         //Performance
         RendererStats stats;
 
         Vel::Imgui vImgui;
 
-        //Testing
-        uint32_t blitTarget = 0;
-        std::unordered_map<std::string, std::shared_ptr<RenderableNode>> loadedNodes;
-        std::unordered_map<std::string, std::shared_ptr<RenderableGLTF>> loadedScenes;
-        Lights testLights;
-
-        void InitDeferred();
-        void InitTestTextures();
-        void InitTestData();
-        void InitTestLightData();
-        GPUMeshBuffers CreateRectangle();
+        DeletionQueue delQueue;
 
         //Debug
         VkDebugUtilsMessengerEXT debugMessenger;
 
         void CreateSwapchain(uint32_t width, uint32_t height);
-        void CreateDrawImage();
         void CreateCommands();
         void CreateSyncStructures();
         void CreateAllocator();
-        void CreateDescriptors();
-        void CreatePipelines();
+        void CreateCameraDescriptors();
+        void InitDeferred();
         void InitImgui();
-
-
-        VkRenderingAttachmentInfo BuildColorAttachmentInfo(VkImageView imageView);
-        VkRenderingAttachmentInfo BuildGPassAttachmentInfo(VkImageView imageView);
-        VkRenderingAttachmentInfo BuildLPassAttachmentInfo(VkImageView imageView);
-        VkRenderingAttachmentInfo BuildDepthAttachmentInfo();
-        VkRenderingInfo BuildGeometryDrawRenderInfo(VkRenderingAttachmentInfo* color, uint32_t colorAttachmentsCount, VkRenderingAttachmentInfo* depth);
-        VkViewport BuildGeometryDrawViewport();
-        VkRect2D BuildGeometryDrawScissors();
 
         void UpdateScene();
         void UpdateGlobalLighting();
         void UpdateCamera();
         void UpdateGlobalDescriptors();
 
+        void DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout);
+
         void DestroySwapchain();
 
-        FrameData& GetCurrentFrame();
+        FrameData& GetCurrentFrame(){ return frames[frameNumber % FRAME_DATA_SIZE]; }
+
+        //Testing
+        std::unordered_map<std::string, std::shared_ptr<RenderableGLTF>> loadedScenes;
+        Lights testLights;
+
+        void InitTestTextures();
+        void InitTestData();
+        void InitTestLightData();
+        GPUMeshBuffers CreateRectangle();
     };
 }

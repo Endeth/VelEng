@@ -34,7 +34,7 @@ namespace Vel
             AllocatedImage depth;
         };
 
-        void Init(VkDevice dev, GPUAllocator* allocator, VkExtent3D renderExtent,
+        void Init(VkDevice dev, GPUAllocator* allocator, VkExtent2D renderExtent,
             VkDescriptorSetLayout cameraDescriptorLayout,
             VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize,
             GPUMeshBuffers&& rect);
@@ -58,7 +58,7 @@ namespace Vel
         DescriptorAllocatorDynamic descriptorPool;
         DescriptorWriter descriptorWriter;
 
-        VkExtent3D drawExtent;
+        VkExtent2D drawExtent;
         VkSampler sampler;
 
         VkDescriptorSet sceneCameraDataDescriptorSet;

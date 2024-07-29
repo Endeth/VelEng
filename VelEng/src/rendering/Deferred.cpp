@@ -103,7 +103,7 @@ void Vel::LPassPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t
     vkDestroyShaderModule(device, fragmentModule, nullptr);
 }
 
-void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent3D renderExtent,
+void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent2D renderExtent,
     VkDescriptorSetLayout cameraDescriptorLayout,
     VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize,
     GPUMeshBuffers&& rect)
@@ -134,10 +134,11 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
         VK_IMAGE_USAGE_SAMPLED_BIT
     };
 
-    framebuffer.position = mainAllocator->CreateImage(drawExtent, VK_FORMAT_R32G32B32A32_SFLOAT, gPassAttachmentsUsage, false);
-    framebuffer.color = mainAllocator->CreateImage(drawExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage, false);
-    framebuffer.normals = mainAllocator->CreateImage(drawExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage, false);
-    framebuffer.depth = mainAllocator->CreateImage(drawExtent, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, false);
+    VkExtent3D imageExtent{ drawExtent.width, drawExtent.height, 1 };
+    framebuffer.position = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R32G32B32A32_SFLOAT, gPassAttachmentsUsage, false);
+    framebuffer.color = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage, false);
+    framebuffer.normals = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage, false);
+    framebuffer.depth = mainAllocator->CreateImage(imageExtent, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, false);
 
     DescriptorLayoutBuilder builder;
     builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
@@ -167,7 +168,7 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT
     };
-    drawImage = mainAllocator->CreateImage(drawExtent, VK_FORMAT_R8G8B8A8_UNORM, lPassAttachmentsUsage, false);
+    drawImage = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, lPassAttachmentsUsage, false);
 
     builder.Clear();
     builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);

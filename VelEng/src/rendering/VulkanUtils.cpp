@@ -98,3 +98,63 @@ void Vel::BlitImage(VkCommandBuffer cmdBuffer, VkImage src, VkImage dst, VkExten
 
     vkCmdBlitImage2(cmdBuffer, &blitInfo);
 }
+
+VkSemaphoreSubmitInfo Vel::CreateSemaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore)
+{
+    VkSemaphoreSubmitInfo info{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .semaphore = semaphore,
+        .value = 1,
+        .stageMask = stageMask,
+        .deviceIndex = 0
+    };
+
+    return info;
+}
+
+VkCommandBufferSubmitInfo Vel::CreateCommandBufferSubmitInfo(VkCommandBuffer cmdBuffer)
+{
+    VkCommandBufferSubmitInfo info{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .pNext = nullptr,
+        .commandBuffer = cmdBuffer,
+        .deviceMask = 0
+    };
+
+    return info;
+}
+
+VkSubmitInfo2 Vel::CreateSubmitInfo(VkCommandBufferSubmitInfo& cmdBufferInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo, VkSemaphoreSubmitInfo* signalSemaphoreInfo)
+{
+    VkSubmitInfo2 info{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .pNext = nullptr,
+
+        .waitSemaphoreInfoCount = waitSemaphoreInfo == nullptr ? 0U : 1U,
+        .pWaitSemaphoreInfos = waitSemaphoreInfo,
+
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &cmdBufferInfo,
+
+        .signalSemaphoreInfoCount = signalSemaphoreInfo == nullptr ? 0U : 1U,
+        .pSignalSemaphoreInfos = signalSemaphoreInfo
+    };
+
+    return info;
+}
+
+VkRenderingAttachmentInfo Vel::CreateColorAttachmentInfo(VkImageView imageView)
+{
+    VkRenderingAttachmentInfo colorAttachment
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .pNext = nullptr,
+        .imageView = imageView,
+        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE
+    };
+
+    return colorAttachment;
+}

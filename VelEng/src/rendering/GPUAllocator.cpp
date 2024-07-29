@@ -20,18 +20,16 @@ Vel::AllocatedBuffer Vel::GPUAllocator::CreateBuffer(size_t size, VkBufferUsageF
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 		.pNext = nullptr,
 		.size = size,
-
 		.usage = usage
 	};
 
-    VmaAllocationCreateInfo vmaallocInfo {
+    VmaAllocationCreateInfo vmaAllocInfo {
 		.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
 		.usage = memoryUsage
 	};
 
     AllocatedBuffer newBuffer;
-    // allocate the buffer
-    VK_CHECK(vmaCreateBuffer(vmaAllocator, &bufferInfo, &vmaallocInfo, &newBuffer.buffer, &newBuffer.allocation, &newBuffer.info));
+    VK_CHECK(vmaCreateBuffer(vmaAllocator, &bufferInfo, &vmaAllocInfo, &newBuffer.buffer, &newBuffer.allocation, &newBuffer.info));
 
     return newBuffer;
 }
@@ -143,6 +141,57 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateImage(void* data, VkExtent3D size, 
 	DestroyBuffer(uploadbuffer);
 
 	return newImage;
+}
+
+Vel::GPUMeshBuffers Vel::GPUAllocator::UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices)
+{
+	const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
+	const size_t indexBufferSize = indices.size() * sizeof(uint32_t);
+
+	GPUMeshBuffers newSurface;
+
+	newSurface.vertexBuffer = CreateBuffer(vertexBufferSize,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		VMA_MEMORY_USAGE_GPU_ONLY);
+
+	newSurface.indexBuffer = CreateBuffer(indexBufferSize,
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		VMA_MEMORY_USAGE_GPU_ONLY);
+
+	VkBufferDeviceAddressInfo deviceAdressInfo{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+		.buffer = newSurface.vertexBuffer.buffer
+	};
+	newSurface.vertexBufferAddress = vkGetBufferDeviceAddress(device, &deviceAdressInfo);
+
+	//TODO create a single staging, resize it first launch, keep max size in config?
+	AllocatedBuffer staging = CreateBuffer(vertexBufferSize + indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+	void* data = staging.info.pMappedData;
+
+	memcpy(data, vertices.data(), vertexBufferSize);
+	memcpy((char*)data + vertexBufferSize, indices.data(), indexBufferSize);
+
+	ImmediateSubmit([&](VkCommandBuffer cmd) {
+		VkBufferCopy vertexCopy{
+			.srcOffset = 0,
+			.dstOffset = 0,
+			.size = vertexBufferSize
+		};
+
+		vkCmdCopyBuffer(cmd, staging.buffer, newSurface.vertexBuffer.buffer, 1, &vertexCopy);
+
+		VkBufferCopy indexCopy{
+			.srcOffset = vertexBufferSize,
+			.dstOffset = 0,
+			.size = indexBufferSize
+		};
+
+		vkCmdCopyBuffer(cmd, staging.buffer, newSurface.indexBuffer.buffer, 1, &indexCopy);
+	});
+
+	DestroyBuffer(staging);
+
+	return newSurface;
 }
 
 void Vel::GPUAllocator::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function)

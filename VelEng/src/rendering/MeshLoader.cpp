@@ -121,7 +121,7 @@ std::optional<std::vector<std::shared_ptr<Vel::MeshAsset>>> Vel::loadGltfMeshes(
                 vertex.color = glm::vec4(vertex.normal, 1.f);
             }
         }
-        newmesh.meshBuffers = renderer->UploadMesh(indices, vertices);
+        newmesh.meshBuffers = renderer->GetAllocator()->UploadMesh(indices, vertices);
 
         meshes.emplace_back(std::make_shared<MeshAsset>(std::move(newmesh)));
     }
@@ -302,7 +302,7 @@ std::optional<std::shared_ptr<Vel::RenderableGLTF>> Vel::loadGltf(VkDevice devic
             materialResources.colorSampler = sceneData.samplers[sampler];
         }
         // build material
-        *newMat = renderer->gltfMaterialPipeline.WriteMaterial(passType, materialResources, sceneData.descriptorPool);
+        //*newMat = renderer->gltfMaterialPipeline.WriteMaterial(passType, materialResources, sceneData.descriptorPool); TODO material not used right now
 
         materialConstantsIndex++;
     }
@@ -399,7 +399,7 @@ std::optional<std::shared_ptr<Vel::RenderableGLTF>> Vel::loadGltf(VkDevice devic
             newMesh->surfaces.push_back(newSurface);
         }
 
-        newMesh->meshBuffers = renderer->UploadMesh(indices, vertices);
+        newMesh->meshBuffers = renderer->GetAllocator()->UploadMesh(indices, vertices);
     }
 
     for (fastgltf::Node& node : gltf.nodes)

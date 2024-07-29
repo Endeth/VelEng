@@ -2,13 +2,13 @@
 
 #include "Renderer.h"
 
+#define VMA_IMPLEMENTATION
+#include "vma/vk_mem_alloc.h"
 
 #include "VulkanTypes.h"
 #include "VulkanUtils.h"
 #include "vkbootstrap/VkBootstrap.h"
 
-#define VMA_IMPLEMENTATION
-#include "vma/vk_mem_alloc.h"
 
 #ifdef _DEBUG
 constexpr bool useValidationLayers = true;
@@ -69,11 +69,10 @@ void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
 
     CreateAllocator();
     CreateSwapchain(windowExtent.width, windowExtent.height);
-    CreateDrawImage();
     CreateCommands();
     CreateSyncStructures();
-    CreateDescriptors();
-    CreatePipelines();
+
+    CreateCameraDescriptors();
 
     InitTestTextures();
     InitTestData();
@@ -138,14 +137,6 @@ void Vel::Renderer::HandleSDLEvent(SDL_Event* sdlEvent)
 {
     vImgui.HandleSDLEvent(sdlEvent);
     mainCamera.ProcessSDLEvent(*sdlEvent);
-    if (sdlEvent->type == SDL_KEYDOWN)
-    {
-        if (sdlEvent->key.keysym.sym == SDLK_1)
-        {
-            ++blitTarget;
-            blitTarget %= 3;
-        }
-    }
 }
 
 void Vel::Renderer::UpdateScene()
@@ -199,7 +190,7 @@ void Vel::Renderer::UpdateGlobalDescriptors()
         gpuAllocator.DestroyBuffer(sceneCameraDataBuffer);
     });
 
-    SceneCameraData* sceneCameraGPUData = (SceneCameraData*)sceneCameraDataBuffer.allocation->GetMappedData();
+    SceneCameraData* sceneCameraGPUData = (SceneCameraData*)sceneCameraDataBuffer.info.pMappedData;
     *sceneCameraGPUData = sceneData;
 
     sceneCameraDataDescriptorSet = GetCurrentFrame().frameDescriptors.Allocate(sceneCameraDataDescriptorLayout);
@@ -236,10 +227,10 @@ void Vel::Renderer::Draw()
             ImGui::Text("scene update %f ms", stats.sceneUpdateTime);
         });
 
-    drawExtent.width = static_cast<uint32_t>(std::min(swapchainExtent.width, drawImage.imageExtent.width) * renderScale);
-    drawExtent.height = static_cast<uint32_t>(std::min(swapchainExtent.height, drawImage.imageExtent.height) * renderScale);
+    //TODO fix draw extent in deferred after resize
+    drawExtent.width = static_cast<uint32_t>(std::min(swapchainExtent.width, drawExtent.width) * renderScale);
+    drawExtent.height = static_cast<uint32_t>(std::min(swapchainExtent.height, drawExtent.height) * renderScale);
 
-    constexpr uint32_t FRAME_TIMEOUT = 1000000000;
     auto& currentFrame = GetCurrentFrame();
 
     VK_CHECK(vkWaitForFences(device, 1, &currentFrame.renderFence, true, FRAME_TIMEOUT));
@@ -258,24 +249,20 @@ void Vel::Renderer::Draw()
 
     UpdateGlobalDescriptors();
 
-    auto& currentCmdBuffer = currentFrame.commandBuffer;
-    VK_CHECK(vkResetCommandBuffer(currentCmdBuffer, 0));
-
-    VkCommandBufferBeginInfo cmdBufferBeginInfo{
+    VkCommandBufferBeginInfo cmdBufferBeginInfo {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
         .pInheritanceInfo = nullptr
     };
 
+    auto& currentCmdBuffer = currentFrame.commandBuffer;
+    VK_CHECK(vkResetCommandBuffer(currentCmdBuffer, 0));
     VK_CHECK(vkBeginCommandBuffer(currentCmdBuffer, &cmdBufferBeginInfo));
-    TransitionImage(currentCmdBuffer, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
     {
         FunctionTimeMeasure measure{ stats.gPassDrawTime };
         deferred.DrawGPass(mainDrawContext, currentCmdBuffer);
     }
-
     VK_CHECK(vkEndCommandBuffer(currentCmdBuffer));
 
     VkCommandBufferSubmitInfo cmdBufferInfo = CreateCommandBufferSubmitInfo(currentCmdBuffer);
@@ -295,12 +282,14 @@ void Vel::Renderer::Draw()
     }
 
     TransitionImage(lPassCmd, deferred.GetDrawImage().image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    TransitionImage(lPassCmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     BlitImage(lPassCmd, deferred.GetDrawImage().image, swapchainImages[swapchainImageIndex], drawExtent, swapchainExtent);
 
     DrawImgui(lPassCmd, swapchainImages[swapchainImageIndex], swapchainImageViews[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
     VK_CHECK(vkEndCommandBuffer(lPassCmd));
 
+    //TODO semaphores are shared between frames
     VkCommandBufferSubmitInfo lPassBufferSubmitInfo = CreateCommandBufferSubmitInfo(lPassCmd);
     VkSemaphoreSubmitInfo waitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, deferred.GetGPassSemaphore());
     VkSemaphoreSubmitInfo signalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, deferred.GetLPassSemaphore());
@@ -328,211 +317,11 @@ void Vel::Renderer::Draw()
     frameNumber++;
 }
 
-void Vel::Renderer::DrawCompute(VkCommandBuffer cmdBuffer)
-{
-    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, gradientPipeline.GetPipeline());
-    vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, gradientPipeline.GetPipelineLayout(), 0, 1, &drawImageDescriptors, 0, nullptr);
-
-    vkCmdDispatch(cmdBuffer, static_cast<uint32_t>(std::ceil(drawExtent.width / 16.0f)), static_cast<uint32_t>(std::ceil(drawExtent.height / 16.0f)), 1);
-}
-
-void Vel::Renderer::DrawGeometry(VkCommandBuffer cmdBuffer)
-{
-    FunctionTimeMeasure measure{ stats.dedicatedMaterialDrawTime };
-
-    VkRenderingAttachmentInfo colorAttachmentInfo = BuildColorAttachmentInfo(drawImage.imageView);
-    VkRenderingAttachmentInfo depthAttachmentInfo = BuildDepthAttachmentInfo();
-    VkRenderingInfo renderInfo = BuildGeometryDrawRenderInfo(&colorAttachmentInfo, 1, &depthAttachmentInfo);
-    VkViewport viewport = BuildGeometryDrawViewport();
-    VkRect2D scissor = BuildGeometryDrawScissors();
-
-    vkCmdBeginRendering(cmdBuffer, &renderInfo);
-
-    vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-    vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-
-    MaterialInstance* lastMaterial = nullptr;
-    MaterialPipeline* lastPipeline = nullptr;
-    VkBuffer lastIndexBuffer = VK_NULL_HANDLE;
-
-    auto drawSurface = [&](const RenderData& drawData)
-    {
-        VkPipelineLayout& layout = drawData.materialData->pipeline->pipelineLayout;
-
-        lastMaterial = drawData.materialData;
-        if (drawData.materialData->pipeline != lastPipeline)
-        {
-            vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, drawData.materialData->pipeline->pipeline);
-            //viewproj + light
-            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &sceneCameraDataDescriptorSet, 0, nullptr);
-        }
-
-        if (drawData.indexBuffer != lastIndexBuffer)
-        {
-            lastIndexBuffer = drawData.indexBuffer;
-            vkCmdBindIndexBuffer(cmdBuffer, drawData.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-        }
-
-        GPUDrawPushConstants pushConstants {
-            .worldMatrix = drawData.transform,
-            .vertexBuffer = drawData.vertexBufferAddress
-        };
-
-        vkCmdPushConstants(cmdBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &pushConstants);
-
-        vkCmdDrawIndexed(cmdBuffer, drawData.indexCount, 1, drawData.firstIndex, 0, 0);
-    };
-
-    for (const auto& materialDraws : mainDrawContext.opaqueSurfaces)
-    {
-        if(!materialDraws.empty())
-        {
-            auto material = materialDraws[0].materialData;
-            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline->pipelineLayout, 1, 1, &material->descriptorSet, 0, nullptr);
-            for (const auto& drawData : materialDraws)
-            {
-                drawSurface(drawData);
-            }
-        }
-    }
-
-    for (const auto& materialDraws : mainDrawContext.transparentSurfaces)
-    {
-        if (!materialDraws.empty())
-        {
-            auto material = materialDraws[0].materialData;
-            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline->pipelineLayout, 1, 1, &material->descriptorSet, 0, nullptr);
-            for (const auto& drawData : materialDraws)
-            {
-                drawSurface(drawData);
-            }
-        }
-    }
-
-    vkCmdEndRendering(cmdBuffer);
-}
-
 void Vel::Renderer::DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout)
 {
     TransitionImage(cmdBuffer, drawImage, srcLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     vImgui.Draw(cmdBuffer, drawImageView, swapchainExtent);
     TransitionImage(cmdBuffer, drawImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, dstLayout);
-}
-
-VkRenderingAttachmentInfo Vel::Renderer::BuildColorAttachmentInfo(VkImageView imageView)
-{
-    VkRenderingAttachmentInfo colorAttachment
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .pNext = nullptr,
-        .imageView = imageView,
-        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE
-    };
-
-    return colorAttachment;
-}
-
-VkRenderingAttachmentInfo Vel::Renderer::BuildGPassAttachmentInfo(VkImageView imageView)
-{
-    VkRenderingAttachmentInfo colorAttachment
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .pNext = nullptr,
-        .imageView = imageView,
-        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue =
-        {
-            .color = {0, 0, 0, 0}
-        }
-    };
-
-    return colorAttachment;
-}
-
-VkRenderingAttachmentInfo Vel::Renderer::BuildLPassAttachmentInfo(VkImageView imageView)
-{
-    VkRenderingAttachmentInfo colorAttachment
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .pNext = nullptr,
-        .imageView = imageView,
-        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-    };
-
-    return colorAttachment;
-}
-
-VkRenderingAttachmentInfo Vel::Renderer::BuildDepthAttachmentInfo()
-{
-    VkRenderingAttachmentInfo depthAttachment
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .pNext = nullptr,
-        .imageView = depthImage.imageView,
-        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue
-        {
-            .depthStencil
-            {
-                .depth = 0.f
-            }
-        }
-    };
-
-    return depthAttachment;
-}
-
-VkRenderingInfo Vel::Renderer::BuildGeometryDrawRenderInfo(VkRenderingAttachmentInfo* color, uint32_t colorAttachmentsCount, VkRenderingAttachmentInfo* depth)
-{
-    VkRenderingInfo renderInfo {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .pNext = nullptr,
-        .renderArea = { .offset = { 0, 0 }, .extent = drawExtent },
-        .layerCount = 1,
-        .colorAttachmentCount = colorAttachmentsCount,
-        .pColorAttachments = color,
-        .pDepthAttachment = depth,
-        .pStencilAttachment = nullptr
-    };
-
-    return renderInfo;
-}
-
-VkViewport Vel::Renderer::BuildGeometryDrawViewport()
-{
-    VkViewport viewport {
-        .x = 0,
-        .y = 0,
-        .width = (float)drawExtent.width,
-        .height = (float)drawExtent.height,
-        .minDepth = 0.f,
-        .maxDepth = 1.f
-    };
-
-    return viewport;
-}
-
-VkRect2D Vel::Renderer::BuildGeometryDrawScissors()
-{
-    VkRect2D scissorsRect {
-        .offset = {
-            .x = 0,
-            .y = 0
-        },
-        .extent = {
-            .width = drawExtent.width,
-            .height = drawExtent.height
-        }
-    };
-    return scissorsRect;
 }
 
 void Vel::Renderer::OnWindowResize()
@@ -565,7 +354,7 @@ void Vel::Renderer::InitTestData()
 void Vel::Renderer::InitTestLightData()
 {
     testLights.lightsDataBuffer = gpuAllocator.CreateBuffer(sizeof(LightData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-    LightData* lightsGPUData = (LightData*)testLights.lightsDataBuffer.allocation->GetMappedData();
+    LightData* lightsGPUData = (LightData*)testLights.lightsDataBuffer.info.pMappedData;
 
     testLights.lights.ambient = glm::vec4{ 0.1f, 0.1f, 0.1f, 1.0f };
     testLights.lights.sunlightDirection = glm::normalize(glm::vec4{ 0.5f, -0.5f, 0.5f, 1.0f });
@@ -573,7 +362,7 @@ void Vel::Renderer::InitTestLightData()
     testLights.lights.pointLightsCount = 2;
 
     testLights.pointLightsBuffer = gpuAllocator.CreateBuffer(sizeof(PointLight) * testLights.lights.pointLightsCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-    testLights.pointLightsGPUData = (PointLight*)testLights.pointLightsBuffer.allocation->GetMappedData();
+    testLights.pointLightsGPUData = (PointLight*)testLights.pointLightsBuffer.info.pMappedData;
 
     testLights.pointLightsGPUData[0] = {
         .position = {0.0f, 0.0f, 0.0f, 0.0f},
@@ -637,12 +426,12 @@ Vel::GPUMeshBuffers Vel::Renderer::CreateRectangle()
     rectIndices[4] = 1;
     rectIndices[5] = 3;
 
-    return UploadMesh(rectIndices, rectVertices);
+    return gpuAllocator.UploadMesh(rectIndices, rectVertices);
 }
 
 void Vel::Renderer::InitDeferred()
 {
-    deferred.Init(device, &gpuAllocator, drawImage.imageExtent, sceneCameraDataDescriptorLayout, testLights.lightsDataBuffer.buffer, sizeof(LightData), CreateRectangle());
+    deferred.Init(device, &gpuAllocator, drawExtent, sceneCameraDataDescriptorLayout, testLights.lightsDataBuffer.buffer, sizeof(LightData), CreateRectangle());
 }
 
 void Vel::Renderer::InitTestTextures()
@@ -665,19 +454,13 @@ void Vel::Renderer::InitTestTextures()
 
     VkSamplerCreateInfo samplerCreateInfo {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .magFilter = VK_FILTER_NEAREST,
-        .minFilter = VK_FILTER_NEAREST
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR
     };
-
-    vkCreateSampler(device, &samplerCreateInfo, nullptr, &defaultSamplerNearest);
-
-    samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
-    samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
 
     vkCreateSampler(device, &samplerCreateInfo, nullptr, &defaultSamplerLinear);
 
     delQueue.Push([&]() {
-        vkDestroySampler(device, defaultSamplerNearest, nullptr);
         vkDestroySampler(device, defaultSamplerLinear, nullptr);
 
         gpuAllocator.DestroyImage(whiteImage);
@@ -703,81 +486,6 @@ void Vel::Renderer::CreateSwapchain(uint32_t width, uint32_t height)
     swapchain = vkbSwapchain.swapchain;
     swapchainImages = vkbSwapchain.get_images().value();
     swapchainImageViews  = vkbSwapchain.get_image_views().value();
-}
-
-void Vel::Renderer::CreateDrawImage()
-{
-    VkExtent3D drawImageExtent {
-        .width = drawExtent.width,
-        .height = drawExtent.height,
-        .depth = 1
-    };
-
-    VkImageUsageFlags drawImageUsages { 
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | 
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | 
-        VK_IMAGE_USAGE_STORAGE_BIT | 
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT 
-    };
-
-    drawImage = gpuAllocator.CreateImage(drawImageExtent, VK_FORMAT_R16G16B16A16_SFLOAT, drawImageUsages, false);
-    depthImage = gpuAllocator.CreateImage(drawImageExtent, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, false);
-
-    delQueue.Push([&]() {
-        gpuAllocator.DestroyImage(drawImage);
-        gpuAllocator.DestroyImage(depthImage);
-    });
-}
-
-Vel::GPUMeshBuffers Vel::Renderer::UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices)
-{
-    const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
-    const size_t indexBufferSize = indices.size() * sizeof(uint32_t);
-
-    GPUMeshBuffers newSurface;
-
-    newSurface.vertexBuffer = gpuAllocator.CreateBuffer(vertexBufferSize,
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-        VMA_MEMORY_USAGE_GPU_ONLY);
-
-    newSurface.indexBuffer = gpuAllocator.CreateBuffer(indexBufferSize,
-        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VMA_MEMORY_USAGE_GPU_ONLY);
-
-    VkBufferDeviceAddressInfo deviceAdressInfo {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        .buffer = newSurface.vertexBuffer.buffer
-    };
-    newSurface.vertexBufferAddress = vkGetBufferDeviceAddress(device, &deviceAdressInfo);
-
-    //TODO create a single staging, resize it first launch, keep max size in config?
-    AllocatedBuffer staging = gpuAllocator.CreateBuffer(vertexBufferSize + indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-    void* data = staging.allocation->GetMappedData();
-
-    memcpy(data, vertices.data(), vertexBufferSize);
-    memcpy((char*)data + vertexBufferSize, indices.data(), indexBufferSize);
-
-    gpuAllocator.ImmediateSubmit([&](VkCommandBuffer cmd) {
-        VkBufferCopy vertexCopy {
-            .srcOffset = 0,
-            .dstOffset = 0,
-            .size = vertexBufferSize
-        };
-
-        vkCmdCopyBuffer(cmd, staging.buffer, newSurface.vertexBuffer.buffer, 1, &vertexCopy);
-
-        VkBufferCopy indexCopy {
-            .srcOffset = vertexBufferSize,
-            .dstOffset = 0,
-            .size = indexBufferSize
-        };
-
-        vkCmdCopyBuffer(cmd, staging.buffer, newSurface.indexBuffer.buffer, 1, &indexCopy);
-        });
-
-    gpuAllocator.DestroyBuffer(staging);
-
-    return newSurface;
 }
 
 void Vel::Renderer::CreateCommands()
@@ -828,10 +536,8 @@ void Vel::Renderer::CreateSyncStructures()
         frame.cleanupQueue.Push([&]() { vkDestroyFence(device, frame.renderFence, nullptr); });
 
         VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &frame.swapchainSemaphore));
-        VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &frame.renderSemaphore));
         frame.cleanupQueue.Push([&]()
         {
-            vkDestroySemaphore(device, frame.renderSemaphore, nullptr);
             vkDestroySemaphore(device, frame.swapchainSemaphore, nullptr);
         });
     }
@@ -852,27 +558,12 @@ void Vel::Renderer::CreateAllocator()
     });
 }
 
-void Vel::Renderer::CreateDescriptors()
+void Vel::Renderer::CreateCameraDescriptors()
 {
-    std::vector<DescriptorPoolSizeRatio> sizes =
-    {
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1.f }
-    };
-
-    globalDescriptorAllocator.InitPool(device, 10, sizes);
-
     DescriptorLayoutBuilder builder;
-    builder.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
-    drawImageDescriptorLayout = builder.Build(device, VK_SHADER_STAGE_COMPUTE_BIT);
-    drawImageDescriptors = globalDescriptorAllocator.Allocate(drawImageDescriptorLayout);
-
     builder.Clear();
     builder.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     sceneCameraDataDescriptorLayout = builder.Build(device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    DescriptorWriter writer;
-    writer.WriteImage(0, drawImage.imageView, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
-    writer.UpdateSet(device, drawImageDescriptors);
 
     for (auto& frameInfo : frames)
     {
@@ -884,32 +575,16 @@ void Vel::Renderer::CreateDescriptors()
         };
 
         frameInfo.frameDescriptors = DescriptorAllocatorDynamic{};
-        frameInfo.frameDescriptors.InitPool(device, 1000, frameSizes);
+        frameInfo.frameDescriptors.InitPool(device, 100, frameSizes);
 
         delQueue.Push([&]() {
             frameInfo.frameDescriptors.Cleanup();
         });
     }
 
-
     delQueue.Push([&]() {
-        globalDescriptorAllocator.Cleanup();
-        vkDestroyDescriptorSetLayout(device, drawImageDescriptorLayout, nullptr);
         vkDestroyDescriptorSetLayout(device, sceneCameraDataDescriptorLayout, nullptr);
-        });
-}
-
-void Vel::Renderer::CreatePipelines()
-{
-    gltfMaterialPipeline.Init(device, sceneCameraDataDescriptorLayout, drawImage.imageFormat, depthImage.imageFormat);
-    gltfMaterialPipeline.BuildPipelines();
-    gradientPipeline.SetDevice(device);
-    gradientPipeline.CreatePipeline(&drawImageDescriptorLayout, 1);
-
-    delQueue.Push([&]() {
-        gltfMaterialPipeline.ClearResources();
-        gradientPipeline.Cleanup();
-        });
+    });
 }
 
 void Vel::Renderer::DestroySwapchain()
@@ -919,51 +594,6 @@ void Vel::Renderer::DestroySwapchain()
         vkDestroyImageView(device, swapchainImageView, nullptr);
     }
     vkDestroySwapchainKHR(device, swapchain, nullptr);
-}
-
-VkSemaphoreSubmitInfo Vel::Renderer::CreateSemaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore)
-{
-    VkSemaphoreSubmitInfo info {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .pNext = nullptr,
-        .semaphore = semaphore,
-        .value = 1,
-        .stageMask = stageMask,
-        .deviceIndex = 0
-    };
-
-    return info;
-}
-
-VkCommandBufferSubmitInfo Vel::Renderer::CreateCommandBufferSubmitInfo(VkCommandBuffer cmdBuffer)
-{
-    VkCommandBufferSubmitInfo info {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-        .pNext = nullptr,
-        .commandBuffer = cmdBuffer,
-        .deviceMask = 0
-    };
-
-    return info;
-}
-
-VkSubmitInfo2 Vel::Renderer::CreateSubmitInfo(VkCommandBufferSubmitInfo &cmdBufferInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo, VkSemaphoreSubmitInfo* signalSemaphoreInfo)
-{
-    VkSubmitInfo2 info {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-        .pNext = nullptr,
-
-        .waitSemaphoreInfoCount = waitSemaphoreInfo == nullptr ? 0U : 1U,
-        .pWaitSemaphoreInfos = waitSemaphoreInfo,
-
-        .commandBufferInfoCount = 1,
-        .pCommandBufferInfos = &cmdBufferInfo,
-
-        .signalSemaphoreInfoCount = signalSemaphoreInfo == nullptr ? 0U : 1U,
-        .pSignalSemaphoreInfos = signalSemaphoreInfo
-    };
-
-    return info;
 }
 
 void Vel::Renderer::Cleanup()
@@ -991,9 +621,4 @@ void Vel::Renderer::Cleanup()
         vkb::destroy_debug_utils_messenger(instance, debugMessenger);
         vkDestroyInstance(instance, nullptr);
     }
-}
-
-Vel::Renderer::FrameData& Vel::Renderer::GetCurrentFrame()
-{
-    return frames[frameNumber % FRAME_DATA_SIZE];
 }
