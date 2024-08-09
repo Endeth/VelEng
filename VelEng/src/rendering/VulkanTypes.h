@@ -28,6 +28,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 
+#include "VkBootstrap.h"
+
 #define VK_CHECK(x)                                                          \
     do {                                                                     \
         VkResult err = x;                                                    \
@@ -39,6 +41,7 @@
 
 namespace Vel
 {
+    constexpr static uint32_t FRAME_TIMEOUT = 1000000000;
 
     struct Vertex
     {
@@ -46,7 +49,7 @@ namespace Vel
         float uv_x;
         glm::vec3 normal;
         float uv_y;
-        glm::vec4 color;
+        glm::vec4 tangent;
     };
 
     struct GPUDrawPushConstants
@@ -60,19 +63,8 @@ namespace Vel
         glm::mat4 view;
         glm::mat4 projection;
         glm::mat4 viewProjection;
-        //glm::vec4 ambientColor;
-        //glm::vec4 sunlightColor;
-        //glm::vec4 sunlightDirection;
-    };
-
-    struct LightData
-    {
-        glm::vec4 ambient;
-        glm::vec4 sunlightDirection;
-        glm::vec4 sunlightColor;
-
-        uint32_t pointLightsCount;
-        VkDeviceAddress pointLightBuffer;
+        glm::vec4 position;
+        glm::vec4 testData;
     };
 
     struct AllocatedImage
@@ -102,6 +94,7 @@ namespace Vel
     {
         MainColor,
         Transparent,
+        Emissive,
         Other
     };
 
@@ -111,6 +104,29 @@ namespace Vel
         VkPipelineLayout pipelineLayout;
     };
 
+    struct MaterialResources
+    {
+        AllocatedImage colorImage;
+        VkSampler colorSampler; //Use one sampler;
+        AllocatedImage normalsImage;
+        VkSampler normalsSampler;
+        AllocatedImage metallicRoughnessImage;
+        VkSampler metallicRoughnessSampler;
+        AllocatedImage emissiveImage; //separate?
+        VkSampler emissiveSampler;
+        VkBuffer dataBuffer; //Model materials constants buffer
+        uint32_t dataBufferOffset; //Material offset
+    };
+
+    struct MaterialConstants
+    {
+        glm::vec4 color;
+        glm::vec4 metallicRoughnessFactor;
+
+        //padding and uniform buffers
+        glm::vec4 extra[14];
+    };
+
     struct MaterialInstance
     {
         static uint32_t instancesCount;
@@ -118,20 +134,15 @@ namespace Vel
         MaterialInstance()
         {
             index = instancesCount++;
-            pipeline = nullptr;
+            //pipeline = nullptr;
             descriptorSet = VK_NULL_HANDLE;
             passType = MaterialPass::Other;
         }
 
         uint32_t index;
-        MaterialPipeline* pipeline;
+        //MaterialPipeline* pipeline; //Fixed pipelines right now
         VkDescriptorSet descriptorSet;
         MaterialPass passType;
-    };
-
-    struct GLTFMaterial
-    {
-        MaterialInstance instanceData;
     };
 
     struct GeoSurface
@@ -149,21 +160,18 @@ namespace Vel
         GPUMeshBuffers meshBuffers;
     };
 
-    struct DirectionalLight
+    struct LightData
     {
-        glm::vec4 direction;
-        glm::vec4 color;
+        glm::vec4 ambient;
+        glm::vec4 sunlightDirection;
+        glm::vec4 sunlightColor;
+
+        uint32_t pointLightsCount;
+        VkDeviceAddress pointLightBuffer;
     };
 
     struct PointLight
     {
-        glm::vec4 position;
-        glm::vec4 color;
-    };
-
-    struct Spotlight
-    {
-        glm::vec4 direction;
         glm::vec4 position;
         glm::vec4 color;
     };

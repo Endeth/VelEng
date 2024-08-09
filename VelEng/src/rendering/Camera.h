@@ -18,7 +18,7 @@ namespace Vel
             return position;
         }
 
-        float speed{ 0.25 };
+        float speed{ 0.05f };
 
     private:
         glm::vec3 position{ 0.f };

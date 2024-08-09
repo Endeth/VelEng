@@ -21,6 +21,7 @@ namespace Vel
     {
         std::vector<std::vector<RenderData>> opaqueSurfaces;
         std::vector<std::vector<RenderData>> transparentSurfaces;
+        //std::vector<std::vector<RenderData>> emissiveSurfaces;
     };
 
     class IRenderable
@@ -78,6 +79,8 @@ namespace Vel
         GPUAllocator* allocator; //TODO temp until asset manager
         VkDevice device; //TODO temp until asset manager
         static VkImage errorCheckerboardImage; //TODO temp until asset manager
+        static VkImage defaultNormalsImage; //TODO temp until asset manager
+        static VkImage defaultMetallicRoughnessImage; //TODO temp until asset manager
 
     private:
         void Cleanup();

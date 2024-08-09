@@ -7,7 +7,6 @@
 
 #include "VulkanTypes.h"
 #include "VulkanUtils.h"
-#include "vkbootstrap/VkBootstrap.h"
 
 
 #ifdef _DEBUG
@@ -65,19 +64,19 @@ void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
 
     drawExtent = windowExtent;
 
-    mainCamera.SetPosition(glm::vec3(0, 0, 5));
+    mainCamera.SetPosition(glm::vec3(0, 0, 0.1));
 
     CreateAllocator();
-    CreateSwapchain(windowExtent.width, windowExtent.height);
+    swapchain.Init(physicalDevice, device, surface, windowExtent);
     CreateCommands();
     CreateSyncStructures();
 
     CreateCameraDescriptors();
+    InitTestLightData(); //TODO divide into creating buffers and test lights
+    InitDeferred();
 
     InitTestTextures();
     InitTestData();
-    InitTestLightData();
-    InitDeferred();
 
     InitImgui();
 
@@ -109,7 +108,7 @@ void Vel::Renderer::InitImgui()
     VkDescriptorPool imguiPool;
     VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &imguiPool));
 
-    ImGui_ImplVulkan_InitInfo initInfo {
+    ImGui_ImplVulkan_InitInfo initInfo{
         .Instance = instance,
         .PhysicalDevice = physicalDevice,
         .Device = device,
@@ -122,7 +121,7 @@ void Vel::Renderer::InitImgui()
         .PipelineRenderingCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
             .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &swapchainImageFormat
+            .pColorAttachmentFormats = &swapchain.GetImageFormat()
         }
     };
 
@@ -137,6 +136,14 @@ void Vel::Renderer::HandleSDLEvent(SDL_Event* sdlEvent)
 {
     vImgui.HandleSDLEvent(sdlEvent);
     mainCamera.ProcessSDLEvent(*sdlEvent);
+
+    if (sdlEvent->type == SDL_KEYDOWN)
+    {
+        if (sdlEvent->key.keysym.sym == SDLK_F2)
+        {
+            imageToPresent = ++imageToPresent % 5;
+        }
+    }
 }
 
 void Vel::Renderer::UpdateScene()
@@ -151,22 +158,39 @@ void Vel::Renderer::UpdateScene()
         materialSurfaces.clear();
     }
     
-    loadedScenes["model"]->Draw(glm::mat4{ 1.f }, mainDrawContext);
-
+    UpdateActors(); //TODO
     UpdateGlobalLighting();
+
+    //auto modelMatrix = glm::scale(glm::vec3{ 60.0f, 60.0f, 60.0f });
+    auto modelMatrix = glm::scale(glm::vec3{ 1, 1, 1 });
+    auto light1Matrix = glm::translate(glm::vec3{ light1Pos.x, light1Pos.y, light1Pos.z });
+    auto light2Matrix = glm::translate(glm::vec3{ light2Pos.x, light2Pos.y, light2Pos.z });
+
+    loadedScenes["model"]->Draw(modelMatrix, mainDrawContext);
+    loadedScenes["lightSource"]->Draw(light1Matrix, mainDrawContext);
+    loadedScenes["lightSource"]->Draw(light2Matrix, mainDrawContext);
+
     UpdateCamera();
+}
+
+void Vel::Renderer::UpdateActors()
+{
 }
 
 void Vel::Renderer::UpdateGlobalLighting()
 {
     float movement1 = sin(frameNumber / 30.f) * 10.0f;
     float movement2 = cos(frameNumber / 30.f) * 10.0f;
+
+    light1Pos = { movement1 + 5.0f, 2.0f, -5.0f + movement2, 0.0f };
+    light2Pos = { 15.0f, 20.0f, -20.0f + movement1, 0.0f };
+
     testLights.pointLightsGPUData[0] = {
-        .position = {movement1 + 5.0f, 10.0f, -5.0f + movement2, 0.0f},
+        .position = light1Pos,
         .color = {0.2f, 0.2f, 1.0f, 150.0f},
     };
     testLights.pointLightsGPUData[1] = {
-        .position = {15.0f, 20.0f, -20.0f + movement1, 0.0f},
+        .position = light2Pos,
         .color = {1.0f, 0.2f, 0.2f, 100.0f},
     };
 }
@@ -175,12 +199,15 @@ void Vel::Renderer::UpdateCamera()
 {
     mainCamera.Update();
     glm::mat4 view = mainCamera.GetViewMatrix();
-    glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)drawExtent.width / (float)drawExtent.height, 10000.f, 0.1f);
+    glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)drawExtent.width / (float)drawExtent.height, 10000.f, 0.01f);
     projection[1][1] *= -1;
 
     sceneData.view = view;
     sceneData.projection = projection;
     sceneData.viewProjection = projection * view;
+    sceneData.position = glm::vec4(mainCamera.GetPosition(), 1.0f);
+    sceneData.testData.g = testRoughness;
+    sceneData.testData.b = testMetallic;
 }
 
 void Vel::Renderer::UpdateGlobalDescriptors()
@@ -205,45 +232,31 @@ void Vel::Renderer::Draw()
 {
     FunctionTimeMeasure measure{ stats.frametime };
 
-    if (resizeRequested)
+    if (swapchain.IsAwaitingResize())
     {
-        OnWindowResize();
+        vkDeviceWaitIdle(device);
+        swapchain.Resize(window);
     }
 
     UpdateScene();
 
-    vImgui.PrepareFrame([&]()
-        {
-            ImGui::Text("Background");
-            ImGui::SliderFloat("Render Scale", &renderScale, 0.3f, 1.f);
-            ImGui::Text("Camera");
-            ImGui::Text("position  %f  %f  %f", mainCamera.GetPosition().x, mainCamera.GetPosition().y, mainCamera.GetPosition().z);
-            ImGui::SliderFloat("Speed", &mainCamera.speed, 0.1f, 1.f);
-            ImGui::Text("Perf");
-            ImGui::Text("frametime %f ms", stats.frametime);
-            ImGui::Text("drawtime %f ms", stats.dedicatedMaterialDrawTime);
-            ImGui::Text("gpass drawtime %f ms", stats.gPassDrawTime);
-            ImGui::Text("gpass drawtime %f ms", stats.lPassDrawTime);
-            ImGui::Text("scene update %f ms", stats.sceneUpdateTime);
-        });
+    PrepareImguiFrame();
 
     //TODO fix draw extent in deferred after resize
-    drawExtent.width = static_cast<uint32_t>(std::min(swapchainExtent.width, drawExtent.width) * renderScale);
-    drawExtent.height = static_cast<uint32_t>(std::min(swapchainExtent.height, drawExtent.height) * renderScale);
+    const VkExtent2D& swapchainSize = swapchain.GetImageSize();
+    drawExtent.width = static_cast<uint32_t>(std::min(swapchainSize.width, drawExtent.width) * renderScale);
+    drawExtent.height = static_cast<uint32_t>(std::min(swapchainSize.height, drawExtent.height) * renderScale);
 
     auto& currentFrame = GetCurrentFrame();
-
     VK_CHECK(vkWaitForFences(device, 1, &currentFrame.renderFence, true, FRAME_TIMEOUT));
     currentFrame.frameCleanupQueue.Flush();
     currentFrame.frameDescriptors.ClearPools();
 
     VK_CHECK(vkResetFences(device, 1, &currentFrame.renderFence));
 
-    uint32_t swapchainImageIndex;
-    VkResult acquireResult = vkAcquireNextImageKHR(device, swapchain, FRAME_TIMEOUT, currentFrame.swapchainSemaphore, nullptr, &swapchainImageIndex);
-    if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR)
+    swapchain.AcquireNextImageIndex(currentFrame.swapchainSemaphore);
+    if (swapchain.IsAwaitingResize())
     {
-        resizeRequested = true;
         return;
     }
 
@@ -259,10 +272,15 @@ void Vel::Renderer::Draw()
     auto& currentCmdBuffer = currentFrame.commandBuffer;
     VK_CHECK(vkResetCommandBuffer(currentCmdBuffer, 0));
     VK_CHECK(vkBeginCommandBuffer(currentCmdBuffer, &cmdBufferBeginInfo));
+
     {
         FunctionTimeMeasure measure{ stats.gPassDrawTime };
+        stats.gPassesAccTime += stats.gPassDrawTime;
         deferred.DrawGPass(mainDrawContext, currentCmdBuffer);
+        ++stats.gPassesCount;
     }
+    stats.gPassesAverage = stats.gPassesAccTime / stats.gPassesCount;
+
     VK_CHECK(vkEndCommandBuffer(currentCmdBuffer));
 
     VkCommandBufferSubmitInfo cmdBufferInfo = CreateCommandBufferSubmitInfo(currentCmdBuffer);
@@ -281,11 +299,7 @@ void Vel::Renderer::Draw()
         deferred.DrawLPass(mainDrawContext, lPassCmd);
     }
 
-    TransitionImage(lPassCmd, deferred.GetDrawImage().image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    TransitionImage(lPassCmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    BlitImage(lPassCmd, deferred.GetDrawImage().image, swapchainImages[swapchainImageIndex], drawExtent, swapchainExtent);
-
-    DrawImgui(lPassCmd, swapchainImages[swapchainImageIndex], swapchainImageViews[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    PreparePresentableImage(lPassCmd);
 
     VK_CHECK(vkEndCommandBuffer(lPassCmd));
 
@@ -297,54 +311,89 @@ void Vel::Renderer::Draw()
 
     VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &lPassSubmitInfo, currentFrame.renderFence));
 
-    VkPresentInfoKHR presentInfo {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &deferred.GetLPassSemaphore(),
-        .swapchainCount = 1,
-        .pSwapchains = &swapchain,
-        .pImageIndices = &swapchainImageIndex
-    };
-
-    VkResult presentResult = vkQueuePresentKHR(graphicsQueue, &presentInfo);
-    if (presentResult == VK_ERROR_OUT_OF_DATE_KHR)
+    swapchain.PresentImage(&deferred.GetLPassSemaphore(), graphicsQueue);
+    if (swapchain.IsAwaitingResize())
     {
-        resizeRequested = true;
         return;
     }
 
     frameNumber++;
 }
 
+void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd)
+{
+    VkImage presentableImage = VK_NULL_HANDLE;
+    VkImageLayout transitionSrcLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    switch (imageToPresent)
+    {
+    case 1:
+        presentableImage = deferred.GetFramebuffer().position.image;
+        transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        break;
+    case 2:
+        presentableImage = deferred.GetFramebuffer().color.image;
+        transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        break;
+    case 3:
+        presentableImage = deferred.GetFramebuffer().normals.image;
+        transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        break;
+    case 4:
+        presentableImage = deferred.GetFramebuffer().metallicRoughness.image;
+        transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        break;
+    default:
+        presentableImage = deferred.GetDrawImage().image;
+        transitionSrcLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        break;
+    }
+
+    TransitionImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    TransitionImage(cmd, swapchain.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    BlitImage(cmd, presentableImage, swapchain.GetImage(), drawExtent, swapchain.GetImageSize());
+
+    DrawImgui(cmd, swapchain.GetImage(), swapchain.GetImageView(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+}
+
+void Vel::Renderer::PrepareImguiFrame()
+{
+    vImgui.PrepareFrame([&]() {
+        ImGui::Text("Background");
+        ImGui::SliderFloat("Render Scale", &renderScale, 0.3f, 1.f);
+        ImGui::Text("Camera");
+        ImGui::Text("position  %f  %f  %f", mainCamera.GetPosition().x, mainCamera.GetPosition().y, mainCamera.GetPosition().z);
+        ImGui::SliderFloat("Speed", &mainCamera.speed, 0.001f, 1.f);
+        ImGui::SliderFloat("roughness", &testRoughness, 0.01f, 1.f);
+        ImGui::SliderFloat("metallic", &testMetallic, 0.00f, 1.f);
+        ImGui::Text("Perf");
+        ImGui::Text("frametime %f ms", stats.frametime);
+        ImGui::Text("drawtime %f ms", stats.dedicatedMaterialDrawTime);
+        ImGui::Text("gpass drawtime %f ms", stats.gPassDrawTime);
+        ImGui::Text("gpass drawtime %f ms", stats.gPassesAverage);
+        ImGui::Text("lpass drawtime %f ms", stats.lPassDrawTime);
+        ImGui::Text("scene update %f ms", stats.sceneUpdateTime);
+    });
+}
+
 void Vel::Renderer::DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout)
 {
     TransitionImage(cmdBuffer, drawImage, srcLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    vImgui.Draw(cmdBuffer, drawImageView, swapchainExtent);
+    vImgui.Draw(cmdBuffer, drawImageView, swapchain.GetImageSize());
     TransitionImage(cmdBuffer, drawImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, dstLayout);
-}
-
-void Vel::Renderer::OnWindowResize()
-{
-    vkDeviceWaitIdle(device);
-
-    DestroySwapchain();
-
-    int width, height;
-    SDL_GetWindowSize(window, &width, &height);
-
-    CreateSwapchain(width, height);
-
-    resizeRequested = false;
 }
 
 void Vel::Renderer::InitTestData()
 {
-    auto structureFile = loadGltf(device, GET_MESH_PATH("house"), this);
+    meshLoader.Init(device, this);
+    //auto structureFile = meshLoader.loadGltf(GET_MESH_PATH("corset/Corset.gltf"));
+    auto structureFile = meshLoader.loadGltf(GET_MESH_PATH("house.glb"));
+    auto cube = meshLoader.loadGltf(GET_MESH_PATH("test/cube.glb"));
 
     assert(structureFile.has_value());
 
     loadedScenes["model"] = *structureFile;
+    loadedScenes["lightSource"] = *cube;
 
     //TODO size per surface type material
     mainDrawContext.opaqueSurfaces.resize(MaterialInstance::instancesCount);
@@ -378,14 +427,13 @@ void Vel::Renderer::InitTestLightData()
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
         .buffer = testLights.pointLightsBuffer.buffer
     };
-    testLights.pointLightsBufferAddress = vkGetBufferDeviceAddress(device, &deviceAdressInfo);
 
     *lightsGPUData = {
         .ambient = glm::vec4{ 0.1f, 0.1f, 0.1f, 1.0f},
         .sunlightDirection = glm::normalize(glm::vec4{ 0.5f, -0.5f, 0.5f, 1.0f}),
         .sunlightColor = glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f },
         .pointLightsCount = testLights.lights.pointLightsCount,
-        .pointLightBuffer = testLights.pointLightsBufferAddress
+        .pointLightBuffer = vkGetBufferDeviceAddress(device, &deviceAdressInfo)
     };
 
     delQueue.Push([&]() {
@@ -411,10 +459,10 @@ Vel::GPUMeshBuffers Vel::Renderer::CreateRectangle()
     rectVertices[3].uv_x = 0;
     rectVertices[3].uv_y = 1;
 
-    rectVertices[0].color = { 0,0, 0,1 };
-    rectVertices[1].color = { 0.5,0.5,0.5 ,1 };
-    rectVertices[2].color = { 1,0, 0,1 };
-    rectVertices[3].color = { 0,1, 0,1 };
+    rectVertices[0].tangent = { 1.0f, 0.0f, 0.0f, 0.0f };
+    rectVertices[1].tangent = { 1.0f, 0.0f, 0.0f, 0.0f };
+    rectVertices[2].tangent = { 1.0f, 0.0f, 0.0f, 0.0f };
+    rectVertices[3].tangent = { 1.0f, 0.0f, 0.0f, 0.0f };
 
     std::array<uint32_t, 6> rectIndices;
 
@@ -439,8 +487,16 @@ void Vel::Renderer::InitTestTextures()
     uint32_t white = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
     whiteImage = gpuAllocator.CreateImage((void*)&white, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
 
+    uint32_t normals = glm::packUnorm4x8(glm::vec4(0.5f, 0.5f, 1.0f, 0.0f));
+    defaultNormalsImage = gpuAllocator.CreateImage((void*)&normals, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    RenderableGLTF::defaultNormalsImage = defaultNormalsImage.image; //TODO temp until asset manager
+
+    uint32_t metallicRoughness = glm::packUnorm4x8(glm::vec4(0.0f, 1.0f, 1.0f, 0.0f));
+    defaultMetallicRoughnessImage = gpuAllocator.CreateImage((void*)&metallicRoughness, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    RenderableGLTF::defaultMetallicRoughnessImage = defaultMetallicRoughnessImage.image; //TODO temp until asset manager
+
     uint32_t black = glm::packUnorm4x8(glm::vec4(0, 0, 0, 0));
-    uint32_t magenta = glm::packUnorm4x8(glm::vec4(1, 0, 1, 1));
+    uint32_t magenta = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
     std::array<uint32_t, 16 * 16 > pixels;
     for (int x = 0; x < 16; x++)
     {
@@ -449,7 +505,7 @@ void Vel::Renderer::InitTestTextures()
             pixels[y * 16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
         }
     }
-    errorCheckerboardImage = gpuAllocator.CreateImage((void*)&magenta, VkExtent3D{ 16, 16, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    errorCheckerboardImage = gpuAllocator.CreateImage((void*)pixels.data(), VkExtent3D{16, 16, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
     RenderableGLTF::errorCheckerboardImage = errorCheckerboardImage.image; //TODO temp until asset manager
 
     VkSamplerCreateInfo samplerCreateInfo {
@@ -464,28 +520,10 @@ void Vel::Renderer::InitTestTextures()
         vkDestroySampler(device, defaultSamplerLinear, nullptr);
 
         gpuAllocator.DestroyImage(whiteImage);
+        gpuAllocator.DestroyImage(defaultNormalsImage);
+        gpuAllocator.DestroyImage(defaultMetallicRoughnessImage);
         gpuAllocator.DestroyImage(errorCheckerboardImage);
     });
-}
-
-void Vel::Renderer::CreateSwapchain(uint32_t width, uint32_t height)
-{
-    vkb::SwapchainBuilder swapchainBuilder{ physicalDevice, device, surface };
-
-    swapchainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
-
-    vkb::Swapchain vkbSwapchain = swapchainBuilder
-        .set_desired_format(VkSurfaceFormatKHR{ .format = swapchainImageFormat, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR })
-        .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-        .set_desired_extent(width, height)
-        .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-        .build()
-        .value();
-
-    swapchainExtent = vkbSwapchain.extent;
-    swapchain = vkbSwapchain.swapchain;
-    swapchainImages = vkbSwapchain.get_images().value();
-    swapchainImageViews  = vkbSwapchain.get_image_views().value();
 }
 
 void Vel::Renderer::CreateCommands()
@@ -587,15 +625,6 @@ void Vel::Renderer::CreateCameraDescriptors()
     });
 }
 
-void Vel::Renderer::DestroySwapchain()
-{
-    for (auto& swapchainImageView : swapchainImageViews)
-    {
-        vkDestroyImageView(device, swapchainImageView, nullptr);
-    }
-    vkDestroySwapchainKHR(device, swapchain, nullptr);
-}
-
 void Vel::Renderer::Cleanup()
 {
     if (isInitialized)
@@ -614,7 +643,7 @@ void Vel::Renderer::Cleanup()
 
         delQueue.Flush();
 
-        DestroySwapchain();
+        swapchain.DestroySwapchain();
 
         vkDestroySurfaceKHR(instance, surface, nullptr);
         vkDestroyDevice(device, nullptr);

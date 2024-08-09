@@ -32,6 +32,7 @@ void Vel::GLTFMetallicRoughness::BuildPipelines()
     descLayoutBuilder.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     descLayoutBuilder.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     descLayoutBuilder.AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    descLayoutBuilder.AddBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     materialLayout = descLayoutBuilder.Build(device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
     VkDescriptorSetLayout layouts[] = { sceneLayout, materialLayout };
@@ -86,13 +87,14 @@ Vel::MaterialInstance Vel::GLTFMetallicRoughness::WriteMaterial(MaterialPass pas
 {
     MaterialInstance materialInstance;
     materialInstance.passType = pass;
-    materialInstance.pipeline = pass == MaterialPass::MainColor ? &opaquePipeline : &transparentPipeline;
+    //materialInstance.pipeline = pass == MaterialPass::MainColor ? &opaquePipeline : &transparentPipeline;
     materialInstance.descriptorSet = descriptorAllocator.Allocate(materialLayout);
 
     writer.Clear();
     writer.WriteBuffer(0, resources.dataBuffer, sizeof(MaterialConstants), resources.dataBufferOffset, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     writer.WriteImage(1, resources.colorImage.imageView, resources.colorSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    writer.WriteImage(2, resources.metallicImage.imageView, resources.metallicSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    writer.WriteImage(2, resources.normalsImage.imageView, resources.normalsSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    writer.WriteImage(3, resources.metallicRoughnessImage.imageView, resources.metallicRoughnessSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
     writer.UpdateSet(device, materialInstance.descriptorSet);
 

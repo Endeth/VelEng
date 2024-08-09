@@ -3,6 +3,7 @@
 #include "utils/DeletionQueue.h"
 
 #include "Pipeline.h"
+#include "Swapchain.h"
 #include "GPUAllocator.h"
 #include "MeshLoader.h"
 #include "Camera.h"
@@ -21,6 +22,10 @@ namespace Vel
         float dedicatedMaterialDrawTime;
         float gPassDrawTime;
         float lPassDrawTime;
+
+        uint32_t gPassesCount;
+        float gPassesAccTime = 0;
+        float gPassesAverage = 0;
     };
 
     struct Lights
@@ -28,24 +33,25 @@ namespace Vel
         LightData lights;
         AllocatedBuffer lightsDataBuffer;
         AllocatedBuffer pointLightsBuffer;
-        VkDeviceAddress pointLightsBufferAddress;
-        PointLight* pointLightsGPUData;
+
+        PointLight* pointLightsGPUData; //Used for position update
+
     };
 
     class Renderer
     {
     public:
-        constexpr static uint32_t FRAME_TIMEOUT = 1000000000;
-
         void Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent);
 
         void HandleSDLEvent(SDL_Event* sdlEvent);
         void Draw();
-        void OnWindowResize();
 
         GPUAllocator* GetAllocator(){ return &gpuAllocator; }
+        const DeferredRenderer& GetDeferredRenderer() const { return deferred; }
 
         AllocatedImage whiteImage;
+        AllocatedImage defaultNormalsImage;
+        AllocatedImage defaultMetallicRoughnessImage;
         AllocatedImage errorCheckerboardImage;
         VkSampler defaultSamplerLinear;
 
@@ -62,13 +68,14 @@ namespace Vel
         VkQueue graphicsQueue;
         uint32_t graphicsQueueFamily;
 
+        Swapchain swapchain;
         //TODO swapchain handler
-        VkSwapchainKHR swapchain;
-        VkFormat swapchainImageFormat;
-        std::vector<VkImage> swapchainImages;
-        std::vector<VkImageView> swapchainImageViews;
-        VkExtent2D swapchainExtent;
-        bool resizeRequested = false;
+        //VkSwapchainKHR swapchain;
+        //VkFormat swapchainImageFormat;
+        //std::vector<VkImage> swapchainImages;
+        //std::vector<VkImageView> swapchainImageViews;
+        //VkExtent2D swapchainExtent;
+        //bool resizeRequested = false;
 
 
         GPUAllocator gpuAllocator;
@@ -90,6 +97,8 @@ namespace Vel
         };
         FrameData frames[FRAME_DATA_SIZE];
 
+        MeshLoader meshLoader;
+
         DeferredRenderer deferred;
         DrawContext mainDrawContext;
         VkExtent2D drawExtent;
@@ -100,6 +109,9 @@ namespace Vel
         VkDescriptorSetLayout sceneCameraDataDescriptorLayout;
         VkDescriptorSet sceneCameraDataDescriptorSet;
 
+        float testRoughness = 0.1f;
+        float testMetallic = 0.0f;
+
         //Performance
         RendererStats stats;
 
@@ -109,8 +121,8 @@ namespace Vel
 
         //Debug
         VkDebugUtilsMessengerEXT debugMessenger;
+        uint32_t imageToPresent = 0;
 
-        void CreateSwapchain(uint32_t width, uint32_t height);
         void CreateCommands();
         void CreateSyncStructures();
         void CreateAllocator();
@@ -119,19 +131,23 @@ namespace Vel
         void InitImgui();
 
         void UpdateScene();
+        void UpdateActors();
         void UpdateGlobalLighting();
         void UpdateCamera();
         void UpdateGlobalDescriptors();
 
-        void DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout);
+        void PreparePresentableImage(VkCommandBuffer cmd);
 
-        void DestroySwapchain();
+        void PrepareImguiFrame();
+        void DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout);
 
         FrameData& GetCurrentFrame(){ return frames[frameNumber % FRAME_DATA_SIZE]; }
 
         //Testing
         std::unordered_map<std::string, std::shared_ptr<RenderableGLTF>> loadedScenes;
         Lights testLights;
+        glm::vec4 light1Pos;
+        glm::vec4 light2Pos;
 
         void InitTestTextures();
         void InitTestData();

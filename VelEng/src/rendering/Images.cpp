@@ -3,7 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-std::optional<Vel::AllocatedImage> Vel::LoadImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image)
+std::optional<Vel::AllocatedImage> Vel::LoadImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath)
 {
     AllocatedImage newImage = {};
 
@@ -27,7 +27,7 @@ std::optional<Vel::AllocatedImage> Vel::LoadImage(GPUAllocator& allocator, fastg
                 assert(filePath.uri.isLocalPath());
 
                 const std::string path(filePath.uri.path().begin(), filePath.uri.path().end());
-                unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 4);
+                unsigned char* data = stbi_load((parentPath.string() + "//" + path).c_str(), &width, &height, &nrChannels, 4);
                 if (data)
                 {
                     createImage(data);

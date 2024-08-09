@@ -34,8 +34,11 @@ void Vel::GPassPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t
     VK_CHECK(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout));
 
 
+    VkFormat formats[] = { VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SNORM, VK_FORMAT_R8G8B8A8_UNORM };
+    constexpr size_t attachmentsCount = sizeof(formats) / sizeof(VkFormat);
+
     pipelineBuilder.Reset();
-    pipelineBuilder.SetPipelineLayoutGPass(pipelineLayout, 3);
+    pipelineBuilder.SetPipelineLayoutGPass(pipelineLayout, attachmentsCount);
     pipelineBuilder.SetShaders(vertexModule, fragmentModule);
     pipelineBuilder.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
     pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
@@ -43,8 +46,7 @@ void Vel::GPassPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t
     pipelineBuilder.SetMultisampling();
     pipelineBuilder.DisableBlending();
 
-    VkFormat formats[] = { VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM };
-    pipelineBuilder.SetColorAttachmentsFormats(formats, 3);
+    pipelineBuilder.SetColorAttachmentsFormats(formats, attachmentsCount);
     pipelineBuilder.SetDepthFormat(VK_FORMAT_D32_SFLOAT);
     pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
 
@@ -110,7 +112,7 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
 {
     drawExtent = renderExtent;
     device = dev;
-    drawRect = std::move(rect);
+    drawRect = std::move(rect); //TODO
     mainAllocator = allocator;
 
     VkSamplerCreateInfo samplerCreateInfo {
@@ -125,25 +127,28 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
     uint32_t color = glm::packUnorm4x8(glm::vec4(1.f, 1.f, 1.f, 1.f));
     defaultColorMap = mainAllocator->CreateImage((void*)&color, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
     uint32_t normals = glm::packUnorm4x8(glm::vec4(0.5f, 0.5f, 1.f, 1.f));
-    defaultNormalMap = mainAllocator->CreateImage((void*)&normals, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
-    uint32_t specular = glm::packUnorm4x8(glm::vec4(0.1f, 0.0f, 0.0f, 0.0f));
-    defaultSpecularMap = mainAllocator->CreateImage((void*)&specular, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    defaultNormalMap = mainAllocator->CreateImage((void*)&normals, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_SNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    uint32_t metalRoughness = glm::packUnorm4x8(glm::vec4(0.1f, 0.0f, 0.0f, 0.0f));
+    defaultMetalRoughnessMap = mainAllocator->CreateImage((void*)&metalRoughness, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
 
     VkImageUsageFlags gPassAttachmentsUsage { 
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-        VK_IMAGE_USAGE_SAMPLED_BIT
+        VK_IMAGE_USAGE_SAMPLED_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT //For debug show
     };
 
     VkExtent3D imageExtent{ drawExtent.width, drawExtent.height, 1 };
     framebuffer.position = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R32G32B32A32_SFLOAT, gPassAttachmentsUsage, false);
     framebuffer.color = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage, false);
-    framebuffer.normals = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage, false);
+    framebuffer.normals = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_SNORM, gPassAttachmentsUsage, false);
+    framebuffer.metallicRoughness = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage, false);
     framebuffer.depth = mainAllocator->CreateImage(imageExtent, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, false);
 
     DescriptorLayoutBuilder builder;
     builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     builder.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     builder.AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    //builder.AddBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     gPassDescriptorLayout = builder.Build(device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
     std::vector<DescriptorPoolSizeRatio> sizes = {
@@ -157,12 +162,13 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
     descriptorWriter.Clear();
     descriptorWriter.WriteImage(0, defaultColorMap.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     descriptorWriter.WriteImage(1, defaultNormalMap.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    descriptorWriter.WriteImage(2, defaultSpecularMap.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    descriptorWriter.WriteImage(2, defaultMetalRoughnessMap.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     descriptorWriter.UpdateSet(device, testGPassSet);
 
     VkDescriptorSetLayout gPassLayouts[] = { cameraDescriptorLayout, gPassDescriptorLayout };
+    constexpr uint32_t gPassLayoutsCount = sizeof(gPassLayouts) / sizeof(VkDescriptorSetLayout);
     gPass.SetDevice(device);
-    gPass.CreatePipeline(gPassLayouts, 2);
+    gPass.CreatePipeline(gPassLayouts, gPassLayoutsCount);
 
     VkImageUsageFlags lPassAttachmentsUsage{
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
@@ -174,6 +180,7 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
     builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     builder.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     builder.AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    builder.AddBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     framebufferDescriptorLayout = builder.Build(device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
     framebufferDescriptorSet = descriptorPool.Allocate(framebufferDescriptorLayout);
 
@@ -181,6 +188,7 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
     descriptorWriter.WriteImage(0, framebuffer.position.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     descriptorWriter.WriteImage(1, framebuffer.color.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     descriptorWriter.WriteImage(2, framebuffer.normals.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    descriptorWriter.WriteImage(3, framebuffer.metallicRoughness.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
     descriptorWriter.UpdateSet(device, framebufferDescriptorSet);
 
@@ -194,8 +202,9 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
     descriptorWriter.UpdateSet(device, lightsDescriptorSet);
 
     VkDescriptorSetLayout lPassLayouts[] = { cameraDescriptorLayout, framebufferDescriptorLayout, lightsDescriptorLayout };
+    constexpr uint32_t lPassLayoutsCount = sizeof(lPassLayouts) / sizeof(VkDescriptorSetLayout);
     lPass.SetDevice(device);
-    lPass.CreatePipeline(lPassLayouts, 3);
+    lPass.CreatePipeline(lPassLayouts, lPassLayoutsCount);
 
     VkSemaphoreCreateInfo semaphoreInfo{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -213,8 +222,9 @@ void Vel::DeferredRenderer::PreBuildRenderInfo()
     framebufferAttachments[0] = BuildGPassAttachmentInfo(framebuffer.position.imageView);
     framebufferAttachments[1] = BuildGPassAttachmentInfo(framebuffer.color.imageView);
     framebufferAttachments[2] = BuildGPassAttachmentInfo(framebuffer.normals.imageView);
+    framebufferAttachments[3] = BuildGPassAttachmentInfo(framebuffer.metallicRoughness.imageView);
     gPassDepthAttachmentInfo = BuildDepthAttachmentInfo();
-    gPassRenderInfo = BuildRenderInfo(framebufferAttachments, 3, &gPassDepthAttachmentInfo);
+    gPassRenderInfo = BuildRenderInfo(framebufferAttachments, 4, &gPassDepthAttachmentInfo);
 
     lPassDrawAttachment = BuildLPassAttachmentInfo(drawImage.imageView);
     lPassRenderInfo = BuildRenderInfo(&lPassDrawAttachment, 1, nullptr);
@@ -329,10 +339,11 @@ void Vel::DeferredRenderer::Cleanup()
     descriptorPool.Cleanup();
     mainAllocator->DestroyImage(defaultColorMap);
     mainAllocator->DestroyImage(defaultNormalMap);
-    mainAllocator->DestroyImage(defaultSpecularMap);
+    mainAllocator->DestroyImage(defaultMetalRoughnessMap);
     mainAllocator->DestroyImage(framebuffer.position);
     mainAllocator->DestroyImage(framebuffer.color);
     mainAllocator->DestroyImage(framebuffer.normals);
+    mainAllocator->DestroyImage(framebuffer.metallicRoughness);
     mainAllocator->DestroyImage(framebuffer.depth);
     mainAllocator->DestroyImage(drawImage);
     mainAllocator->DestroyBuffer(drawRect.indexBuffer);
@@ -347,11 +358,30 @@ void Vel::DeferredRenderer::Cleanup()
     vkDestroySampler(device, sampler, nullptr);
 }
 
+Vel::MaterialInstance Vel::DeferredRenderer::CreateMaterialInstance(const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const
+{
+    MaterialInstance materialInstance;
+    //materialInstance.passType = pass;
+    //materialInstance.pipeline = pass == MaterialPass::MainColor ? &opaquePipeline : &transparentPipeline;
+    materialInstance.descriptorSet = descriptorAllocator.Allocate(gPassDescriptorLayout);
+
+    DescriptorWriter writer; 
+    //writer.WriteBuffer(0, resources.dataBuffer, sizeof(MaterialConstants), resources.dataBufferOffset, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    writer.WriteImage(0, resources.colorImage.imageView, resources.colorSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    writer.WriteImage(1, resources.normalsImage.imageView, resources.normalsSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    writer.WriteImage(2, resources.metallicRoughnessImage.imageView, resources.metallicRoughnessSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+    writer.UpdateSet(device, materialInstance.descriptorSet);
+
+    return materialInstance;
+}
+
 void Vel::DeferredRenderer::DrawGPass(const DrawContext& context, VkCommandBuffer cmd)
 {
     TransitionImage(cmd, framebuffer.position.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     TransitionImage(cmd, framebuffer.color.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     TransitionImage(cmd, framebuffer.normals.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    TransitionImage(cmd, framebuffer.metallicRoughness.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     TransitionImage(cmd, framebuffer.depth.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
     vkCmdBeginRendering(cmd, &gPassRenderInfo);
@@ -363,17 +393,20 @@ void Vel::DeferredRenderer::DrawGPass(const DrawContext& context, VkCommandBuffe
 
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPass.GetPipelineLayout(), 0, 1, &sceneCameraDataDescriptorSet, 0, nullptr);
 
-    VkBuffer lastIndexBuffer = VK_NULL_HANDLE; //TODO
+    VkBuffer lastIndexBuffer = VK_NULL_HANDLE;
     for (const auto& materialDraws : context.opaqueSurfaces)
     {
         if (!materialDraws.empty())
         {
             auto material = materialDraws[0].materialData;
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPass.GetPipelineLayout(), 1, 1, &testGPassSet, 0, nullptr);
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPass.GetPipelineLayout(), 1, 1, &material->descriptorSet, 0, nullptr);
             for (const auto& drawData : materialDraws)
             {
-                lastIndexBuffer = drawData.indexBuffer;
-                vkCmdBindIndexBuffer(cmd, drawData.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                if (lastIndexBuffer != drawData.indexBuffer)
+                {
+                    lastIndexBuffer = drawData.indexBuffer;
+                    vkCmdBindIndexBuffer(cmd, drawData.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                }
 
                 GPUDrawPushConstants pushConstants{
                     .worldMatrix = drawData.transform,
@@ -395,6 +428,7 @@ void Vel::DeferredRenderer::DrawLPass(const DrawContext& context, VkCommandBuffe
     TransitionImage(cmd, framebuffer.position.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     TransitionImage(cmd, framebuffer.color.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     TransitionImage(cmd, framebuffer.normals.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    TransitionImage(cmd, framebuffer.metallicRoughness.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     TransitionImage(cmd, drawImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
     vkCmdBeginRendering(cmd, &lPassRenderInfo);

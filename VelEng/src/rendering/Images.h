@@ -9,5 +9,5 @@
 
 namespace Vel
 {
-    std::optional<AllocatedImage> LoadImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image);
+    std::optional<AllocatedImage> LoadImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath);
 }

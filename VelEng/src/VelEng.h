@@ -1,5 +1,4 @@
 #pragma once
-#include "rendering/VulkanTypes.h"
 #include "rendering/Renderer.h"
 
 struct SDL_Window;

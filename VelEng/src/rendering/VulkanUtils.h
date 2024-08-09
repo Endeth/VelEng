@@ -27,6 +27,7 @@ namespace Vel
 
     VkImageSubresourceRange CreateImageSubresourceRangeAll(VkImageAspectFlags aspect);
     void TransitionImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout srcLayout, VkImageLayout dstLayout);
+    void TransitionImages(VkCommandBuffer cmdBuffer, uint32_t count, VkImage* images, VkImageLayout* srcLayouts, VkImageLayout* dstLayouts);
     void ClearImage(VkCommandBuffer cmdBuffer, VkImage image, VkClearColorValue color, VkImageAspectFlagBits aspectFlags);
     void BlitImage(VkCommandBuffer cmdBuffer, VkImage src, VkImage dst, VkExtent2D srcSize, VkExtent2D dstSize);
 

@@ -31,6 +31,7 @@ namespace Vel
             AllocatedImage position;
             AllocatedImage color;
             AllocatedImage normals;
+            AllocatedImage metallicRoughness;
             AllocatedImage depth;
         };
 
@@ -40,6 +41,7 @@ namespace Vel
             GPUMeshBuffers&& rect);
         void Cleanup();
 
+        MaterialInstance CreateMaterialInstance(const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const;
         void UpdateCameraDescriptorSet(VkDescriptorSet cameraSet) { sceneCameraDataDescriptorSet = cameraSet; }
 
         void DrawGPass(const DrawContext& context, VkCommandBuffer cmd);
@@ -67,7 +69,7 @@ namespace Vel
         VkDescriptorSetLayout gPassDescriptorLayout;
         AllocatedImage defaultColorMap;
         AllocatedImage defaultNormalMap;
-        AllocatedImage defaultSpecularMap;
+        AllocatedImage defaultMetalRoughnessMap;
         Framebuffer framebuffer;
         VkSemaphore gPassFinishDrawing;
 
@@ -84,7 +86,7 @@ namespace Vel
         VkDescriptorSet testGPassSet;
 
         //gpass prebuilt render info
-        VkRenderingAttachmentInfo framebufferAttachments[3];
+        VkRenderingAttachmentInfo framebufferAttachments[4];
         VkRenderingAttachmentInfo gPassDepthAttachmentInfo;
         VkRenderingAttachmentInfo lPassDrawAttachment;
         VkRenderingInfo gPassRenderInfo;

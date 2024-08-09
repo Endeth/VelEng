@@ -37,6 +37,47 @@ void Vel::TransitionImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayou
     vkCmdPipelineBarrier2(cmdBuffer, &depInfo);
 }
 
+void Vel::TransitionImages(VkCommandBuffer cmdBuffer, uint32_t count, VkImage* images, VkImageLayout* srcLayouts, VkImageLayout* dstLayouts)
+{
+    VkImageMemoryBarrier2* barriers = new VkImageMemoryBarrier2[count];
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        barriers[i] = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+
+            .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+            .srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+            .dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT,
+
+            .oldLayout = srcLayouts[i],
+            .newLayout = dstLayouts[i],
+
+            .image = images[i],
+            .subresourceRange = {
+                .aspectMask = (VkImageAspectFlags)((dstLayouts[i] == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT),
+                .baseMipLevel = 0,
+                .levelCount = VK_REMAINING_MIP_LEVELS,
+                .baseArrayLayer = 0,
+                .layerCount = VK_REMAINING_ARRAY_LAYERS
+            }
+        };
+    }
+
+    VkDependencyInfo depInfo{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .pNext = nullptr,
+
+        .imageMemoryBarrierCount = count,
+        .pImageMemoryBarriers = barriers
+    };
+
+    vkCmdPipelineBarrier2(cmdBuffer, &depInfo);
+
+    delete[] barriers;
+}
+
 VkImageSubresourceRange Vel::CreateImageSubresourceRangeAll(VkImageAspectFlags aspect)
 {
     VkImageSubresourceRange subresourceRange{

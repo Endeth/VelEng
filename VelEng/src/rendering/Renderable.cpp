@@ -69,6 +69,8 @@ void Vel::MeshNode::SetSurfacesMaterialData(const MaterialInstance& materialData
 }
 
 VkImage Vel::RenderableGLTF::errorCheckerboardImage = VK_NULL_HANDLE;
+VkImage Vel::RenderableGLTF::defaultNormalsImage = VK_NULL_HANDLE;
+VkImage Vel::RenderableGLTF::defaultMetallicRoughnessImage = VK_NULL_HANDLE;
 
 void Vel::RenderableGLTF::Draw(const glm::mat4& topMatrix, DrawContext& context)
 {

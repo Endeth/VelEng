@@ -15,7 +15,7 @@ set(SOURCE
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/GPUAllocator.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Material.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Renderable.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/rendering/SceneLights.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Lighting.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Camera.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Images.cpp
 
@@ -41,7 +41,7 @@ set(HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/GPUAllocator.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Material.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Renderable.h
-	${CMAKE_CURRENT_SOURCE_DIR}/rendering/SceneLights.h
+	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Lighting.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Camera.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Images.h
 
