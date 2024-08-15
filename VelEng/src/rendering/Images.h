@@ -7,7 +7,27 @@
 #include <fastgltf/tools.hpp>
 #include <fastgltf/util.hpp>
 
+#define GET_TEXTURE_PATH(name) TEXTURE_PATH name
+
 namespace Vel
 {
-    std::optional<AllocatedImage> LoadImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath);
+    class STBImage
+    {
+    public:
+        STBImage(const std::filesystem::path& imagePath);
+        ~STBImage();
+
+        bool HasImage() { return imageData != nullptr; }
+        unsigned char* GetImageData() { return imageData; }
+        VkExtent3D GetSize();
+    private:
+        STBImage(STBImage& other) = delete;
+        int width;
+        int height;
+        int channels;
+
+        unsigned char* imageData;
+    };
+
+    std::optional<AllocatedImage> LoadGltfAssetImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath);
 }

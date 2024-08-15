@@ -162,7 +162,7 @@ void Vel::MeshLoader::CreateMaterials(RenderableGLTF& sceneData, fastgltf::Asset
     size_t counter = 0;
     for (fastgltf::Image& image : gltfAsset.images)
     {
-        std::optional<AllocatedImage> img = LoadImage(*renderer->GetAllocator(), gltfAsset, image, parentPath);
+        std::optional<AllocatedImage> img = LoadGltfAssetImage(*renderer->GetAllocator(), gltfAsset, image, parentPath);
         if (img.has_value())
         {
             images[counter] = *img;

@@ -10,10 +10,13 @@ namespace Vel
         void ProcessSDLEvent(SDL_Event& e);
         void Update();
         void SetPosition(glm::vec3 pos);
+        void SetProjection(float aspect, float fov);
 
-        glm::mat4 GetViewMatrix();
-        glm::mat4 GetRotationMatrix();
-        const glm::vec3& GetPosition()
+        glm::mat4 GetViewMatrix() const;
+        const glm::mat4& GetProjectionMatrix() const;
+        glm::mat4 GetViewProjectionMatrix() const;
+        glm::mat4 GetRotationMatrix() const;
+        const glm::vec3& GetPosition() const
         {
             return position;
         }
@@ -23,6 +26,7 @@ namespace Vel
     private:
         glm::vec3 position{ 0.f };
         glm::vec3 velocity{ 0.f };
+        glm::mat4 projection{ 1.f };
 
         float pitch{ 0.f };
         float yaw{ 0.f };

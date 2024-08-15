@@ -125,11 +125,11 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
 
     //TODO format doesnt matter now for now
     uint32_t color = glm::packUnorm4x8(glm::vec4(1.f, 1.f, 1.f, 1.f));
-    defaultColorMap = mainAllocator->CreateImage((void*)&color, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    defaultColorMap = mainAllocator->CreateImage((void*)&color, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
     uint32_t normals = glm::packUnorm4x8(glm::vec4(0.5f, 0.5f, 1.f, 1.f));
-    defaultNormalMap = mainAllocator->CreateImage((void*)&normals, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_SNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    defaultNormalMap = mainAllocator->CreateImage((void*)&normals, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_SNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
     uint32_t metalRoughness = glm::packUnorm4x8(glm::vec4(0.1f, 0.0f, 0.0f, 0.0f));
-    defaultMetalRoughnessMap = mainAllocator->CreateImage((void*)&metalRoughness, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    defaultMetalRoughnessMap = mainAllocator->CreateImage((void*)&metalRoughness, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
     VkImageUsageFlags gPassAttachmentsUsage { 
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
@@ -138,11 +138,11 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
     };
 
     VkExtent3D imageExtent{ drawExtent.width, drawExtent.height, 1 };
-    framebuffer.position = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R32G32B32A32_SFLOAT, gPassAttachmentsUsage, false);
-    framebuffer.color = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage, false);
-    framebuffer.normals = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_SNORM, gPassAttachmentsUsage, false);
-    framebuffer.metallicRoughness = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage, false);
-    framebuffer.depth = mainAllocator->CreateImage(imageExtent, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, false);
+    framebuffer.position = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R32G32B32A32_SFLOAT, gPassAttachmentsUsage);
+    framebuffer.color = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage);
+    framebuffer.normals = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_SNORM, gPassAttachmentsUsage);
+    framebuffer.metallicRoughness = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage);
+    framebuffer.depth = mainAllocator->CreateImage(imageExtent, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
     DescriptorLayoutBuilder builder;
     builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
@@ -157,13 +157,6 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
         { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1.f }
     };
     descriptorPool.InitPool(device, 10, sizes);
-    testGPassSet = descriptorPool.Allocate(gPassDescriptorLayout);
-
-    descriptorWriter.Clear();
-    descriptorWriter.WriteImage(0, defaultColorMap.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    descriptorWriter.WriteImage(1, defaultNormalMap.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    descriptorWriter.WriteImage(2, defaultMetalRoughnessMap.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    descriptorWriter.UpdateSet(device, testGPassSet);
 
     VkDescriptorSetLayout gPassLayouts[] = { cameraDescriptorLayout, gPassDescriptorLayout };
     constexpr uint32_t gPassLayoutsCount = sizeof(gPassLayouts) / sizeof(VkDescriptorSetLayout);
@@ -174,7 +167,7 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT
     };
-    drawImage = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, lPassAttachmentsUsage, false);
+    drawImage = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, lPassAttachmentsUsage);
 
     builder.Clear();
     builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
@@ -220,7 +213,7 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
 void Vel::DeferredRenderer::PreBuildRenderInfo()
 {
     framebufferAttachments[0] = BuildGPassAttachmentInfo(framebuffer.position.imageView);
-    framebufferAttachments[1] = BuildGPassAttachmentInfo(framebuffer.color.imageView);
+    framebufferAttachments[1] = BuildGPassAttachmentInfo(framebuffer.color.imageView, VK_ATTACHMENT_LOAD_OP_LOAD);
     framebufferAttachments[2] = BuildGPassAttachmentInfo(framebuffer.normals.imageView);
     framebufferAttachments[3] = BuildGPassAttachmentInfo(framebuffer.metallicRoughness.imageView);
     gPassDepthAttachmentInfo = BuildDepthAttachmentInfo();
@@ -233,7 +226,7 @@ void Vel::DeferredRenderer::PreBuildRenderInfo()
     renderScissor = BuildRenderScissors();
 }
 
-VkRenderingAttachmentInfo Vel::DeferredRenderer::BuildGPassAttachmentInfo(VkImageView imageView)
+VkRenderingAttachmentInfo Vel::DeferredRenderer::BuildGPassAttachmentInfo(VkImageView imageView, VkAttachmentLoadOp loadOp)
 {
     VkRenderingAttachmentInfo colorAttachment
     {
@@ -241,11 +234,11 @@ VkRenderingAttachmentInfo Vel::DeferredRenderer::BuildGPassAttachmentInfo(VkImag
         .pNext = nullptr,
         .imageView = imageView,
         .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .loadOp = loadOp,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue =
         {
-            .color = {0, 0, 0, 0}
+            .color = {0.0f, 0.0f, 0.0f, 0.0f}
         }
     };
 
@@ -378,10 +371,6 @@ Vel::MaterialInstance Vel::DeferredRenderer::CreateMaterialInstance(const Materi
 
 void Vel::DeferredRenderer::DrawGPass(const DrawContext& context, VkCommandBuffer cmd)
 {
-    TransitionImage(cmd, framebuffer.position.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    TransitionImage(cmd, framebuffer.color.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    TransitionImage(cmd, framebuffer.normals.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    TransitionImage(cmd, framebuffer.metallicRoughness.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     TransitionImage(cmd, framebuffer.depth.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
     vkCmdBeginRendering(cmd, &gPassRenderInfo);
@@ -425,10 +414,6 @@ void Vel::DeferredRenderer::DrawGPass(const DrawContext& context, VkCommandBuffe
 
 void Vel::DeferredRenderer::DrawLPass(const DrawContext& context, VkCommandBuffer cmd)
 {
-    TransitionImage(cmd, framebuffer.position.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    TransitionImage(cmd, framebuffer.color.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    TransitionImage(cmd, framebuffer.normals.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    TransitionImage(cmd, framebuffer.metallicRoughness.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     TransitionImage(cmd, drawImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
     vkCmdBeginRendering(cmd, &lPassRenderInfo);
@@ -451,4 +436,12 @@ void Vel::DeferredRenderer::DrawLPass(const DrawContext& context, VkCommandBuffe
     vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
 
     vkCmdEndRendering(cmd);
+}
+
+void Vel::DeferredRenderer::Framebuffer::TransitionImages(VkCommandBuffer cmd, VkImageLayout src, VkImageLayout dst)
+{
+    TransitionImage(cmd, position.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    TransitionImage(cmd, color.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    TransitionImage(cmd, normals.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    TransitionImage(cmd, metallicRoughness.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }

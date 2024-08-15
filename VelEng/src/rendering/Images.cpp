@@ -1,9 +1,10 @@
 #include "Images.h"
+#include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-std::optional<Vel::AllocatedImage> Vel::LoadImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath)
+std::optional<Vel::AllocatedImage> Vel::LoadGltfAssetImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath)
 {
     AllocatedImage newImage = {};
 
@@ -14,7 +15,7 @@ std::optional<Vel::AllocatedImage> Vel::LoadImage(GPUAllocator& allocator, fastg
     auto createImage = [&](unsigned char* data)
     {
         VkExtent3D imageSize{ .width = static_cast<uint32_t>(width), .height = static_cast<uint32_t>(height), .depth = 1 };
-        newImage = allocator.CreateImage(data, imageSize, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+        newImage = allocator.CreateImage(data, imageSize, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
         stbi_image_free(data);
     };
 
@@ -78,4 +79,27 @@ std::optional<Vel::AllocatedImage> Vel::LoadImage(GPUAllocator& allocator, fastg
         return newImage;
     }
     return std::optional<Vel::AllocatedImage>(newImage);
+}
+
+Vel::STBImage::STBImage(const std::filesystem::path& imagePath)
+{
+    imageData = stbi_load(imagePath.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
+
+    if (imageData == nullptr)
+    {
+        std::cerr << "Failed to load image: " << imagePath << std::endl;
+    }
+}
+
+Vel::STBImage::~STBImage()
+{
+    if (imageData != nullptr)
+    {
+        stbi_image_free(imageData);
+    }
+}
+
+VkExtent3D Vel::STBImage::GetSize()
+{
+    return VkExtent3D{ .width = (uint32_t)width, .height = (uint32_t)height, .depth = 1 };
 }

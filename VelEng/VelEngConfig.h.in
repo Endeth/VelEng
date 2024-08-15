@@ -5,3 +5,4 @@
 
 #define SHADERS_PATH "${SHADERS_PATH_SPV}"
 #define MESH_PATH "${MESH_PATH}"
+#define TEXTURE_PATH "${TEXTURE_PATH}"

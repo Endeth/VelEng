@@ -30,10 +30,12 @@ layout (location = 0) out vec4 outColor;
 
 void main() 
 {
-	vec3 position = texture(positionTexture, inUV).xyz;
-	vec3 color = texture(colorTexture, inUV).xyz;
-	vec3 normal = texture(normalsTexture, inUV).xyz;
-	vec3 metallicRoughness = texture(metallicRoughnessTexture, inUV).xyz;
+	vec3 position = texture(positionTexture, inUV).rgb;
+	vec4 colorSample = texture(colorTexture, inUV);
+	vec3 color = colorSample.rgb;
+	float alpha = colorSample.a; //Currently for skybox
+	vec3 normal = texture(normalsTexture, inUV).rgb;
+	vec3 metallicRoughness = texture(metallicRoughnessTexture, inUV).rgb;
 
 
 	float roughnessFactor = sceneCamera.testData.g;
@@ -56,6 +58,10 @@ void main()
 	colorResult.x = min(colorResult.x, color.x);
 	colorResult.y = min(colorResult.y, color.y);
 	colorResult.z = min(colorResult.z, color.z);
+
+	//Skybox fuckery
+	colorResult *= alpha;
+	colorResult += color * (1 - alpha);
 
 	outColor = vec4(colorResult, 1.0f);
 }

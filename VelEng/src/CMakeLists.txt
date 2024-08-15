@@ -7,6 +7,8 @@ set(SOURCE
 
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Renderer.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Deferred.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/rendering/ShadowPass.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/rendering/SkyboxPass.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/VulkanUtils.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Swapchain.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Descriptors.cpp
@@ -32,6 +34,8 @@ set(HEADERS
 
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Renderer.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Deferred.h
+	${CMAKE_CURRENT_SOURCE_DIR}/rendering/ShadowPass.h
+	${CMAKE_CURRENT_SOURCE_DIR}/rendering/SkyboxPass.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/VulkanTypes.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/VulkanUtils.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Swapchain.h

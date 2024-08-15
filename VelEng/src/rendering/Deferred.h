@@ -33,6 +33,8 @@ namespace Vel
             AllocatedImage normals;
             AllocatedImage metallicRoughness;
             AllocatedImage depth;
+
+            void TransitionImages(VkCommandBuffer cmd, VkImageLayout src, VkImageLayout dst);
         };
 
         void Init(VkDevice dev, GPUAllocator* allocator, VkExtent2D renderExtent,
@@ -82,10 +84,6 @@ namespace Vel
         AllocatedImage drawImage;
         VkSemaphore lPassFinishDrawing;
 
-        //Testing
-        VkDescriptorSet testGPassSet;
-
-        //gpass prebuilt render info
         VkRenderingAttachmentInfo framebufferAttachments[4];
         VkRenderingAttachmentInfo gPassDepthAttachmentInfo;
         VkRenderingAttachmentInfo lPassDrawAttachment;
@@ -96,7 +94,7 @@ namespace Vel
         VkRect2D renderScissor;
 
         void PreBuildRenderInfo();
-        VkRenderingAttachmentInfo BuildGPassAttachmentInfo(VkImageView imageView);
+        VkRenderingAttachmentInfo BuildGPassAttachmentInfo(VkImageView imageView, VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR);
         VkRenderingAttachmentInfo BuildLPassAttachmentInfo(VkImageView imageView);
         VkRenderingAttachmentInfo BuildDepthAttachmentInfo();
         VkRenderingInfo BuildRenderInfo(VkRenderingAttachmentInfo* color, uint32_t colorAttachmentsCount, VkRenderingAttachmentInfo* depth);

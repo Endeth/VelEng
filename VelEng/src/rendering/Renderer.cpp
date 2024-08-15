@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Renderer.h"
+#include "Images.h"
 
 #define VMA_IMPLEMENTATION
 #include "vma/vk_mem_alloc.h"
@@ -65,6 +66,7 @@ void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
     drawExtent = windowExtent;
 
     mainCamera.SetPosition(glm::vec3(0, 0, 0.1));
+    mainCamera.SetProjection((float)drawExtent.width / (float)drawExtent.height, 70.f);
 
     CreateAllocator();
     swapchain.Init(physicalDevice, device, surface, windowExtent);
@@ -76,6 +78,7 @@ void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
     InitDeferred();
 
     InitTestTextures();
+    InitSkyboxPass();
     InitTestData();
 
     InitImgui();
@@ -198,13 +201,13 @@ void Vel::Renderer::UpdateGlobalLighting()
 void Vel::Renderer::UpdateCamera()
 {
     mainCamera.Update();
-    glm::mat4 view = mainCamera.GetViewMatrix();
-    glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)drawExtent.width / (float)drawExtent.height, 10000.f, 0.01f);
-    projection[1][1] *= -1;
+    //glm::mat4 view = mainCamera.GetViewMatrix();
+    //glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)drawExtent.width / (float)drawExtent.height, 10000.f, 0.01f);
+    //projection[1][1] *= -1;
 
-    sceneData.view = view;
-    sceneData.projection = projection;
-    sceneData.viewProjection = projection * view;
+    sceneData.view = mainCamera.GetViewMatrix();
+    sceneData.projection = mainCamera.GetProjectionMatrix();
+    sceneData.viewProjection = mainCamera.GetViewProjectionMatrix();
     sceneData.position = glm::vec4(mainCamera.GetPosition(), 1.0f);
     sceneData.testData.g = testRoughness;
     sceneData.testData.b = testMetallic;
@@ -269,31 +272,56 @@ void Vel::Renderer::Draw()
         .pInheritanceInfo = nullptr
     };
 
-    auto& currentCmdBuffer = currentFrame.commandBuffer;
-    VK_CHECK(vkResetCommandBuffer(currentCmdBuffer, 0));
-    VK_CHECK(vkBeginCommandBuffer(currentCmdBuffer, &cmdBufferBeginInfo));
+
+    //--SKYBOX--
+    auto& skyboxCmd = currentFrame.skyboxCommands;
+    VK_CHECK(vkResetCommandBuffer(skyboxCmd, 0));
+    VK_CHECK(vkBeginCommandBuffer(skyboxCmd, &cmdBufferBeginInfo));
+
+    deferred.GetFramebuffer().TransitionImages(skyboxCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    {
+        skyboxPass.Draw(skyboxCmd, mainCamera);
+    }
+
+    VK_CHECK(vkEndCommandBuffer(skyboxCmd));
+
+    VkCommandBufferSubmitInfo skyboxBufferInfo = CreateCommandBufferSubmitInfo(skyboxCmd);
+    VkSemaphoreSubmitInfo skyboxWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, currentFrame.swapchainSemaphore);
+    VkSemaphoreSubmitInfo skyboxSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, skyboxPass.GetSemaphore());
+    VkSubmitInfo2 skyboxSubmitInfo = CreateSubmitInfo(skyboxBufferInfo, &skyboxWaitInfo, &skyboxSignalInfo);
+
+    VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &skyboxSubmitInfo, VK_NULL_HANDLE));
+
+
+    //--GPASS--
+    auto& gPassCmd = currentFrame.gPassCommands;
+    VK_CHECK(vkResetCommandBuffer(gPassCmd, 0));
+    VK_CHECK(vkBeginCommandBuffer(gPassCmd, &cmdBufferBeginInfo));
 
     {
         FunctionTimeMeasure measure{ stats.gPassDrawTime };
         stats.gPassesAccTime += stats.gPassDrawTime;
-        deferred.DrawGPass(mainDrawContext, currentCmdBuffer);
+        deferred.DrawGPass(mainDrawContext, gPassCmd);
         ++stats.gPassesCount;
     }
     stats.gPassesAverage = stats.gPassesAccTime / stats.gPassesCount;
 
-    VK_CHECK(vkEndCommandBuffer(currentCmdBuffer));
+    VK_CHECK(vkEndCommandBuffer(gPassCmd));
 
-    VkCommandBufferSubmitInfo cmdBufferInfo = CreateCommandBufferSubmitInfo(currentCmdBuffer);
-    VkSemaphoreSubmitInfo waitSemaphoreInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, currentFrame.swapchainSemaphore);
-    VkSemaphoreSubmitInfo signalSemaphoreInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, deferred.GetGPassSemaphore());
-    VkSubmitInfo2 submitInfo = CreateSubmitInfo(cmdBufferInfo, &waitSemaphoreInfo, &signalSemaphoreInfo);
+    VkCommandBufferSubmitInfo gPassBufferInfo = CreateCommandBufferSubmitInfo(gPassCmd);
+    VkSemaphoreSubmitInfo gPassWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, skyboxPass.GetSemaphore());
+    VkSemaphoreSubmitInfo gPassSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, deferred.GetGPassSemaphore());
+    VkSubmitInfo2 gPassSubmitInfo = CreateSubmitInfo(gPassBufferInfo, &gPassWaitInfo, &gPassSignalInfo);
 
-    VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
+    VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &gPassSubmitInfo, VK_NULL_HANDLE));
 
+
+    //--LPASS--
     auto& lPassCmd = currentFrame.lPassCommands;
     VK_CHECK(vkResetCommandBuffer(lPassCmd, 0));
     VK_CHECK(vkBeginCommandBuffer(lPassCmd, &cmdBufferBeginInfo));
 
+    deferred.GetFramebuffer().TransitionImages(lPassCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     {
         FunctionTimeMeasure measure{ stats.lPassDrawTime };
         deferred.DrawLPass(mainDrawContext, lPassCmd);
@@ -305,12 +333,14 @@ void Vel::Renderer::Draw()
 
     //TODO semaphores are shared between frames
     VkCommandBufferSubmitInfo lPassBufferSubmitInfo = CreateCommandBufferSubmitInfo(lPassCmd);
-    VkSemaphoreSubmitInfo waitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, deferred.GetGPassSemaphore());
-    VkSemaphoreSubmitInfo signalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, deferred.GetLPassSemaphore());
-    VkSubmitInfo2 lPassSubmitInfo = CreateSubmitInfo(lPassBufferSubmitInfo, &waitInfo, &signalInfo);
+    VkSemaphoreSubmitInfo lPassWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, deferred.GetGPassSemaphore());
+    VkSemaphoreSubmitInfo lPassSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, deferred.GetLPassSemaphore());
+    VkSubmitInfo2 lPassSubmitInfo = CreateSubmitInfo(lPassBufferSubmitInfo, &lPassWaitInfo, &lPassSignalInfo);
 
     VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &lPassSubmitInfo, currentFrame.renderFence));
 
+
+    //--PRESENT--
     swapchain.PresentImage(&deferred.GetLPassSemaphore(), graphicsQueue);
     if (swapchain.IsAwaitingResize())
     {
@@ -477,6 +507,11 @@ Vel::GPUMeshBuffers Vel::Renderer::CreateRectangle()
     return gpuAllocator.UploadMesh(rectIndices, rectVertices);
 }
 
+void Vel::Renderer::InitSkyboxPass()
+{
+    skyboxPass.Init(device, drawExtent, defaultCubeImage, deferred.GetFramebuffer().color);
+}
+
 void Vel::Renderer::InitDeferred()
 {
     deferred.Init(device, &gpuAllocator, drawExtent, sceneCameraDataDescriptorLayout, testLights.lightsDataBuffer.buffer, sizeof(LightData), CreateRectangle());
@@ -485,14 +520,14 @@ void Vel::Renderer::InitDeferred()
 void Vel::Renderer::InitTestTextures()
 {
     uint32_t white = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
-    whiteImage = gpuAllocator.CreateImage((void*)&white, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    whiteImage = gpuAllocator.CreateImage((void*)&white, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
     uint32_t normals = glm::packUnorm4x8(glm::vec4(0.5f, 0.5f, 1.0f, 0.0f));
-    defaultNormalsImage = gpuAllocator.CreateImage((void*)&normals, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    defaultNormalsImage = gpuAllocator.CreateImage((void*)&normals, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
     RenderableGLTF::defaultNormalsImage = defaultNormalsImage.image; //TODO temp until asset manager
 
     uint32_t metallicRoughness = glm::packUnorm4x8(glm::vec4(0.0f, 1.0f, 1.0f, 0.0f));
-    defaultMetallicRoughnessImage = gpuAllocator.CreateImage((void*)&metallicRoughness, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    defaultMetallicRoughnessImage = gpuAllocator.CreateImage((void*)&metallicRoughness, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
     RenderableGLTF::defaultMetallicRoughnessImage = defaultMetallicRoughnessImage.image; //TODO temp until asset manager
 
     uint32_t black = glm::packUnorm4x8(glm::vec4(0, 0, 0, 0));
@@ -505,8 +540,25 @@ void Vel::Renderer::InitTestTextures()
             pixels[y * 16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
         }
     }
-    errorCheckerboardImage = gpuAllocator.CreateImage((void*)pixels.data(), VkExtent3D{16, 16, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false);
+    errorCheckerboardImage = gpuAllocator.CreateImage((void*)pixels.data(), VkExtent3D{16, 16, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
     RenderableGLTF::errorCheckerboardImage = errorCheckerboardImage.image; //TODO temp until asset manager
+
+    STBImage front(GET_TEXTURE_PATH("skybox/front.png"));
+    STBImage back(GET_TEXTURE_PATH("skybox/back.png"));
+    STBImage left(GET_TEXTURE_PATH("skybox/left.png"));
+    STBImage right(GET_TEXTURE_PATH("skybox/right.png"));
+    STBImage top(GET_TEXTURE_PATH("skybox/top.png"));
+    STBImage bottom(GET_TEXTURE_PATH("skybox/bottom.png"));
+
+    std::array<unsigned char*, GPUAllocator::cubeTextureLayers> cubeImages;
+    cubeImages[0] = right.GetImageData();
+    cubeImages[1] = left.GetImageData();
+    cubeImages[2] = top.GetImageData();
+    cubeImages[3] = bottom.GetImageData();
+    cubeImages[4] = front.GetImageData();
+    cubeImages[5] = back.GetImageData();
+
+    defaultCubeImage = gpuAllocator.CreateCubeImage(cubeImages, front.GetSize(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
     VkSamplerCreateInfo samplerCreateInfo {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -522,6 +574,7 @@ void Vel::Renderer::InitTestTextures()
         gpuAllocator.DestroyImage(whiteImage);
         gpuAllocator.DestroyImage(defaultNormalsImage);
         gpuAllocator.DestroyImage(defaultMetallicRoughnessImage);
+        gpuAllocator.DestroyImage(defaultCubeImage);
         gpuAllocator.DestroyImage(errorCheckerboardImage);
     });
 }
@@ -548,7 +601,8 @@ void Vel::Renderer::CreateCommands()
 
         cmdAllocateInfo.commandPool = frameInfo.commandPool;
 
-        VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.commandBuffer));
+        VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.skyboxCommands));
+        VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.gPassCommands));
         VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.lPassCommands));
 
         frameInfo.cleanupQueue.Push( [&]() { vkDestroyCommandPool(device, frameInfo.commandPool, nullptr); } );
@@ -633,6 +687,7 @@ void Vel::Renderer::Cleanup()
 
         loadedScenes.clear();
 
+        skyboxPass.Cleanup();
         deferred.Cleanup();
 
         for (auto& frame : frames)

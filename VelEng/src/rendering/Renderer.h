@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include "Material.h"
 #include "Renderable.h"
+#include "SkyboxPass.h"
 #include "Deferred.h"
 
 #include "ui/VelImgui.h"
@@ -52,6 +53,7 @@ namespace Vel
         AllocatedImage whiteImage;
         AllocatedImage defaultNormalsImage;
         AllocatedImage defaultMetallicRoughnessImage;
+        AllocatedImage defaultCubeImage;
         AllocatedImage errorCheckerboardImage;
         VkSampler defaultSamplerLinear;
 
@@ -86,7 +88,8 @@ namespace Vel
         struct FrameData
         {
             VkCommandPool commandPool;
-            VkCommandBuffer commandBuffer;
+            VkCommandBuffer skyboxCommands;
+            VkCommandBuffer gPassCommands;
             VkCommandBuffer lPassCommands;
             VkSemaphore swapchainSemaphore;
             VkFence renderFence;
@@ -99,6 +102,7 @@ namespace Vel
 
         MeshLoader meshLoader;
 
+        SkyboxPass skyboxPass;
         DeferredRenderer deferred;
         DrawContext mainDrawContext;
         VkExtent2D drawExtent;
@@ -127,6 +131,7 @@ namespace Vel
         void CreateSyncStructures();
         void CreateAllocator();
         void CreateCameraDescriptors();
+        void InitSkyboxPass();
         void InitDeferred();
         void InitImgui();
 

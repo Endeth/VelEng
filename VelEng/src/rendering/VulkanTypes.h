@@ -58,6 +58,12 @@ namespace Vel
         VkDeviceAddress vertexBuffer;
     };
 
+    struct SkyboxPushConstants
+    {
+        glm::mat4 inverseViewProjection;
+        glm::vec4 cameraPosition;
+    };
+
     struct SceneCameraData
     {
         glm::mat4 view;
