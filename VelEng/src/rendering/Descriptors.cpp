@@ -213,10 +213,10 @@ VkDescriptorPool Vel::DescriptorAllocatorDynamic::CreatePool(uint32_t setCount, 
     return newPool;
 }
 
-void Vel::DescriptorWriter::WriteImage(uint32_t binding, VkImageView imageView, VkSampler sampler, VkImageLayout layout, VkDescriptorType type)
+void Vel::DescriptorWriter::WriteImageSampler(uint32_t binding, VkImageView imageView, VkSampler sampler, VkImageLayout layout, VkDescriptorType type)
 {
     VkDescriptorImageInfo& info = imageInfos.emplace_back(VkDescriptorImageInfo{
-        .sampler = sampler ,
+        .sampler = sampler,
         .imageView = imageView,
         .imageLayout = layout
     });
@@ -229,6 +229,55 @@ void Vel::DescriptorWriter::WriteImage(uint32_t binding, VkImageView imageView, 
         .dstBinding = binding,
         .descriptorCount = 1,
         .descriptorType = type,
+        .pImageInfo = &info
+    };
+
+    writes.push_back(write);
+}
+
+void Vel::DescriptorWriter::WriteImages(uint32_t binding, VkImageView* imageViews, VkImageLayout imagesLayout, VkDescriptorType type, uint32_t descriptorCount)
+{
+    VkDescriptorImageInfo* infos = nullptr;
+
+    for (uint32_t i = 0; i < descriptorCount; ++i)
+    {
+        VkDescriptorImageInfo& info = imageInfos.emplace_back(VkDescriptorImageInfo{
+            .imageView = imageViews[i],
+            .imageLayout = imagesLayout
+        });
+
+        if (!infos)
+            infos = &info;
+    }
+
+    VkWriteDescriptorSet write{
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+
+        .dstSet = VK_NULL_HANDLE,
+        .dstBinding = binding,
+        .descriptorCount = descriptorCount,
+        .descriptorType = type,
+        .pImageInfo = infos
+    };
+
+    writes.push_back(write);
+}
+
+void Vel::DescriptorWriter::WriteSampler(uint32_t binding, VkSampler sampler)
+{
+    VkDescriptorImageInfo& info = imageInfos.emplace_back(VkDescriptorImageInfo{
+        .sampler = sampler,
+     });
+
+    VkWriteDescriptorSet write{
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+
+        .dstSet = VK_NULL_HANDLE,
+        .dstBinding = binding,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
         .pImageInfo = &info
     };
 

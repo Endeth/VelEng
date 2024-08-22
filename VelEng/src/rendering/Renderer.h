@@ -10,6 +10,8 @@
 #include "Material.h"
 #include "Renderable.h"
 #include "SkyboxPass.h"
+#include "Lighting.h"
+#include "ShadowPass.h"
 #include "Deferred.h"
 
 #include "ui/VelImgui.h"
@@ -31,6 +33,7 @@ namespace Vel
 
     struct Lights
     {
+        Sunlight sunlight;
         LightData lights;
         AllocatedBuffer lightsDataBuffer;
         AllocatedBuffer pointLightsBuffer;
@@ -88,6 +91,7 @@ namespace Vel
         struct FrameData
         {
             VkCommandPool commandPool;
+            VkCommandBuffer shadowCommands;
             VkCommandBuffer skyboxCommands;
             VkCommandBuffer gPassCommands;
             VkCommandBuffer lPassCommands;
@@ -103,6 +107,7 @@ namespace Vel
         MeshLoader meshLoader;
 
         SkyboxPass skyboxPass;
+        ShadowPass shadowPass;
         DeferredRenderer deferred;
         DrawContext mainDrawContext;
         VkExtent2D drawExtent;
@@ -114,7 +119,7 @@ namespace Vel
         VkDescriptorSet sceneCameraDataDescriptorSet;
 
         float testRoughness = 0.1f;
-        float testMetallic = 0.0f;
+        float testMetallic = 0.001f;
 
         //Performance
         RendererStats stats;
@@ -132,6 +137,7 @@ namespace Vel
         void CreateAllocator();
         void CreateCameraDescriptors();
         void InitSkyboxPass();
+        void InitShadowPass();
         void InitDeferred();
         void InitImgui();
 
@@ -144,6 +150,7 @@ namespace Vel
         void PreparePresentableImage(VkCommandBuffer cmd);
 
         void PrepareImguiFrame();
+        void DrawShadows();
         void DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout);
 
         FrameData& GetCurrentFrame(){ return frames[frameNumber % FRAME_DATA_SIZE]; }

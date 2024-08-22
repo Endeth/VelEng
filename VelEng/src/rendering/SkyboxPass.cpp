@@ -77,7 +77,7 @@ void Vel::SkyboxPass::Init(VkDevice dev, VkExtent2D renderExtent, AllocatedImage
 
     skyboxDescriptorSet = descriptorPool.Allocate(skyboxLayout);
     descriptorWriter.Clear();
-    descriptorWriter.WriteImage(0, skyboxImage.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    descriptorWriter.WriteImageSampler(0, skyboxImage.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
     descriptorWriter.UpdateSet(device, skyboxDescriptorSet);
 

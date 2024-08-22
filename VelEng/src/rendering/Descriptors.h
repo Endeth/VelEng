@@ -58,7 +58,9 @@ namespace Vel
     class DescriptorWriter
     {
     public:
-        void WriteImage(uint32_t binding, VkImageView imageView, VkSampler sampler, VkImageLayout layout, VkDescriptorType type);
+        void WriteImageSampler(uint32_t binding, VkImageView imageView, VkSampler sampler, VkImageLayout layout, VkDescriptorType type);
+        void WriteImages(uint32_t binding, VkImageView* imageViews, VkImageLayout imagesLayout, VkDescriptorType type, uint32_t descriptorCount);
+        void WriteSampler(uint32_t binding, VkSampler sampler);
         void WriteBuffer(uint32_t binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type);
 
         void Clear();

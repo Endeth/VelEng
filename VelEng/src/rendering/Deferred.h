@@ -39,7 +39,7 @@ namespace Vel
 
         void Init(VkDevice dev, GPUAllocator* allocator, VkExtent2D renderExtent,
             VkDescriptorSetLayout cameraDescriptorLayout,
-            VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize,
+            VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize, VkImageView sunlightShadowMapView,
             GPUMeshBuffers&& rect);
         void Cleanup();
 
@@ -64,6 +64,7 @@ namespace Vel
 
         VkExtent2D drawExtent;
         VkSampler sampler;
+        VkSampler shadowsSampler;
 
         VkDescriptorSet sceneCameraDataDescriptorSet;
 

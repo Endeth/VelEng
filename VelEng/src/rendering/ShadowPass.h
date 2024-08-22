@@ -4,6 +4,7 @@
 #include "Pipeline.h"
 #include "PipelineBuilder.h"
 #include "GPUAllocator.h"
+#include "Lighting.h"
 #include "Renderable.h"
 
 namespace Vel
@@ -18,7 +19,7 @@ namespace Vel
     class ShadowPass
     {
     public:
-        void Init(VkDevice dev, VkExtent2D renderExtent, AllocatedImage& skyboxImage, AllocatedImage& drawImage);
+        void Init(VkDevice dev, Sunlight& sunlight);
         void Draw(const DrawContext& context, VkCommandBuffer cmd);
 
         VkSemaphore GetSemaphore()
@@ -34,23 +35,23 @@ namespace Vel
         DescriptorWriter descriptorWriter;
 
         VkDescriptorSetLayout shadowPassLayout;
-        VkDescriptorSet hadowPassDescriptorSet;
+        VkDescriptorSet shadowPassDescriptorSet;
         VkSemaphore finishDrawing;
         ShadowPipeline pipeline;
 
-        VkExtent2D drawExtent;
-        VkSampler sampler;
+        VkExtent3D drawExtent;
         VkImageView drawImageView;
+        VkImage drawImage;
 
-        VkRenderingAttachmentInfo renderingAttachmentInfo;
+        VkRenderingAttachmentInfo depthAttachment;
         VkRenderingInfo renderingInfo;
         VkViewport renderViewport;
         VkRect2D renderScissor;
 
         void PrebuildRenderInfo();
-        VkRenderingAttachmentInfo BuildAttachmentInfo();
-        VkRenderingInfo BuildRenderInfo();
-        VkViewport BuildRenderViewport();
-        VkRect2D BuildRenderScissors();
+        //VkRenderingAttachmentInfo BuildAttachmentInfo();
+        //VkRenderingInfo BuildRenderInfo();
+        //VkViewport BuildRenderViewport();
+        //VkRect2D BuildRenderScissors();
     };
 }

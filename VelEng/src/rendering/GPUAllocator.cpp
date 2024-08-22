@@ -3,13 +3,18 @@
 
 void Vel::GPUAllocator::Init(VkDevice dev, VmaAllocatorCreateInfo allocatorCreateInfo, uint32_t graphicsQueueFamily, VkQueue targetQueue)
 {
+	constexpr size_t stagingBufferSize = 2048U * 2048U * 4U;
     device = dev;
 	vmaCreateAllocator(&allocatorCreateInfo, &vmaAllocator);
 	submitter.Init(dev, graphicsQueueFamily, targetQueue);
+
+	//stagingBuffer = CreateBuffer(stagingBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	stagingBuffer = CreateBuffer(stagingBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void Vel::GPUAllocator::Cleanup()
 {
+	DestroyBuffer(stagingBuffer);
 	submitter.Cleanup();
 	vmaDestroyAllocator(vmaAllocator);
 }
@@ -37,6 +42,11 @@ Vel::AllocatedBuffer Vel::GPUAllocator::CreateBuffer(size_t size, VkBufferUsageF
 void Vel::GPUAllocator::DestroyBuffer(const AllocatedBuffer& buffer)
 {
 	vmaDestroyBuffer(vmaAllocator, buffer.buffer, buffer.allocation);
+}
+
+Vel::AllocatedBuffer& Vel::GPUAllocator::GetStagingBuffer()
+{
+	return stagingBuffer;
 }
 
 VkImageCreateInfo Vel::GPUAllocator::Create2DImageCreateInfo(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
@@ -223,7 +233,7 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateCubeImage(std::array<unsigned char*
 		VkBufferImageCopy copyRegion = CreateBufferImageCopy(size, 6);
 
 		vkCmdCopyBufferToImage(cmd, uploadBuffer.buffer, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
+		 
 		TransitionImage(cmd, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	});
 

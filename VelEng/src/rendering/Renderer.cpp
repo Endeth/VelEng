@@ -44,6 +44,7 @@ void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
     features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
     features12.bufferDeviceAddress = true;
     features12.descriptorIndexing = true; //For bindless textures
+    features12.runtimeDescriptorArray = true;
 
     vkb::PhysicalDeviceSelector selector{ vkbInstance };
     vkb::PhysicalDevice vkbPhysicalDevice = selector
@@ -75,6 +76,7 @@ void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
 
     CreateCameraDescriptors();
     InitTestLightData(); //TODO divide into creating buffers and test lights
+    InitShadowPass();
     InitDeferred();
 
     InitTestTextures();
@@ -144,7 +146,7 @@ void Vel::Renderer::HandleSDLEvent(SDL_Event* sdlEvent)
     {
         if (sdlEvent->key.keysym.sym == SDLK_F2)
         {
-            imageToPresent = ++imageToPresent % 5;
+            imageToPresent = ++imageToPresent % 6;
         }
     }
 }
@@ -185,6 +187,10 @@ void Vel::Renderer::UpdateGlobalLighting()
     float movement1 = sin(frameNumber / 30.f) * 10.0f;
     float movement2 = cos(frameNumber / 30.f) * 10.0f;
 
+    testLights.sunlight.UpdateCameraPosition(mainCamera);
+    LightData* lightsGPUData = (LightData*)testLights.lightsDataBuffer.info.pMappedData;
+    lightsGPUData->sunlightViewProj = testLights.sunlight.viewProj;
+
     light1Pos = { movement1 + 5.0f, 2.0f, -5.0f + movement2, 0.0f };
     light2Pos = { 15.0f, 20.0f, -20.0f + movement1, 0.0f };
 
@@ -201,16 +207,15 @@ void Vel::Renderer::UpdateGlobalLighting()
 void Vel::Renderer::UpdateCamera()
 {
     mainCamera.Update();
-    //glm::mat4 view = mainCamera.GetViewMatrix();
-    //glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)drawExtent.width / (float)drawExtent.height, 10000.f, 0.01f);
-    //projection[1][1] *= -1;
 
     sceneData.view = mainCamera.GetViewMatrix();
     sceneData.projection = mainCamera.GetProjectionMatrix();
-    sceneData.viewProjection = mainCamera.GetViewProjectionMatrix();
+    glm::mat4 viewProj = mainCamera.GetViewProjectionMatrix();
+    sceneData.viewProjection = viewProj;
+    sceneData.invViewProjection = glm::inverse(viewProj);
     sceneData.position = glm::vec4(mainCamera.GetPosition(), 1.0f);
     sceneData.testData.g = testRoughness;
-    sceneData.testData.b = testMetallic;
+    sceneData.testData.b = testMetallic * 0.1f;
 }
 
 void Vel::Renderer::UpdateGlobalDescriptors()
@@ -272,8 +277,9 @@ void Vel::Renderer::Draw()
         .pInheritanceInfo = nullptr
     };
 
+    DrawShadows();
 
-    //--SKYBOX--
+    //--SKYBOX-- --SHADOW PASS--
     auto& skyboxCmd = currentFrame.skyboxCommands;
     VK_CHECK(vkResetCommandBuffer(skyboxCmd, 0));
     VK_CHECK(vkBeginCommandBuffer(skyboxCmd, &cmdBufferBeginInfo));
@@ -281,16 +287,38 @@ void Vel::Renderer::Draw()
     deferred.GetFramebuffer().TransitionImages(skyboxCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     {
         skyboxPass.Draw(skyboxCmd, mainCamera);
+        shadowPass.Draw(mainDrawContext, skyboxCmd);
     }
 
     VK_CHECK(vkEndCommandBuffer(skyboxCmd));
 
     VkCommandBufferSubmitInfo skyboxBufferInfo = CreateCommandBufferSubmitInfo(skyboxCmd);
     VkSemaphoreSubmitInfo skyboxWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, currentFrame.swapchainSemaphore);
-    VkSemaphoreSubmitInfo skyboxSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, skyboxPass.GetSemaphore());
-    VkSubmitInfo2 skyboxSubmitInfo = CreateSubmitInfo(skyboxBufferInfo, &skyboxWaitInfo, &skyboxSignalInfo);
+    VkSemaphoreSubmitInfo signalSemaphores[2];
+    signalSemaphores[0] = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, skyboxPass.GetSemaphore());
+    signalSemaphores[1] = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, shadowPass.GetSemaphore());
+    VkSubmitInfo2 skyboxSubmitInfo = CreateSubmitInfo(skyboxBufferInfo, &skyboxWaitInfo, 1, signalSemaphores, 2);
 
     VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &skyboxSubmitInfo, VK_NULL_HANDLE));
+
+
+    //--SHADOW PASS--
+    /*auto& shadowCmd = currentFrame.shadowCommands;
+    VK_CHECK(vkResetCommandBuffer(shadowCmd, 0));
+    VK_CHECK(vkBeginCommandBuffer(shadowCmd, &cmdBufferBeginInfo));
+
+    {
+        shadowPass.Draw(mainDrawContext, shadowCmd);
+    }
+
+    VK_CHECK(vkEndCommandBuffer(shadowCmd));
+
+    VkCommandBufferSubmitInfo shadowPassBufferInfo = CreateCommandBufferSubmitInfo(shadowCmd);
+    VkSemaphoreSubmitInfo shadowPassWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, currentFrame.swapchainSemaphore);
+    VkSemaphoreSubmitInfo shadowPassSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, shadowPass.GetSemaphore());
+    VkSubmitInfo2 shadowPassSubmitInfo = CreateSubmitInfo(shadowPassBufferInfo, &shadowPassWaitInfo, 1, &shadowPassSignalInfo);
+
+    VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &shadowPassSubmitInfo, VK_NULL_HANDLE));*/
 
 
     //--GPASS--
@@ -311,7 +339,7 @@ void Vel::Renderer::Draw()
     VkCommandBufferSubmitInfo gPassBufferInfo = CreateCommandBufferSubmitInfo(gPassCmd);
     VkSemaphoreSubmitInfo gPassWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, skyboxPass.GetSemaphore());
     VkSemaphoreSubmitInfo gPassSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, deferred.GetGPassSemaphore());
-    VkSubmitInfo2 gPassSubmitInfo = CreateSubmitInfo(gPassBufferInfo, &gPassWaitInfo, &gPassSignalInfo);
+    VkSubmitInfo2 gPassSubmitInfo = CreateSubmitInfo(gPassBufferInfo, &gPassWaitInfo, 1, &gPassSignalInfo, 1);
 
     VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &gPassSubmitInfo, VK_NULL_HANDLE));
 
@@ -321,6 +349,7 @@ void Vel::Renderer::Draw()
     VK_CHECK(vkResetCommandBuffer(lPassCmd, 0));
     VK_CHECK(vkBeginCommandBuffer(lPassCmd, &cmdBufferBeginInfo));
 
+    TransitionDepthImage(lPassCmd, testLights.sunlight.shadowMap.image, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL);
     deferred.GetFramebuffer().TransitionImages(lPassCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     {
         FunctionTimeMeasure measure{ stats.lPassDrawTime };
@@ -333,9 +362,11 @@ void Vel::Renderer::Draw()
 
     //TODO semaphores are shared between frames
     VkCommandBufferSubmitInfo lPassBufferSubmitInfo = CreateCommandBufferSubmitInfo(lPassCmd);
-    VkSemaphoreSubmitInfo lPassWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, deferred.GetGPassSemaphore());
+    VkSemaphoreSubmitInfo waitSemaphores[2];
+    waitSemaphores[0] = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, shadowPass.GetSemaphore());
+    waitSemaphores[1] = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, deferred.GetGPassSemaphore());
     VkSemaphoreSubmitInfo lPassSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, deferred.GetLPassSemaphore());
-    VkSubmitInfo2 lPassSubmitInfo = CreateSubmitInfo(lPassBufferSubmitInfo, &lPassWaitInfo, &lPassSignalInfo);
+    VkSubmitInfo2 lPassSubmitInfo = CreateSubmitInfo(lPassBufferSubmitInfo, waitSemaphores, 2, &lPassSignalInfo, 1);
 
     VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &lPassSubmitInfo, currentFrame.renderFence));
 
@@ -354,6 +385,9 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd)
 {
     VkImage presentableImage = VK_NULL_HANDLE;
     VkImageLayout transitionSrcLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    AllocatedBuffer& buff = gpuAllocator.GetStagingBuffer();
+
+    TransitionImage(cmd, swapchain.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     switch (imageToPresent)
     {
@@ -373,15 +407,23 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd)
         presentableImage = deferred.GetFramebuffer().metallicRoughness.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
+    case 5:
+        presentableImage = testLights.sunlight.shadowMap.image;
+        transitionSrcLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+        TransitionDepthImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        CopyDepthToColorImage(cmd, presentableImage, buff, swapchain.GetImage(), testLights.sunlight.shadowMap.imageExtent);
+        break;
     default:
         presentableImage = deferred.GetDrawImage().image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         break;
     }
 
-    TransitionImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    TransitionImage(cmd, swapchain.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    BlitImage(cmd, presentableImage, swapchain.GetImage(), drawExtent, swapchain.GetImageSize());
+    if (imageToPresent != 5)
+    {
+        TransitionImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        BlitImage(cmd, presentableImage, swapchain.GetImage(), drawExtent, swapchain.GetImageSize());
+    }
 
     DrawImgui(cmd, swapchain.GetImage(), swapchain.GetImageView(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 }
@@ -395,7 +437,7 @@ void Vel::Renderer::PrepareImguiFrame()
         ImGui::Text("position  %f  %f  %f", mainCamera.GetPosition().x, mainCamera.GetPosition().y, mainCamera.GetPosition().z);
         ImGui::SliderFloat("Speed", &mainCamera.speed, 0.001f, 1.f);
         ImGui::SliderFloat("roughness", &testRoughness, 0.01f, 1.f);
-        ImGui::SliderFloat("metallic", &testMetallic, 0.00f, 1.f);
+        ImGui::SliderFloat("metallic", &testMetallic, 0.0001f, 0.1f);
         ImGui::Text("Perf");
         ImGui::Text("frametime %f ms", stats.frametime);
         ImGui::Text("drawtime %f ms", stats.dedicatedMaterialDrawTime);
@@ -404,6 +446,10 @@ void Vel::Renderer::PrepareImguiFrame()
         ImGui::Text("lpass drawtime %f ms", stats.lPassDrawTime);
         ImGui::Text("scene update %f ms", stats.sceneUpdateTime);
     });
+}
+
+void Vel::Renderer::DrawShadows()
+{
 }
 
 void Vel::Renderer::DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout)
@@ -416,13 +462,14 @@ void Vel::Renderer::DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkIm
 void Vel::Renderer::InitTestData()
 {
     meshLoader.Init(device, this);
-    //auto structureFile = meshLoader.loadGltf(GET_MESH_PATH("corset/Corset.gltf"));
-    auto structureFile = meshLoader.loadGltf(GET_MESH_PATH("house.glb"));
+    //auto mainModel = meshLoader.loadGltf(GET_MESH_PATH("corset/Corset.gltf"));
+    //auto mainModel = meshLoader.loadGltf(GET_MESH_PATH("house/house.glb"));
+    auto mainModel = meshLoader.loadGltf(GET_MESH_PATH("sponza/Sponza.gltf"));
     auto cube = meshLoader.loadGltf(GET_MESH_PATH("test/cube.glb"));
 
-    assert(structureFile.has_value());
+    assert(mainModel.has_value());
 
-    loadedScenes["model"] = *structureFile;
+    loadedScenes["model"] = *mainModel;
     loadedScenes["lightSource"] = *cube;
 
     //TODO size per surface type material
@@ -432,14 +479,19 @@ void Vel::Renderer::InitTestData()
 
 void Vel::Renderer::InitTestLightData()
 {
-    testLights.lightsDataBuffer = gpuAllocator.CreateBuffer(sizeof(LightData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-    LightData* lightsGPUData = (LightData*)testLights.lightsDataBuffer.info.pMappedData;
+    testLights.lights.ambient = glm::vec4{ 0.05f, 0.05f, 0.05f, 1.0f };
 
-    testLights.lights.ambient = glm::vec4{ 0.1f, 0.1f, 0.1f, 1.0f };
-    testLights.lights.sunlightDirection = glm::normalize(glm::vec4{ 0.5f, -0.5f, 0.5f, 1.0f });
-    testLights.lights.sunlightColor = glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f };
+    VkExtent3D shadowMapResolution = {
+        .width = 2048,
+        .height = 2048,
+        .depth = 1,
+    };
+    testLights.sunlight.InitShadowData(gpuAllocator, shadowMapResolution);
+    testLights.sunlight.InitLightData(glm::normalize(glm::vec4{ 0.5f, 1.f, 0.5f, 1.0f }), glm::vec4{ 1.0f, 0.85f, 0.3f, 1.0f });
+    //testLights.sunlight.direction = glm::normalize(glm::vec4{ 0.5f, -0.5f, 0.5f, 1.0f });
+    //testLights.sunlight.color = glm::vec4{ 1.0f, 0.85f, 0.2f, 1.0f };
+
     testLights.lights.pointLightsCount = 2;
-
     testLights.pointLightsBuffer = gpuAllocator.CreateBuffer(sizeof(PointLight) * testLights.lights.pointLightsCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
     testLights.pointLightsGPUData = (PointLight*)testLights.pointLightsBuffer.info.pMappedData;
 
@@ -458,15 +510,22 @@ void Vel::Renderer::InitTestLightData()
         .buffer = testLights.pointLightsBuffer.buffer
     };
 
+    testLights.lightsDataBuffer = gpuAllocator.CreateBuffer(sizeof(LightData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    LightData* lightsGPUData = (LightData*)testLights.lightsDataBuffer.info.pMappedData;
+
     *lightsGPUData = {
-        .ambient = glm::vec4{ 0.1f, 0.1f, 0.1f, 1.0f},
-        .sunlightDirection = glm::normalize(glm::vec4{ 0.5f, -0.5f, 0.5f, 1.0f}),
-        .sunlightColor = glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f },
+        .ambient = glm::vec4{ 0.05f, 0.05f, 0.1f, 1.0f},
+        .sunlightDirection = glm::vec4(testLights.sunlight.direction, 1.0f),
+        .sunlightColor = testLights.sunlight.color,
+        .sunlightViewProj = testLights.sunlight.viewProj,
+        .sunlightShadowMapID = 0,
         .pointLightsCount = testLights.lights.pointLightsCount,
         .pointLightBuffer = vkGetBufferDeviceAddress(device, &deviceAdressInfo)
     };
 
     delQueue.Push([&]() {
+        gpuAllocator.DestroyImage(testLights.sunlight.shadowMap);
+        gpuAllocator.DestroyBuffer(testLights.sunlight.gpuViewProjData);
         gpuAllocator.DestroyBuffer(testLights.lightsDataBuffer);
         gpuAllocator.DestroyBuffer(testLights.pointLightsBuffer);
     });
@@ -512,9 +571,14 @@ void Vel::Renderer::InitSkyboxPass()
     skyboxPass.Init(device, drawExtent, defaultCubeImage, deferred.GetFramebuffer().color);
 }
 
+void Vel::Renderer::InitShadowPass()
+{
+    shadowPass.Init(device, testLights.sunlight);
+}
+
 void Vel::Renderer::InitDeferred()
 {
-    deferred.Init(device, &gpuAllocator, drawExtent, sceneCameraDataDescriptorLayout, testLights.lightsDataBuffer.buffer, sizeof(LightData), CreateRectangle());
+    deferred.Init(device, &gpuAllocator, drawExtent, sceneCameraDataDescriptorLayout, testLights.lightsDataBuffer.buffer, sizeof(LightData), testLights.sunlight.shadowMap.imageView, CreateRectangle());
 }
 
 void Vel::Renderer::InitTestTextures()
@@ -601,6 +665,7 @@ void Vel::Renderer::CreateCommands()
 
         cmdAllocateInfo.commandPool = frameInfo.commandPool;
 
+        VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.shadowCommands));
         VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.skyboxCommands));
         VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.gPassCommands));
         VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.lPassCommands));
@@ -687,6 +752,7 @@ void Vel::Renderer::Cleanup()
 
         loadedScenes.clear();
 
+        shadowPass.Cleanup();
         skyboxPass.Cleanup();
         deferred.Cleanup();
 

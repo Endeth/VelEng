@@ -166,7 +166,7 @@ void Vel::MeshLoader::CreateMaterials(RenderableGLTF& sceneData, fastgltf::Asset
         if (img.has_value())
         {
             images[counter] = *img;
-            sceneData.images[image.name.c_str()] = *img;
+            sceneData.images[counter] = *img;
         }
         ++counter;
     }

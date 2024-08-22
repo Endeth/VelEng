@@ -19,6 +19,6 @@ void main()
     vec4 coord = PushConstants.inverseViewProj * vec4(ndc, 1.0, 1.0);
     vec3 samplePoint = normalize(coord.xyz / vec3(coord.w) - PushConstants.cameraPosition.xyz);
 
-    //outColor = vec4(texture(skyboxTexture, samplePoint).xyz, 1.0f);
-    outColor = vec4(inUV.x, inUV.y, 0.0f, 1.0f);
+    outColor = vec4(texture(skyboxTexture, samplePoint).xyz, 1.0f);
+    //outColor = vec4(inUV.x, inUV.y, 0.0f, 1.0f);
 }

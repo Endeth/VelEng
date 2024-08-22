@@ -107,7 +107,7 @@ void Vel::LPassPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t
 
 void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent2D renderExtent,
     VkDescriptorSetLayout cameraDescriptorLayout,
-    VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize,
+    VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize, VkImageView sunlightShadowMapView,
     GPUMeshBuffers&& rect)
 {
     drawExtent = renderExtent;
@@ -120,8 +120,14 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
         .magFilter = VK_FILTER_LINEAR,
         .minFilter = VK_FILTER_LINEAR
     };
-
     vkCreateSampler(device, &samplerCreateInfo, nullptr, &sampler);
+
+    VkSamplerCreateInfo shadowsSamplerCreateInfo{
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = VK_FILTER_NEAREST,
+        .minFilter = VK_FILTER_NEAREST
+    };
+    vkCreateSampler(device, &shadowsSamplerCreateInfo, nullptr, &shadowsSampler);
 
     //TODO format doesnt matter now for now
     uint32_t color = glm::packUnorm4x8(glm::vec4(1.f, 1.f, 1.f, 1.f));
@@ -178,20 +184,24 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
     framebufferDescriptorSet = descriptorPool.Allocate(framebufferDescriptorLayout);
 
     descriptorWriter.Clear();
-    descriptorWriter.WriteImage(0, framebuffer.position.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    descriptorWriter.WriteImage(1, framebuffer.color.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    descriptorWriter.WriteImage(2, framebuffer.normals.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    descriptorWriter.WriteImage(3, framebuffer.metallicRoughness.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    descriptorWriter.WriteImageSampler(0, framebuffer.position.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    descriptorWriter.WriteImageSampler(1, framebuffer.color.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    descriptorWriter.WriteImageSampler(2, framebuffer.normals.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    descriptorWriter.WriteImageSampler(3, framebuffer.metallicRoughness.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
     descriptorWriter.UpdateSet(device, framebufferDescriptorSet);
 
     builder.Clear();
     builder.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    builder.AddBinding(1, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+    builder.AddBinding(2, VK_DESCRIPTOR_TYPE_SAMPLER);
     lightsDescriptorLayout = builder.Build(device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
     lightsDescriptorSet = descriptorPool.Allocate(lightsDescriptorLayout);
     descriptorWriter.Clear();
     descriptorWriter.WriteBuffer(0, sceneLightDataBuffer, sceneLightDataBufferSize, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    descriptorWriter.WriteImages(1, &sunlightShadowMapView, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1);
+    descriptorWriter.WriteSampler(2, shadowsSampler);
     descriptorWriter.UpdateSet(device, lightsDescriptorSet);
 
     VkDescriptorSetLayout lPassLayouts[] = { cameraDescriptorLayout, framebufferDescriptorLayout, lightsDescriptorLayout };
@@ -349,6 +359,7 @@ void Vel::DeferredRenderer::Cleanup()
     gPass.Cleanup();
     lPass.Cleanup();
     vkDestroySampler(device, sampler, nullptr);
+    vkDestroySampler(device, shadowsSampler, nullptr);
 }
 
 Vel::MaterialInstance Vel::DeferredRenderer::CreateMaterialInstance(const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const
@@ -360,9 +371,9 @@ Vel::MaterialInstance Vel::DeferredRenderer::CreateMaterialInstance(const Materi
 
     DescriptorWriter writer; 
     //writer.WriteBuffer(0, resources.dataBuffer, sizeof(MaterialConstants), resources.dataBufferOffset, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    writer.WriteImage(0, resources.colorImage.imageView, resources.colorSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    writer.WriteImage(1, resources.normalsImage.imageView, resources.normalsSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    writer.WriteImage(2, resources.metallicRoughnessImage.imageView, resources.metallicRoughnessSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    writer.WriteImageSampler(0, resources.colorImage.imageView, resources.colorSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    writer.WriteImageSampler(1, resources.normalsImage.imageView, resources.normalsSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    writer.WriteImageSampler(2, resources.metallicRoughnessImage.imageView, resources.metallicRoughnessSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
     writer.UpdateSet(device, materialInstance.descriptorSet);
 
@@ -371,7 +382,7 @@ Vel::MaterialInstance Vel::DeferredRenderer::CreateMaterialInstance(const Materi
 
 void Vel::DeferredRenderer::DrawGPass(const DrawContext& context, VkCommandBuffer cmd)
 {
-    TransitionImage(cmd, framebuffer.depth.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+    TransitionDepthImage(cmd, framebuffer.depth.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
     vkCmdBeginRendering(cmd, &gPassRenderInfo);
 

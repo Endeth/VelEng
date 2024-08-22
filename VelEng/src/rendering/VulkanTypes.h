@@ -69,6 +69,7 @@ namespace Vel
         glm::mat4 view;
         glm::mat4 projection;
         glm::mat4 viewProjection;
+        glm::mat4 invViewProjection;
         glm::vec4 position;
         glm::vec4 testData;
     };
@@ -171,6 +172,8 @@ namespace Vel
         glm::vec4 ambient;
         glm::vec4 sunlightDirection;
         glm::vec4 sunlightColor;
+        glm::mat4 sunlightViewProj;
+        uint32_t sunlightShadowMapID;
 
         uint32_t pointLightsCount;
         VkDeviceAddress pointLightBuffer;

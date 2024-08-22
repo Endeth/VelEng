@@ -63,7 +63,7 @@ namespace Vel
     public:
         std::unordered_map<std::string, std::shared_ptr<MeshAsset>> meshes;
         std::unordered_map<std::string, std::shared_ptr<RenderableNode>> nodes;
-        std::unordered_map<std::string, AllocatedImage> images;
+        std::unordered_map<size_t, AllocatedImage> images; //TODO vector, just to destroy images
         std::unordered_map<std::string, std::shared_ptr<MaterialInstance>> materials;
 
         std::vector<std::shared_ptr<RenderableNode>> topNodes;

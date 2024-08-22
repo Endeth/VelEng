@@ -29,6 +29,7 @@ namespace Vel
 
         AllocatedBuffer CreateBuffer(size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
         void DestroyBuffer(const AllocatedBuffer& buffer);
+        AllocatedBuffer& GetStagingBuffer();
 
         VkImageCreateInfo Create2DImageCreateInfo(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
         VkImageCreateInfo CreateCubeImageCreateInfo(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
@@ -49,5 +50,7 @@ namespace Vel
         VmaAllocator vmaAllocator;
 
         ImmediateSubmitter submitter;
+
+        AllocatedBuffer stagingBuffer;
     };
 }

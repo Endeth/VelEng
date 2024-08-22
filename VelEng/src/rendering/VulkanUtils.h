@@ -27,13 +27,16 @@ namespace Vel
 
     VkImageSubresourceRange CreateImageSubresourceRangeAll(VkImageAspectFlags aspect);
     void TransitionImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout srcLayout, VkImageLayout dstLayout);
+    void TransitionDepthImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout srcLayout, VkImageLayout dstLayout);
     void TransitionImages(VkCommandBuffer cmdBuffer, uint32_t count, VkImage* images, VkImageLayout* srcLayouts, VkImageLayout* dstLayouts);
     void ClearImage(VkCommandBuffer cmdBuffer, VkImage image, VkClearColorValue color, VkImageAspectFlagBits aspectFlags);
     void BlitImage(VkCommandBuffer cmdBuffer, VkImage src, VkImage dst, VkExtent2D srcSize, VkExtent2D dstSize);
+    void CopyDepthToColorImage(VkCommandBuffer cmdBuffer, VkImage src, AllocatedBuffer& buf, VkImage dst, VkExtent3D copy);
 
     VkRenderingAttachmentInfo CreateColorAttachmentInfo(VkImageView imageView);
-    VkRenderingInfo CreateGeometryDrawRenderInfo(VkRenderingAttachmentInfo* color, uint32_t colorAttachmentsCount, VkRenderingAttachmentInfo* depth);
+    //VkRenderingInfo CreateGeometryDrawRenderInfo(VkRenderingAttachmentInfo* color, uint32_t colorAttachmentsCount, VkRenderingAttachmentInfo* depth);
     VkSemaphoreSubmitInfo CreateSemaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
     VkCommandBufferSubmitInfo CreateCommandBufferSubmitInfo(VkCommandBuffer cmdBuffer);
-    VkSubmitInfo2 CreateSubmitInfo(VkCommandBufferSubmitInfo& cmdBufferInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo, VkSemaphoreSubmitInfo* signalSemaphoreInfo);
+    VkSubmitInfo2 CreateSubmitInfo(VkCommandBufferSubmitInfo& cmdBufferInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo, uint32_t waitSemaphoresCount,
+        VkSemaphoreSubmitInfo* signalSemaphoreInfo, uint32_t signalSemaphoresCount);
 }

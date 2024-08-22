@@ -1,23 +1,43 @@
 #pragma once
 #include "VulkanTypes.h"
+#include "GPUAllocator.h"
+#include "Camera.h"
 
-class SceneLights
+namespace Vel
 {
-    glm::vec4 ambient;
-};
+    struct SceneLights
+    {
+        glm::vec4 ambient;
+    };
 
-class Sunlight
-{
-    glm::vec3 direction;
-    glm::vec3 color;
-};
+    struct AmbientLight //SSAO info
+    {
+        glm::vec4 color;
+    };
 
-class PointLight
-{
+    struct Sunlight
+    {
+        glm::vec3 direction;
+        glm::vec3 position;
+        glm::vec4 color;
+        glm::mat4 viewProj;
 
-};
+        VkExtent3D shadowResolution;
+        AllocatedImage shadowMap;
+        AllocatedBuffer gpuViewProjData;
 
-class ShadedPointLight
-{
+        void InitLightData(const glm::vec3& dir, const glm::vec4& col);
+        void InitShadowData(GPUAllocator& allocator, VkExtent3D shadowMapResolution);
+        void UpdateCameraPosition(const Camera& mainCamera);
+    };
 
-};
+    /*struct PointLight
+    {
+
+    };*/
+
+    struct ShadedPointLight
+    {
+
+    };
+}
