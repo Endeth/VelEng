@@ -31,15 +31,33 @@ vec2 getPoissonDiskCoord(vec2 projCoords, int i) {
     return projCoords.xy + poissonDisk[index]/DISK_RADIUS;
 }
 
-float MultiSampleShadowMap(vec3 projCoords)
+float MultiSampleShadowMapPoisson(vec3 projCoords)
 {
 	float shadow = 0.f;
-    int numSamples = 4;
-    for (int i = 0; i < numSamples; ++i) {
+    int numSamples = 8;
+    for (int i = 0; i < numSamples; ++i)
+    {
         vec2 coord = getPoissonDiskCoord(projCoords.xy, i);
-        shadow += projCoords.z > texture(sampler2DShadow(shadowsTexture, shadowsSampler), coord).r ? 1.0f : 0.0f;
+        shadow += (projCoords.z > texture(sampler2D(shadowsTexture, shadowsSampler), coord).r) ? 1.0f : 0.0f;
     }
     shadow /= float(numSamples);
+    return shadow;
+}
+
+float MultiSampleShadowMapGrid(vec3 projCoords)
+{
+	float shadow = 0.f;
+    
+    vec2 texelSize = vec2(0.00005f, 0.00005f);//textureSize(shadowMap, 0);
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = texture(sampler2D(shadowsTexture, shadowsSampler), projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += projCoords.z > pcfDepth ? 1.0 : 0.0;        
+        }    
+    }
+    shadow /= 9.0f;
     return shadow;
 }
 

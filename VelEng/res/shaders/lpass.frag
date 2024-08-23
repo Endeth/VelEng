@@ -65,10 +65,10 @@ void main()
 	projectionCoords.xy = projectionCoords.xy * vec2(0.5f, 0.5f) + vec2(0.5f, 0.5f);
 	float bias = GetShadowBias(sunlightDir, normal);
 
-	projectionCoords.z += bias;
+	projectionCoords.z += bias; //bias;
 	//float sampledShadow = texture(sampler2D(shadowsTexture, shadowsSampler), projectionCoords.xy).r;
 	//sunlightColor *= projectionCoords.z > sampledShadow  ? 1.0 : 0.0;;
-	float sampledShadow = MultiSampleShadowMap(projectionCoords);
+	float sampledShadow = MultiSampleShadowMapGrid(projectionCoords);
 	sunlightColor *= sampledShadow;
 
 	vec3 colorResult = max(ambientColor, sunlightColor) + pointLightsIntensity;
