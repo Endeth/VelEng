@@ -1,6 +1,7 @@
 #pragma once
-#include "VulkanTypes.h"
 #include <deque>
+
+#include "Rendering/VulkanTypes.h"
 
 #define GET_SHADER_PATH(name) SHADERS_PATH name ".spv"
 namespace Vel

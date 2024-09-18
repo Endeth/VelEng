@@ -1,11 +1,13 @@
 #pragma once
-#include "VulkanTypes.h"
-#include "Descriptors.h"
-#include "Pipeline.h"
-#include "PipelineBuilder.h"
-#include "GPUAllocator.h"
-#include "Renderable.h"
 #include <deque>
+
+#include "Rendering/VulkanTypes.h"
+#include "Rendering/Descriptors.h"
+#include "Rendering/GPUAllocator.h"
+#include "Rendering/Renderable.h"
+
+#include "Rendering/RenderPasses/Pipeline.h"
+#include "Rendering/RenderPasses/PipelineBuilder.h"
 
 namespace Vel
 {
@@ -23,7 +25,7 @@ namespace Vel
         void CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t layoutsCount);
     };
 
-    class DeferredRenderer
+    class DeferredPasses
     {
     public:
         struct Framebuffer

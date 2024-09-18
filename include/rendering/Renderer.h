@@ -2,19 +2,20 @@
 #include "VulkanTypes.h"
 #include "utils/DeletionQueue.h"
 
-#include "utils/RenderThreadPool.h"
-#include "Frames.h"
-#include "Pipeline.h"
-#include "Swapchain.h"
-#include "GPUAllocator.h"
-#include "MeshLoader.h"
-#include "Camera.h"
-#include "Material.h"
-#include "Renderable.h"
-#include "SkyboxPass.h"
-#include "Lighting.h"
-#include "ShadowPass.h"
-#include "Deferred.h"
+#include "Utils/RenderThreadPool.h"
+#include "Rendering/Frames.h"
+#include "Rendering/Swapchain.h"
+#include "Rendering/GPUAllocator.h"
+#include "Rendering/MeshLoader.h"
+#include "Rendering/Camera.h"
+#include "Rendering/Material.h"
+#include "Rendering/Lighting.h"
+#include "Rendering/Renderable.h"
+
+#include "Rendering/RenderPasses/Pipeline.h"
+#include "Rendering/RenderPasses/DeferredPasses.h"
+#include "Rendering/RenderPasses/ShadowPass.h"
+#include "Rendering/RenderPasses/SkyboxPass.h"
 
 #include "ui/VelImgui.h"
 
@@ -58,7 +59,7 @@ namespace Vel
         void Draw();
 
         GPUAllocator* GetAllocator(){ return &gpuAllocator; }
-        const DeferredRenderer& GetDeferredRenderer() const { return deferred; }
+        const DeferredPasses& GetDeferredRenderer() const { return deferredPasses; }
 
         AllocatedImage whiteImage;
         AllocatedImage defaultNormalsImage;
@@ -137,7 +138,7 @@ namespace Vel
 
         SkyboxPass skyboxPass;
         ShadowPass shadowPass;
-        DeferredRenderer deferred;
+        DeferredPasses deferredPasses;
         std::vector<DrawContext> mainDrawContexts;
         std::mutex drawContextMutex;
         std::mutex graphicsQueueMutex;

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "config/VelEngConfig.h"
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,6 +27,8 @@
 #include <SDL2/SDL_vulkan.h>
 
 #include "VkBootstrap.h"
+
+#include "config/VelEngConfig.h"
 
 #define VK_CHECK(x)                                                          \
     do {                                                                     \

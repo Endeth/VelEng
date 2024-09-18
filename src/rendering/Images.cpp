@@ -1,4 +1,5 @@
-#include "rendering/Images.h"
+#include "Rendering/Images.h"
+
 #include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION

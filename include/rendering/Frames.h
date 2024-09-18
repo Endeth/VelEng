@@ -1,8 +1,10 @@
 #pragma once
-#include "VulkanTypes.h"
-#include "Descriptors.h"
-#include "utils/DeletionQueue.h"
-#include "utils/TSQueue.h"
+
+#include "Rendering/VulkanTypes.h"
+#include "Rendering/Descriptors.h"
+
+#include "Utils/DeletionQueue.h"
+#include "Utils/TSQueue.h"
 
 namespace Vel
 {

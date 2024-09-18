@@ -1,7 +1,8 @@
 #pragma once
-#include "VulkanTypes.h"
-#include "Material.h"
-#include "MeshLoader.h"
+
+#include "Rendering/VulkanTypes.h"
+#include "Rendering/Material.h"
+#include "Rendering/MeshLoader.h"
 
 namespace Vel
 {

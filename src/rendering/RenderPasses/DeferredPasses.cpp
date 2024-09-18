@@ -1,8 +1,11 @@
-#include "rendering/Deferred.h"
-#include "rendering/PipelineBuilder.h"
-#include "rendering/VulkanUtils.h"
+#include "Rendering/RenderPasses/DeferredPasses.h"
 
 #include <fstream>
+
+#include "Rendering/VulkanUtils.h"
+
+#include "Rendering/RenderPasses/PipelineBuilder.h"
+
 
 void Vel::GPassPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t layoutsCount)
 {
@@ -105,7 +108,7 @@ void Vel::LPassPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t
     vkDestroyShaderModule(device, fragmentModule, nullptr);
 }
 
-void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent2D renderExtent,
+void Vel::DeferredPasses::Init(VkDevice dev, GPUAllocator* allocator, VkExtent2D renderExtent,
     VkDescriptorSetLayout cameraDescriptorLayout,
     VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize, VkImageView sunlightShadowMapView,
     GPUMeshBuffers&& rect)
@@ -217,7 +220,7 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
     PreBuildRenderInfo();
 }
 
-void Vel::DeferredRenderer::PreBuildRenderInfo()
+void Vel::DeferredPasses::PreBuildRenderInfo()
 {
     framebufferAttachments[0] = BuildGPassAttachmentInfo(framebuffer.position.imageView);
     framebufferAttachments[1] = BuildGPassAttachmentInfo(framebuffer.color.imageView, VK_ATTACHMENT_LOAD_OP_LOAD);
@@ -233,7 +236,7 @@ void Vel::DeferredRenderer::PreBuildRenderInfo()
     renderScissor = BuildRenderScissors();
 }
 
-VkRenderingAttachmentInfo Vel::DeferredRenderer::BuildGPassAttachmentInfo(VkImageView imageView, VkAttachmentLoadOp loadOp)
+VkRenderingAttachmentInfo Vel::DeferredPasses::BuildGPassAttachmentInfo(VkImageView imageView, VkAttachmentLoadOp loadOp)
 {
     VkRenderingAttachmentInfo colorAttachment
     {
@@ -252,7 +255,7 @@ VkRenderingAttachmentInfo Vel::DeferredRenderer::BuildGPassAttachmentInfo(VkImag
     return colorAttachment;
 }
 
-VkRenderingAttachmentInfo Vel::DeferredRenderer::BuildLPassAttachmentInfo(VkImageView imageView)
+VkRenderingAttachmentInfo Vel::DeferredPasses::BuildLPassAttachmentInfo(VkImageView imageView)
 {
     VkRenderingAttachmentInfo colorAttachment
     {
@@ -267,7 +270,7 @@ VkRenderingAttachmentInfo Vel::DeferredRenderer::BuildLPassAttachmentInfo(VkImag
     return colorAttachment;
 }
 
-VkRenderingAttachmentInfo Vel::DeferredRenderer::BuildDepthAttachmentInfo()
+VkRenderingAttachmentInfo Vel::DeferredPasses::BuildDepthAttachmentInfo()
 {
     VkRenderingAttachmentInfo depthAttachment
     {
@@ -289,7 +292,7 @@ VkRenderingAttachmentInfo Vel::DeferredRenderer::BuildDepthAttachmentInfo()
     return depthAttachment;
 }
 
-VkRenderingInfo Vel::DeferredRenderer::BuildRenderInfo(VkRenderingAttachmentInfo* color, uint32_t colorAttachmentsCount, VkRenderingAttachmentInfo* depth)
+VkRenderingInfo Vel::DeferredPasses::BuildRenderInfo(VkRenderingAttachmentInfo* color, uint32_t colorAttachmentsCount, VkRenderingAttachmentInfo* depth)
 {
     VkRenderingInfo renderInfo{
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
@@ -305,7 +308,7 @@ VkRenderingInfo Vel::DeferredRenderer::BuildRenderInfo(VkRenderingAttachmentInfo
     return renderInfo;
 }
 
-VkViewport Vel::DeferredRenderer::BuildRenderViewport()
+VkViewport Vel::DeferredPasses::BuildRenderViewport()
 {
     VkViewport viewport{
         .x = 0,
@@ -319,7 +322,7 @@ VkViewport Vel::DeferredRenderer::BuildRenderViewport()
     return viewport;
 }
 
-VkRect2D Vel::DeferredRenderer::BuildRenderScissors()
+VkRect2D Vel::DeferredPasses::BuildRenderScissors()
 {
     VkRect2D scissorsRect{
         .offset = {
@@ -334,7 +337,7 @@ VkRect2D Vel::DeferredRenderer::BuildRenderScissors()
     return scissorsRect;
 }
 
-void Vel::DeferredRenderer::Cleanup()
+void Vel::DeferredPasses::Cleanup()
 {
     descriptorPool.Cleanup();
     mainAllocator->DestroyImage(defaultColorMap);
@@ -357,7 +360,7 @@ void Vel::DeferredRenderer::Cleanup()
     vkDestroySampler(device, shadowsSampler, nullptr);
 }
 
-Vel::MaterialInstance Vel::DeferredRenderer::CreateMaterialInstance(const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const
+Vel::MaterialInstance Vel::DeferredPasses::CreateMaterialInstance(const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const
 {
     MaterialInstance materialInstance;
     //materialInstance.passType = pass;
@@ -375,7 +378,7 @@ Vel::MaterialInstance Vel::DeferredRenderer::CreateMaterialInstance(const Materi
     return materialInstance;
 }
 
-void Vel::DeferredRenderer::DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd)
+void Vel::DeferredPasses::DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd)
 {
     TransitionDepthImage(cmd, framebuffer.depth.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
@@ -421,7 +424,7 @@ void Vel::DeferredRenderer::DrawGPass(const std::vector<DrawContext>& contexts, 
     vkCmdEndRendering(cmd);
 }
 
-void Vel::DeferredRenderer::DrawLPass(VkCommandBuffer cmd)
+void Vel::DeferredPasses::DrawLPass(VkCommandBuffer cmd)
 {
     TransitionImage(cmd, drawImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
@@ -447,7 +450,7 @@ void Vel::DeferredRenderer::DrawLPass(VkCommandBuffer cmd)
     vkCmdEndRendering(cmd);
 }
 
-void Vel::DeferredRenderer::Framebuffer::TransitionImages(VkCommandBuffer cmd, VkImageLayout src, VkImageLayout dst)
+void Vel::DeferredPasses::Framebuffer::TransitionImages(VkCommandBuffer cmd, VkImageLayout src, VkImageLayout dst)
 {
     TransitionImage(cmd, position.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     TransitionImage(cmd, color.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

@@ -1,6 +1,4 @@
-#include "rendering/MeshLoader.h"
-#include "rendering/Renderer.h"
-#include "rendering/Images.h"
+#include "Rendering/MeshLoader.h"
 
 #include <memory>
 #include <unordered_map>
@@ -12,6 +10,9 @@
 
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/tools.hpp>
+
+#include "Rendering/Renderer.h"
+#include "Rendering/Images.h"
 
 VkFilter ExtractFilter(fastgltf::Filter filter)
 {

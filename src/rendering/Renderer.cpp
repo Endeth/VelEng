@@ -1,13 +1,13 @@
 #pragma once
 
-#include "rendering/Renderer.h"
-#include "rendering/Images.h"
+#include "Rendering/Renderer.h"
 
 #define VMA_IMPLEMENTATION
 #include "vma/vk_mem_alloc.h"
 
-#include "rendering/VulkanTypes.h"
-#include "rendering/VulkanUtils.h"
+#include "Rendering/VulkanTypes.h"
+#include "Rendering/VulkanUtils.h"
+#include "Rendering/Images.h"
 
 
 #ifdef _DEBUG
@@ -225,7 +225,7 @@ void Vel::Renderer::UpdateFrameDescriptors()
     SceneCameraData* sceneCameraGPUData = (SceneCameraData*)currentFrame.GetSceneData().cameraDataBuffer.info.pMappedData;
     *sceneCameraGPUData = sceneData;
 
-    deferred.SetCameraDescriptorSet(currentFrame.GetSceneData().cameraDescriptorSet);
+    deferredPasses.SetCameraDescriptorSet(currentFrame.GetSceneData().cameraDescriptorSet);
 }
 
 void Vel::Renderer::AwaitFramePreviousRenderDone(FrameData& frame)
@@ -242,7 +242,7 @@ void Vel::Renderer::SkyboxDraw(FrameData& frame)
     VK_CHECK(vkResetCommandBuffer(skyboxCmd, 0));
     VK_CHECK(vkBeginCommandBuffer(skyboxCmd, &primaryCommandBegin));
 
-    deferred.GetFramebuffer().TransitionImages(skyboxCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    deferredPasses.GetFramebuffer().TransitionImages(skyboxCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     {
         skyboxPass.Draw(skyboxCmd, mainCamera);
     }
@@ -275,7 +275,7 @@ void Vel::Renderer::GPassCommandRecord(FrameData& frame)
 
     {
         FunctionTimeMeasure measure{ stats.gPassDrawTime };
-        deferred.DrawGPass(mainDrawContexts, gPassCmd);
+        deferredPasses.DrawGPass(mainDrawContexts, gPassCmd);
     }
     ++stats.gPassesCount;
     stats.gPassesAccTime += stats.gPassDrawTime;
@@ -320,10 +320,10 @@ void Vel::Renderer::LPassCommandRecord(FrameData& frame)
     VK_CHECK(vkBeginCommandBuffer(lPassCmd, &primaryCommandBegin));
 
     TransitionDepthImage(lPassCmd, testLights.sunlight.shadowMap.image, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL);
-    deferred.GetFramebuffer().TransitionImages(lPassCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    deferredPasses.GetFramebuffer().TransitionImages(lPassCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     {
         FunctionTimeMeasure measure{ stats.lPassDrawTime };
-        deferred.DrawLPass(lPassCmd);
+        deferredPasses.DrawLPass(lPassCmd);
     }
 
     PreparePresentableImage(lPassCmd); //TODO rename to OnFrameRenderEnd
@@ -499,19 +499,19 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd)
     switch (imageToPresent)
     {
     case 1:
-        presentableImage = deferred.GetFramebuffer().position.image;
+        presentableImage = deferredPasses.GetFramebuffer().position.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
     case 2:
-        presentableImage = deferred.GetFramebuffer().color.image;
+        presentableImage = deferredPasses.GetFramebuffer().color.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
     case 3:
-        presentableImage = deferred.GetFramebuffer().normals.image;
+        presentableImage = deferredPasses.GetFramebuffer().normals.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
     case 4:
-        presentableImage = deferred.GetFramebuffer().metallicRoughness.image;
+        presentableImage = deferredPasses.GetFramebuffer().metallicRoughness.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
     case 5:
@@ -521,7 +521,7 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd)
         CopyDepthToColorImage(cmd, presentableImage, buff, swapchain.GetImage(), testLights.sunlight.shadowMap.imageExtent);
         break;
     default:
-        presentableImage = deferred.GetDrawImage().image;
+        presentableImage = deferredPasses.GetDrawImage().image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         break;
     }
@@ -665,7 +665,7 @@ Vel::GPUMeshBuffers Vel::Renderer::CreateRectangle()
 
 void Vel::Renderer::InitSkyboxPass()
 {
-    skyboxPass.Init(device, drawExtent, defaultCubeImage, deferred.GetFramebuffer().color);
+    skyboxPass.Init(device, drawExtent, defaultCubeImage, deferredPasses.GetFramebuffer().color);
 }
 
 void Vel::Renderer::InitShadowPass()
@@ -675,7 +675,7 @@ void Vel::Renderer::InitShadowPass()
 
 void Vel::Renderer::InitDeferred()
 {
-    deferred.Init(device, &gpuAllocator, drawExtent, sceneCameraDataDescriptorLayout, testLights.lightsDataBuffer.buffer, sizeof(LightData), testLights.sunlight.shadowMap.imageView, CreateRectangle());
+    deferredPasses.Init(device, &gpuAllocator, drawExtent, sceneCameraDataDescriptorLayout, testLights.lightsDataBuffer.buffer, sizeof(LightData), testLights.sunlight.shadowMap.imageView, CreateRectangle());
 }
 
 void Vel::Renderer::InitTestTextures()
@@ -838,7 +838,7 @@ void Vel::Renderer::Cleanup()
 
         shadowPass.Cleanup();
         skyboxPass.Cleanup();
-        deferred.Cleanup();
+        deferredPasses.Cleanup();
 
         for (auto& frame : frames)
         {

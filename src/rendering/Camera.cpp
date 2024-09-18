@@ -1,4 +1,5 @@
-#include "rendering/Camera.h"
+#include "Rendering/Camera.h"
+
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 

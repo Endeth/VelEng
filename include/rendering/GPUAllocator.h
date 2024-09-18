@@ -1,4 +1,5 @@
 #pragma once
+
 #include "VulkanTypes.h"
 
 namespace Vel

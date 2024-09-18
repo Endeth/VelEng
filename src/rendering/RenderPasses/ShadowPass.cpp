@@ -1,5 +1,6 @@
-#include "rendering/ShadowPass.h"
-#include "rendering/VulkanUtils.h"
+#include "Rendering/RenderPasses/ShadowPass.h"
+
+#include "Rendering/VulkanUtils.h"
 
 void Vel::ShadowPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t layoutsCount)
 {

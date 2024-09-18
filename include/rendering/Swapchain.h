@@ -1,5 +1,6 @@
 #pragma once
-#include "VulkanTypes.h"
+
+#include "Rendering/VulkanTypes.h"
 
 namespace Vel
 {

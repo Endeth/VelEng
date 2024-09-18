@@ -1,5 +1,6 @@
-#include "rendering/Material.h"
-#include "rendering/PipelineBuilder.h"
+#include "Rendering/Material.h"
+
+#include "Rendering/RenderPasses/PipelineBuilder.h"
 
 void Vel::GLTFMetallicRoughness::Init(VkDevice dev, VkDescriptorSetLayout sceneDescriptorsLayout, VkFormat drawImgFormat, VkFormat depthImgFormat)
 {

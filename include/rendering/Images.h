@@ -1,11 +1,12 @@
 #pragma once
-#include "VulkanTypes.h"
-#include "GPUAllocator.h"
 
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/parser.hpp>
 #include <fastgltf/tools.hpp>
 #include <fastgltf/util.hpp>
+
+#include "Rendering/VulkanTypes.h"
+#include "Rendering/GPUAllocator.h"
 
 #define GET_TEXTURE_PATH(name) TEXTURE_PATH name
 

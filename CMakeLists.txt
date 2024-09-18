@@ -14,56 +14,60 @@ set(HEADERS
 	${HEADERS}
 	${CMAKE_CURRENT_SOURCE_DIR}/include/VelEng.h
 
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/MeshLoader.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/MeshLoader.h
 
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Renderer.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Frames.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Deferred.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/ShadowPass.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/SkyboxPass.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/VulkanTypes.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/VulkanUtils.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Swapchain.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Descriptors.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Pipeline.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/PipelineBuilder.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/GPUAllocator.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Material.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Renderable.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Lighting.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Camera.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Images.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/Renderer.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/Frames.h
 
-	${CMAKE_CURRENT_SOURCE_DIR}/include/ui/VelImgui.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/ui/GUIValue.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/RenderPasses/Pipeline.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/RenderPasses/PipelineBuilder.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/RenderPasses/DeferredPasses.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/RenderPasses/ShadowPass.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/RenderPasses/SkyboxPass.h
 
-	${CMAKE_CURRENT_SOURCE_DIR}/include/utils/DeletionQueue.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/utils/RenderThreadPool.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/utils/TSQueue.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/VulkanTypes.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/VulkanUtils.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/Swapchain.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/Descriptors.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/GPUAllocator.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/Material.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/Renderable.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/Lighting.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/Camera.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Rendering/Images.h
+
+	${CMAKE_CURRENT_SOURCE_DIR}/include/UI/VelImgui.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/UI/GUIValue.h
+
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Utils/DeletionQueue.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Utils/RenderThreadPool.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Utils/TSQueue.h
 )
 
 set(SOURCE
 	${SOURCE}
 	${CMAKE_CURRENT_SOURCE_DIR}/src/VelEng.cpp
 	
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/MeshLoader.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/MeshLoader.cpp
 
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Renderer.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Frames.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Deferred.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/ShadowPass.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/SkyboxPass.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/VulkanUtils.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Swapchain.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Descriptors.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Pipeline.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/PipelineBuilder.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/GPUAllocator.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Material.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Renderable.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Lighting.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Camera.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Images.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Renderer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Frames.cpp
+
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/RenderPasses/Pipeline.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/RenderPasses/PipelineBuilder.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/RenderPasses/DeferredPasses.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/RenderPasses/ShadowPass.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/RenderPasses/SkyboxPass.cpp
+
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/VulkanUtils.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Swapchain.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Descriptors.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/GPUAllocator.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Material.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Renderable.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Lighting.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Camera.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Rendering/Images.cpp
 
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/VelImgui.cpp
 

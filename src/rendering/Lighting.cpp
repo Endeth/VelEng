@@ -1,4 +1,4 @@
-#include "rendering/Lighting.h"
+#include "Rendering/Lighting.h"
 
 void Vel::Sunlight::InitLightData(const glm::vec3& dir, const glm::vec4& col)
 {

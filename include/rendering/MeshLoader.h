@@ -1,11 +1,12 @@
 #pragma once
 #include <filesystem>
 
-#include "VulkanTypes.h"
-#include "GPUAllocator.h"
-#include "Material.h"
-#include "Renderable.h"
 #include <fastgltf/parser.hpp>
+
+#include "Rendering/VulkanTypes.h"
+#include "Rendering/GPUAllocator.h"
+#include "Rendering/Material.h"
+#include "Rendering/Renderable.h"
 
 #define GET_MESH_PATH(name) MESH_PATH name
 

@@ -1,4 +1,4 @@
-#include "rendering/VulkanUtils.h"
+#include "Rendering/VulkanUtils.h"
 
 void Vel::TransitionImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout srcLayout, VkImageLayout dstLayout)
 {

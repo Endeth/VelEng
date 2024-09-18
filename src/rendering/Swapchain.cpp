@@ -1,4 +1,5 @@
-#include "rendering/Swapchain.h"
+#include "Rendering/Swapchain.h"
+
 #include "VkBootstrap.h"
 
 void Vel::Swapchain::Init(VkPhysicalDevice physicalDevice, VkDevice dev, VkSurfaceKHR surface, VkExtent2D size)

@@ -1,8 +1,10 @@
 #pragma once
-#include "VulkanTypes.h"
-#include "GPUAllocator.h"
-#include "Descriptors.h"
-#include "Pipeline.h"
+
+#include "Rendering/VulkanTypes.h"
+#include "Rendering/GPUAllocator.h"
+#include "Rendering/Descriptors.h"
+
+#include "Rendering/RenderPasses/Pipeline.h"
 
 namespace Vel
 {

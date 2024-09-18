@@ -1,7 +1,8 @@
 #pragma once
-#include "VulkanTypes.h"
-#include "GPUAllocator.h"
-#include "Camera.h"
+
+#include "Rendering/VulkanTypes.h"
+#include "Rendering/GPUAllocator.h"
+#include "Rendering/Camera.h"
 
 namespace Vel
 {
