@@ -1,5 +1,5 @@
-#include "Pipeline.h"
-#include "PipelineBuilder.h"
+#include "rendering/Pipeline.h"
+#include "rendering/PipelineBuilder.h"
 
 #include <fstream>
 

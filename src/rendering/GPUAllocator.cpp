@@ -1,5 +1,5 @@
-#include "GPUAllocator.h"
-#include "VulkanUtils.h"
+#include "rendering/GPUAllocator.h"
+#include "rendering/VulkanUtils.h"
 
 void Vel::GPUAllocator::Init(VkDevice dev, VmaAllocatorCreateInfo allocatorCreateInfo, uint32_t graphicsQueueFamily, VkQueue targetQueue)
 {

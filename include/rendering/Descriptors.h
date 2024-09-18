@@ -2,7 +2,6 @@
 #include "VulkanTypes.h"
 #include <deque>
 
-#define GET_SHADER_PATH(name) SHADERS_PATH name ".spv"
 namespace Vel
 {
     class DescriptorLayoutBuilder

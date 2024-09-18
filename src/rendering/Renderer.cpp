@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Renderer.h"
-#include "Images.h"
+#include "rendering/Renderer.h"
+#include "rendering/Images.h"
 
 #define VMA_IMPLEMENTATION
 #include "vma/vk_mem_alloc.h"
 
-#include "VulkanTypes.h"
-#include "VulkanUtils.h"
+#include "rendering/VulkanTypes.h"
+#include "rendering/VulkanUtils.h"
 
 
 #ifdef _DEBUG

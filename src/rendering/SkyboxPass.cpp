@@ -1,4 +1,4 @@
-#include "SkyboxPass.h"
+#include "rendering/SkyboxPass.h"
 
 void Vel::SkyboxPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t layoutsCount)
 {

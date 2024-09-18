@@ -1,6 +1,6 @@
-#include "MeshLoader.h"
-#include "Renderer.h"
-#include "Images.h"
+#include "rendering/MeshLoader.h"
+#include "rendering/Renderer.h"
+#include "rendering/Images.h"
 
 #include <memory>
 #include <unordered_map>

@@ -22,7 +22,7 @@ namespace Vel
 
         struct Resources
         {
-            DrawContext context;
+            //DrawContext context;
             AllocatedImage drawImage;
 
             //GPass framebuffer

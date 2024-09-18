@@ -5,4 +5,4 @@ target_link_libraries(VelTest
 	VelEng
 )
 
-include_directories(${PROJECT_BINARY_DIR}/VelEng/generated/)
+include_directories(${PROJECT_BINARY_DIR}/generated/)
