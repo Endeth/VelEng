@@ -2,6 +2,8 @@
 #include "VulkanTypes.h"
 #include "utils/DeletionQueue.h"
 
+#include "utils/RenderThreadPool.h"
+#include "Frames.h"
 #include "Pipeline.h"
 #include "Swapchain.h"
 #include "GPUAllocator.h"
@@ -22,7 +24,7 @@ namespace Vel
     {
         float frametime;
         float sceneUpdateTime;
-        float dedicatedMaterialDrawTime;
+        float contextCreation;
         float gPassDrawTime;
         float lPassDrawTime;
 
@@ -45,6 +47,11 @@ namespace Vel
     class Renderer
     {
     public:
+        Renderer(); //Only for RenderThread
+        ~Renderer();
+
+        //Configure() before Init?
+
         void Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent);
 
         void HandleSDLEvent(SDL_Event* sdlEvent);
@@ -65,6 +72,8 @@ namespace Vel
     private:
         SDL_Window* window;
         bool isInitialized = false;
+        RenderThreadPool renderThreadPool;
+
 
         VkInstance instance;
         VkPhysicalDevice physicalDevice;
@@ -72,36 +81,56 @@ namespace Vel
         VkSurfaceKHR surface;
         VkQueue graphicsQueue;
         uint32_t graphicsQueueFamily;
+        VkCommandBufferBeginInfo primaryCommandBegin;
 
         Swapchain swapchain;
-        //TODO swapchain handler
-        //VkSwapchainKHR swapchain;
-        //VkFormat swapchainImageFormat;
-        //std::vector<VkImage> swapchainImages;
-        //std::vector<VkImageView> swapchainImageViews;
-        //VkExtent2D swapchainExtent;
-        //bool resizeRequested = false;
-
 
         GPUAllocator gpuAllocator;
 
         //Frame specific data
-        int frameNumber = 0;
+        uint32_t frameNumber = 0;
         constexpr static size_t FRAME_DATA_SIZE = 2;
+
+        /*
         struct FrameData
         {
-            VkCommandPool commandPool;
-            VkCommandBuffer shadowCommands;
-            VkCommandBuffer skyboxCommands;
-            VkCommandBuffer gPassCommands;
-            VkCommandBuffer lPassCommands;
+            VkCommandPool GetAvailableCommandPool()
+            {
+                VkCommandPool pool;
+                //Should always be able to return pool
+                commandPools.TryPop(pool);
+
+                return pool;
+            }
+
+            void ReaddCommandPool(VkCommandPool pool)
+            {
+                commandPools.Push(std::move(pool));
+            }
+            //Frame info
+            uint32_t idx;
+
+            //Work resources
+            std::list<RenderWorkQueue> frameWorkQueues;
+            TSQueue<VkCommandPool> commandPools;
+
+            //Sync resources
             VkSemaphore swapchainSemaphore;
+            VkSemaphore skyboxSemaphore;
+            VkSemaphore gPassSemaphore;
+            VkSemaphore shadowsSemaphore; //TODO dynamic queue?
+            VkSemaphore lPassSemaphore;
+            std::atomic<bool> rendering = false;
             VkFence renderFence;
 
+            //Data resources
+            AllocatedBuffer sceneCameraDataBuffer;
+            VkDescriptorSet sceneCameraDescriptorSet;
             DescriptorAllocatorDynamic frameDescriptors;
-            DeletionQueue frameCleanupQueue;
+
+            DeletionQueue frameEndCleanup;
             DeletionQueue cleanupQueue;
-        };
+        };//*/
         FrameData frames[FRAME_DATA_SIZE];
 
         MeshLoader meshLoader;
@@ -109,17 +138,16 @@ namespace Vel
         SkyboxPass skyboxPass;
         ShadowPass shadowPass;
         DeferredRenderer deferred;
-        DrawContext mainDrawContext;
+        std::vector<DrawContext> mainDrawContexts;
+        std::mutex drawContextMutex;
+        std::mutex graphicsQueueMutex;
+        //DrawContext mainDrawContext; //TODO let's try to use vector
         VkExtent2D drawExtent;
         float renderScale = 1.f;
 
         Camera mainCamera;
         SceneCameraData sceneData;
         VkDescriptorSetLayout sceneCameraDataDescriptorLayout;
-        VkDescriptorSet sceneCameraDataDescriptorSet;
-
-        float testRoughness = 0.1f;
-        float testMetallic = 0.001f;
 
         //Performance
         RendererStats stats;
@@ -132,10 +160,12 @@ namespace Vel
         VkDebugUtilsMessengerEXT debugMessenger;
         uint32_t imageToPresent = 0;
 
-        void CreateCommands();
-        void CreateSyncStructures();
+        void CreateFrameData();
+        void CreateCommandsInfo();
+        VkCommandBuffer CreateCommandBuffer(VkCommandPool pool, VkCommandBufferLevel level);
         void CreateAllocator();
         void CreateCameraDescriptors();
+
         void InitSkyboxPass();
         void InitShadowPass();
         void InitDeferred();
@@ -145,12 +175,19 @@ namespace Vel
         void UpdateActors();
         void UpdateGlobalLighting();
         void UpdateCamera();
-        void UpdateGlobalDescriptors();
+        void UpdateFrameDescriptors();
+
+        void AwaitFramePreviousRenderDone(FrameData& frame);
+        void GPassContextWork(std::shared_ptr<RenderableGLTF> model, const glm::mat4& modelMatrix, std::vector<DrawContext>& drawContexts);
+        void GPassCommandRecord(FrameData& frame);
+        void LightSourceShadowWork(FrameData& frame);
+        void SkyboxDraw(FrameData& frame);
+        void LPassCommandRecord(FrameData& frame);
+        void QueueGPUWork(VkCommandBuffer cmd, const std::vector<VkSemaphore>&& wait, VkSemaphore signal, VkFence fence = VK_NULL_HANDLE);
 
         void PreparePresentableImage(VkCommandBuffer cmd);
 
         void PrepareImguiFrame();
-        void DrawShadows();
         void DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout);
 
         FrameData& GetCurrentFrame(){ return frames[frameNumber % FRAME_DATA_SIZE]; }
@@ -160,6 +197,11 @@ namespace Vel
         Lights testLights;
         glm::vec4 light1Pos;
         glm::vec4 light2Pos;
+
+        glm::mat4 modelMatrix;
+        glm::mat4 modelMatrix2;
+        glm::mat4 light1Matrix;
+        glm::mat4 light2Matrix;
 
         void InitTestTextures();
         void InitTestData();

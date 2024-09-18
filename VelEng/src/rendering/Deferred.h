@@ -44,14 +44,11 @@ namespace Vel
         void Cleanup();
 
         MaterialInstance CreateMaterialInstance(const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const;
-        void UpdateCameraDescriptorSet(VkDescriptorSet cameraSet) { sceneCameraDataDescriptorSet = cameraSet; }
+        void SetCameraDescriptorSet(VkDescriptorSet cameraSet) { sceneCameraDataDescriptorSet = cameraSet; }
 
-        void DrawGPass(const DrawContext& context, VkCommandBuffer cmd);
+        void DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd);
         //void DrawShadows(const DrawContext& context);
-        void DrawLPass(const DrawContext& context, VkCommandBuffer cmd);
-
-        VkSemaphore& GetGPassSemaphore() { return gPassFinishDrawing; }
-        VkSemaphore& GetLPassSemaphore() { return lPassFinishDrawing; }
+        void DrawLPass(VkCommandBuffer cmd);
 
         Framebuffer& GetFramebuffer() { return framebuffer; }
         AllocatedImage& GetDrawImage() { return drawImage; }
@@ -74,7 +71,6 @@ namespace Vel
         AllocatedImage defaultNormalMap;
         AllocatedImage defaultMetalRoughnessMap;
         Framebuffer framebuffer;
-        VkSemaphore gPassFinishDrawing;
 
         LPassPipeline lPass;
         VkDescriptorSetLayout framebufferDescriptorLayout;
@@ -83,7 +79,6 @@ namespace Vel
         VkDescriptorSet lightsDescriptorSet;
         GPUMeshBuffers drawRect;
         AllocatedImage drawImage;
-        VkSemaphore lPassFinishDrawing;
 
         VkRenderingAttachmentInfo framebufferAttachments[4];
         VkRenderingAttachmentInfo gPassDepthAttachmentInfo;

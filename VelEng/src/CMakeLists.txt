@@ -6,6 +6,7 @@ set(SOURCE
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/MeshLoader.cpp
 
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Renderer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Frames.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Deferred.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/ShadowPass.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/SkyboxPass.cpp
@@ -23,6 +24,8 @@ set(SOURCE
 
 	${CMAKE_CURRENT_SOURCE_DIR}/ui/VelImgui.cpp
 
+	${CMAKE_CURRENT_SOURCE_DIR}/utils/RenderThreadPool.cpp
+
 	PARENT_SCOPE
 )
 
@@ -33,6 +36,7 @@ set(HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/MeshLoader.h
 
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Renderer.h
+	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Frames.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/Deferred.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/ShadowPass.h
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering/SkyboxPass.h
@@ -53,6 +57,8 @@ set(HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/ui/GUIValue.h
 
 	${CMAKE_CURRENT_SOURCE_DIR}/utils/DeletionQueue.h
+	${CMAKE_CURRENT_SOURCE_DIR}/utils/RenderThreadPool.h
+	${CMAKE_CURRENT_SOURCE_DIR}/utils/TSQueue.h
 
 	PARENT_SCOPE
 )

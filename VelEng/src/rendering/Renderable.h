@@ -19,9 +19,38 @@ namespace Vel
 
     struct DrawContext //Dedicated Material
     {
+        DrawContext() = default;
+        DrawContext(const size_t materialsInstances)
+        {
+            opaqueSurfaces.resize(materialsInstances);
+            transparentSurfaces.resize(materialsInstances);
+        }
+        DrawContext(DrawContext&& other)
+        {
+            opaqueSurfaces = std::move(other.opaqueSurfaces);
+            transparentSurfaces = std::move(other.transparentSurfaces);
+        }
+
+        void Clear()
+        {
+            for (auto& materialSurfaces : opaqueSurfaces)
+            {
+                materialSurfaces.clear();
+            }
+            for (auto& materialSurfaces : transparentSurfaces)
+            {
+                materialSurfaces.clear();
+            }
+        }
+
         std::vector<std::vector<RenderData>> opaqueSurfaces;
         std::vector<std::vector<RenderData>> transparentSurfaces;
         //std::vector<std::vector<RenderData>> emissiveSurfaces;
+    };
+
+    struct ShadowContext
+    {
+        std::vector<RenderData> surfaces;
     };
 
     class IRenderable

@@ -18,6 +18,15 @@ constexpr bool useValidationLayers = false;
 
 uint32_t Vel::MaterialInstance::instancesCount = 0;
 
+Vel::Renderer::Renderer() : //Temp?
+    renderThreadPool(RENDER_THREADS_COUNT)
+{
+}
+
+Vel::Renderer::~Renderer()
+{
+}
+
 void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
 {
     window = sdlWindow;
@@ -66,15 +75,15 @@ void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
 
     drawExtent = windowExtent;
 
-    mainCamera.SetPosition(glm::vec3(0, 0, 0.1));
+    mainCamera.SetPosition(glm::vec3(0, 0, 0));
     mainCamera.SetProjection((float)drawExtent.width / (float)drawExtent.height, 70.f);
 
     CreateAllocator();
     swapchain.Init(physicalDevice, device, surface, windowExtent);
-    CreateCommands();
-    CreateSyncStructures();
+    CreateFrameData();
+    CreateCameraDescriptors(); //TODO move to frame data
+    CreateCommandsInfo();
 
-    CreateCameraDescriptors();
     InitTestLightData(); //TODO divide into creating buffers and test lights
     InitShadowPass();
     InitDeferred();
@@ -154,32 +163,17 @@ void Vel::Renderer::HandleSDLEvent(SDL_Event* sdlEvent)
 void Vel::Renderer::UpdateScene()
 {
     FunctionTimeMeasure measure{ stats.sceneUpdateTime };
-    for (auto& materialSurfaces : mainDrawContext.opaqueSurfaces)
+    for (auto& context : mainDrawContexts)
     {
-        materialSurfaces.clear();
+        context.Clear();
     }
-    for (auto& materialSurfaces : mainDrawContext.transparentSurfaces)
-    {
-        materialSurfaces.clear();
-    }
-    
-    UpdateActors(); //TODO
-    UpdateGlobalLighting();
-
-    //auto modelMatrix = glm::scale(glm::vec3{ 60.0f, 60.0f, 60.0f });
-    auto modelMatrix = glm::scale(glm::vec3{ 1, 1, 1 });
-    auto light1Matrix = glm::translate(glm::vec3{ light1Pos.x, light1Pos.y, light1Pos.z });
-    auto light2Matrix = glm::translate(glm::vec3{ light2Pos.x, light2Pos.y, light2Pos.z });
-
-    loadedScenes["model"]->Draw(modelMatrix, mainDrawContext);
-    loadedScenes["lightSource"]->Draw(light1Matrix, mainDrawContext);
-    loadedScenes["lightSource"]->Draw(light2Matrix, mainDrawContext);
+    mainDrawContexts.clear();
 
     UpdateCamera();
-}
 
-void Vel::Renderer::UpdateActors()
-{
+    UpdateGlobalLighting();
+
+    UpdateActors();
 }
 
 void Vel::Renderer::UpdateGlobalLighting()
@@ -214,26 +208,149 @@ void Vel::Renderer::UpdateCamera()
     sceneData.viewProjection = viewProj;
     sceneData.invViewProjection = glm::inverse(viewProj);
     sceneData.position = glm::vec4(mainCamera.GetPosition(), 1.0f);
-    sceneData.testData.g = testRoughness;
-    sceneData.testData.b = testMetallic * 0.1f;
 }
 
-void Vel::Renderer::UpdateGlobalDescriptors()
+void Vel::Renderer::UpdateActors()
 {
-    AllocatedBuffer sceneCameraDataBuffer = gpuAllocator.CreateBuffer(sizeof(SceneCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-    GetCurrentFrame().frameCleanupQueue.Push([=, this]() {
-        gpuAllocator.DestroyBuffer(sceneCameraDataBuffer);
-    });
+    modelMatrix = glm::scale(glm::vec3{ 1, 1, 1 });
+    modelMatrix2 = glm::translate(glm::vec3{ 0, -50, 0 });
+    light1Matrix = glm::translate(glm::vec3{ light1Pos.x, light1Pos.y, light1Pos.z });
+    light2Matrix = glm::translate(glm::vec3{ light2Pos.x, light2Pos.y, light2Pos.z });
+}
 
-    SceneCameraData* sceneCameraGPUData = (SceneCameraData*)sceneCameraDataBuffer.info.pMappedData;
+void Vel::Renderer::UpdateFrameDescriptors()
+{
+    auto& currentFrame = GetCurrentFrame();
+
+    SceneCameraData* sceneCameraGPUData = (SceneCameraData*)currentFrame.GetSceneData().cameraDataBuffer.info.pMappedData;
     *sceneCameraGPUData = sceneData;
 
-    sceneCameraDataDescriptorSet = GetCurrentFrame().frameDescriptors.Allocate(sceneCameraDataDescriptorLayout);
-    DescriptorWriter writer;
-    writer.WriteBuffer(0, sceneCameraDataBuffer.buffer, sizeof(SceneCameraData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    writer.UpdateSet(device, sceneCameraDataDescriptorSet);
+    deferred.SetCameraDescriptorSet(currentFrame.GetSceneData().cameraDescriptorSet);
+}
 
-    deferred.UpdateCameraDescriptorSet(sceneCameraDataDescriptorSet);
+void Vel::Renderer::AwaitFramePreviousRenderDone(FrameData& frame)
+{
+    VK_CHECK(vkWaitForFences(device, 1, &frame.GetSync().renderFence, true, FRAME_TIMEOUT));
+    VK_CHECK(vkResetFences(device, 1, &frame.GetSync().renderFence));
+}
+
+void Vel::Renderer::SkyboxDraw(FrameData& frame)
+{
+    VkCommandPool threadCmdPool = frame.GetAvailableCommandPool();
+    VkCommandBuffer skyboxCmd = CreateCommandBuffer(threadCmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+    VK_CHECK(vkResetCommandBuffer(skyboxCmd, 0));
+    VK_CHECK(vkBeginCommandBuffer(skyboxCmd, &primaryCommandBegin));
+
+    deferred.GetFramebuffer().TransitionImages(skyboxCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    {
+        skyboxPass.Draw(skyboxCmd, mainCamera);
+    }
+
+    VK_CHECK(vkEndCommandBuffer(skyboxCmd));
+
+    QueueGPUWork(skyboxCmd, { frame.GetSync().swapchainSemaphore }, frame.GetSync().skyboxSemaphore);
+
+    frame.ReaddCommandPool(threadCmdPool);
+}
+
+//TODO Some model grouping, Batch created after updating some actors?
+void Vel::Renderer::GPassContextWork(std::shared_ptr<RenderableGLTF> model, const glm::mat4& modelMatrix, std::vector<DrawContext>& drawContexts)
+{
+    DrawContext workDrawContext(MaterialInstance::instancesCount);;
+
+    model->Draw(modelMatrix, workDrawContext);
+
+    std::lock_guard lock(drawContextMutex);
+    drawContexts.emplace_back(std::move(workDrawContext));
+}
+
+void Vel::Renderer::GPassCommandRecord(FrameData& frame)
+{
+    VkCommandPool threadCmdPool = frame.GetAvailableCommandPool();
+    VkCommandBuffer gPassCmd = CreateCommandBuffer(threadCmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+    VK_CHECK(vkResetCommandBuffer(gPassCmd, 0));
+    VK_CHECK(vkBeginCommandBuffer(gPassCmd, &primaryCommandBegin));
+
+    {
+        FunctionTimeMeasure measure{ stats.gPassDrawTime };
+        deferred.DrawGPass(mainDrawContexts, gPassCmd);
+    }
+    ++stats.gPassesCount;
+    stats.gPassesAccTime += stats.gPassDrawTime;
+    stats.gPassesAverage = stats.gPassesAccTime / stats.gPassesCount;
+
+    VK_CHECK(vkEndCommandBuffer(gPassCmd));
+
+    QueueGPUWork(gPassCmd, { frame.GetSync().skyboxSemaphore }, frame.GetSync().gPassSemaphore);
+
+    frame.ReaddCommandPool(threadCmdPool);
+}
+
+void Vel::Renderer::LightSourceShadowWork(FrameData& frame)
+{
+    DrawContext shadowContext(MaterialInstance::instancesCount);
+
+    loadedScenes["model"]->Draw(modelMatrix, shadowContext);
+    loadedScenes["lightSource"]->Draw(light1Matrix, shadowContext);
+    loadedScenes["lightSource"]->Draw(light2Matrix, shadowContext);
+
+    VkCommandPool threadCmdPool = frame.GetAvailableCommandPool();
+    VkCommandBuffer shadowCmd = CreateCommandBuffer(threadCmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+    VK_CHECK(vkResetCommandBuffer(shadowCmd, 0));
+    VK_CHECK(vkBeginCommandBuffer(shadowCmd, &primaryCommandBegin));
+
+    shadowPass.Draw(shadowContext, shadowCmd);
+
+    VK_CHECK(vkEndCommandBuffer(shadowCmd));
+
+    QueueGPUWork(shadowCmd, {}, frame.GetSync().shadowsSemaphore);
+
+    frame.ReaddCommandPool(threadCmdPool);
+}
+
+void Vel::Renderer::LPassCommandRecord(FrameData& frame)
+{
+    VkCommandPool threadCmdPool = frame.GetAvailableCommandPool();
+    VkCommandBuffer lPassCmd = CreateCommandBuffer(threadCmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+    VK_CHECK(vkResetCommandBuffer(lPassCmd, 0));
+    VK_CHECK(vkBeginCommandBuffer(lPassCmd, &primaryCommandBegin));
+
+    TransitionDepthImage(lPassCmd, testLights.sunlight.shadowMap.image, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL);
+    deferred.GetFramebuffer().TransitionImages(lPassCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    {
+        FunctionTimeMeasure measure{ stats.lPassDrawTime };
+        deferred.DrawLPass(lPassCmd);
+    }
+
+    PreparePresentableImage(lPassCmd); //TODO rename to OnFrameRenderEnd
+
+    DrawImgui(lPassCmd, swapchain.GetImage(), swapchain.GetImageView(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+    VK_CHECK(vkEndCommandBuffer(lPassCmd));
+
+    const auto& sync = frame.GetSync();
+    QueueGPUWork(lPassCmd, { sync.shadowsSemaphore, sync.gPassSemaphore }, sync.lPassSemaphore, sync.renderFence);
+
+    frame.ReaddCommandPool(threadCmdPool);
+}
+
+void Vel::Renderer::QueueGPUWork(VkCommandBuffer cmd, const std::vector<VkSemaphore>&& wait, VkSemaphore signal, VkFence fence)
+{
+    VkCommandBufferSubmitInfo lPassBufferSubmitInfo = CreateCommandBufferSubmitInfo(cmd);
+    std::vector<VkSemaphoreSubmitInfo> waitSemaphores(wait.size());
+    for (int i = 0; i < wait.size(); ++i)
+    {
+        waitSemaphores[i] = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, wait[i]);
+    }
+    VkSemaphoreSubmitInfo signalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, signal);
+    VkSubmitInfo2 submitInfo = CreateSubmitInfo(lPassBufferSubmitInfo, waitSemaphores.data(), wait.size(), &signalInfo, 1);
+
+    std::lock_guard lock(graphicsQueueMutex);
+    VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &submitInfo, fence));
 }
 
 void Vel::Renderer::Draw()
@@ -243,142 +360,132 @@ void Vel::Renderer::Draw()
     if (swapchain.IsAwaitingResize())
     {
         vkDeviceWaitIdle(device);
-        swapchain.Resize(window);
+        swapchain.Resize(window); //TODO fix matrix
     }
 
-    UpdateScene();
+    //UpdateScene();
+    ++frameNumber;
+    auto& currentFrame = GetCurrentFrame();
+
+    fmt::println("--------------------------------------------------");
+    fmt::println("You spin me right round .                   Frame ID {}", frameNumber);
+    while (currentFrame.GetSync().inProgress.load()){} //TODO temp spinlock
+    fmt::println("Awaiting this frame previous work done .    Frame ID {}", frameNumber);
+    AwaitFramePreviousRenderDone(currentFrame);
+    fmt::println("This frame previous render await finish.    Frame ID {}", frameNumber);
+
+    currentFrame.StartNew(frameNumber);
+
+    if (frames[(frameNumber + 1) % FRAME_DATA_SIZE].GetSync().preparing.load())
+    {
+        //With 2 frames this condition means that the work queue is empty, so we can put other frame's prepare there
+        //Probably not, because other frame will still wait for Fence, which by when the 
+        renderThreadPool.SetWorkFrame(&frames[(frameNumber + 1) % FRAME_DATA_SIZE]);
+        fmt::println("Previous frame moved to work.           Frame ID {}", frameNumber);
+    }
+
+    currentFrame.GetSync().inProgress.store(true);
+    currentFrame.GetSync().preparing.store(true);
+    //In this place the other thread can move prepare to work and so one prepare will be lost
+    renderThreadPool.SetPrepareFrame(&currentFrame);
+    fmt::println("Frame set for prepare.                 Frame ID {}", frameNumber);
+
+    currentFrame.AddWork(GENERAL, [&]() {
+        UpdateScene();
+        UpdateFrameDescriptors();
+
+        swapchain.AcquireNextImageIndex(currentFrame.GetSync().swapchainSemaphore);
+        if (swapchain.IsAwaitingResize())
+        {
+            currentFrame.Discard();
+        }
+
+        fmt::println("General work done.                     Frame ID {}", currentFrame.GetFrameIdx());
+    }, true);
+
+    currentFrame.AddQueueWorkFinishCallback(GENERAL, [&]() {
+        fmt::println("Start Skybox queue.                    Frame ID {}", currentFrame.GetFrameIdx());
+        SkyboxDraw(currentFrame);
+        fmt::println("General cb done.                       Frame ID {}", currentFrame.GetFrameIdx());
+    });
+
+    currentFrame.AddQueueWorkFinishCallback(MAIN_CONTEXT, [&]() {
+        //GPassCommandRecord(currentFrame);
+        fmt::println("Main context cb done.                  Frame ID {}", currentFrame.GetFrameIdx());
+    });
+    currentFrame.AddWork(MAIN_CONTEXT, [&]() {
+        for (int i = 0; i < 25; ++i)
+            GPassContextWork(loadedScenes["model"], modelMatrix2, mainDrawContexts);
+    });
+    currentFrame.AddWork(MAIN_CONTEXT, [&]() {
+        for (int i = 0; i < 25; ++i)
+            GPassContextWork(loadedScenes["model"], modelMatrix2, mainDrawContexts);
+    });
+    currentFrame.AddWork(MAIN_CONTEXT, [&]() {
+        for (int i = 0; i < 25; ++i)
+            GPassContextWork(loadedScenes["model"], modelMatrix2, mainDrawContexts);
+    });
+    currentFrame.AddWork(MAIN_CONTEXT, [&]() {
+        fmt::println("Main context work done.                Frame ID {}", currentFrame.GetFrameIdx());
+    }, true);
+
+    currentFrame.AddWork(SHADOW_CONTEXT, [&]() {
+        fmt::println("Start Shadows context/queue.           Frame ID {}", currentFrame.GetFrameIdx());
+        LightSourceShadowWork(currentFrame);
+        fmt::println("Shadows context/queue work done.       Frame ID {}", currentFrame.GetFrameIdx());
+    }, true);
+
+    currentFrame.AddWork(PREPARED_FRAME_HANDLER, [&]() {
+        fmt::println("Frame prepared.                        Frame ID {}", currentFrame.GetFrameIdx());
+        //LightSourceShadowWork(currentFrame);
+        //Await fence
+
+        while (frames[(currentFrame.GetFrameIdx() + 1) % FRAME_DATA_SIZE].GetSync().rendering.load()){}
+        currentFrame.GetSync().rendering.store(true);
+        renderThreadPool.SetWorkFrame(&currentFrame);
+    }, true);
+
+    currentFrame.AddWork(MAIN_COMMANDS_RECORD, [&]() {
+        fmt::println("Start GPass queue.                     Frame ID {}", currentFrame.GetFrameIdx());
+        GPassCommandRecord(currentFrame);
+        fmt::println("Main commmands done.                   Frame ID {}", currentFrame.GetFrameIdx());
+    }, true);
+
+    currentFrame.AddWork(SHADOW_COMMANDS_RECORD, [&]() {
+        //LightSourceShadowWork(currentFrame);
+        fmt::println("Shadows commands work done (MOCK).     Frame ID {}", currentFrame.GetFrameIdx());
+    }, true);
+
+    currentFrame.AddWork(LPASS_COMMANDS_RECORD, [&]() {
+        fmt::println("Start LPass queue.                     Frame ID {}", currentFrame.GetFrameIdx());
+        LPassCommandRecord(currentFrame); //Signals render fence
+        fmt::println("Finish LPass queue.                    Frame ID {}", currentFrame.GetFrameIdx());
+
+        swapchain.PresentImage(&currentFrame.GetSync().lPassSemaphore, graphicsQueue);
+        currentFrame.LockQueues();
+        currentFrame.GetSync().rendering.store(false);
+        currentFrame.GetSync().inProgress.store(false);
+        fmt::println("Finish present.                        Frame ID {}", currentFrame.GetFrameIdx());
+    }, true);
+
+    fmt::println("Work added.                            Frame ID {}", frameNumber);
 
     PrepareImguiFrame();
 
-    //TODO fix draw extent in deferred after resize
+    //TODO fix draw extent in deferred after resize, update in passes
     const VkExtent2D& swapchainSize = swapchain.GetImageSize();
-    drawExtent.width = static_cast<uint32_t>(std::min(swapchainSize.width, drawExtent.width) * renderScale);
-    drawExtent.height = static_cast<uint32_t>(std::min(swapchainSize.height, drawExtent.height) * renderScale);
+    //drawExtent.width = static_cast<uint32_t>(std::min(swapchainSize.width, drawExtent.width) * renderScale);
+    //drawExtent.height = static_cast<uint32_t>(std::min(swapchainSize.height, drawExtent.height) * renderScale);
+    drawExtent.width = static_cast<uint32_t>(swapchainSize.width * renderScale);
+    drawExtent.height = static_cast<uint32_t>(swapchainSize.height * renderScale);
 
-    auto& currentFrame = GetCurrentFrame();
-    VK_CHECK(vkWaitForFences(device, 1, &currentFrame.renderFence, true, FRAME_TIMEOUT));
-    currentFrame.frameCleanupQueue.Flush();
-    currentFrame.frameDescriptors.ClearPools();
-
-    VK_CHECK(vkResetFences(device, 1, &currentFrame.renderFence));
-
-    swapchain.AcquireNextImageIndex(currentFrame.swapchainSemaphore);
-    if (swapchain.IsAwaitingResize())
-    {
-        return;
-    }
-
-    UpdateGlobalDescriptors();
-
-    VkCommandBufferBeginInfo cmdBufferBeginInfo {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    DrawShadows();
-
-    //--SKYBOX-- --SHADOW PASS--
-    auto& skyboxCmd = currentFrame.skyboxCommands;
-    VK_CHECK(vkResetCommandBuffer(skyboxCmd, 0));
-    VK_CHECK(vkBeginCommandBuffer(skyboxCmd, &cmdBufferBeginInfo));
-
-    deferred.GetFramebuffer().TransitionImages(skyboxCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    {
-        skyboxPass.Draw(skyboxCmd, mainCamera);
-        shadowPass.Draw(mainDrawContext, skyboxCmd);
-    }
-
-    VK_CHECK(vkEndCommandBuffer(skyboxCmd));
-
-    VkCommandBufferSubmitInfo skyboxBufferInfo = CreateCommandBufferSubmitInfo(skyboxCmd);
-    VkSemaphoreSubmitInfo skyboxWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, currentFrame.swapchainSemaphore);
-    VkSemaphoreSubmitInfo signalSemaphores[2];
-    signalSemaphores[0] = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, skyboxPass.GetSemaphore());
-    signalSemaphores[1] = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, shadowPass.GetSemaphore());
-    VkSubmitInfo2 skyboxSubmitInfo = CreateSubmitInfo(skyboxBufferInfo, &skyboxWaitInfo, 1, signalSemaphores, 2);
-
-    VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &skyboxSubmitInfo, VK_NULL_HANDLE));
-
-
-    //--SHADOW PASS--
-    /*auto& shadowCmd = currentFrame.shadowCommands;
-    VK_CHECK(vkResetCommandBuffer(shadowCmd, 0));
-    VK_CHECK(vkBeginCommandBuffer(shadowCmd, &cmdBufferBeginInfo));
-
-    {
-        shadowPass.Draw(mainDrawContext, shadowCmd);
-    }
-
-    VK_CHECK(vkEndCommandBuffer(shadowCmd));
-
-    VkCommandBufferSubmitInfo shadowPassBufferInfo = CreateCommandBufferSubmitInfo(shadowCmd);
-    VkSemaphoreSubmitInfo shadowPassWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, currentFrame.swapchainSemaphore);
-    VkSemaphoreSubmitInfo shadowPassSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, shadowPass.GetSemaphore());
-    VkSubmitInfo2 shadowPassSubmitInfo = CreateSubmitInfo(shadowPassBufferInfo, &shadowPassWaitInfo, 1, &shadowPassSignalInfo);
-
-    VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &shadowPassSubmitInfo, VK_NULL_HANDLE));*/
-
-
-    //--GPASS--
-    auto& gPassCmd = currentFrame.gPassCommands;
-    VK_CHECK(vkResetCommandBuffer(gPassCmd, 0));
-    VK_CHECK(vkBeginCommandBuffer(gPassCmd, &cmdBufferBeginInfo));
-
-    {
-        FunctionTimeMeasure measure{ stats.gPassDrawTime };
-        stats.gPassesAccTime += stats.gPassDrawTime;
-        deferred.DrawGPass(mainDrawContext, gPassCmd);
-        ++stats.gPassesCount;
-    }
-    stats.gPassesAverage = stats.gPassesAccTime / stats.gPassesCount;
-
-    VK_CHECK(vkEndCommandBuffer(gPassCmd));
-
-    VkCommandBufferSubmitInfo gPassBufferInfo = CreateCommandBufferSubmitInfo(gPassCmd);
-    VkSemaphoreSubmitInfo gPassWaitInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, skyboxPass.GetSemaphore());
-    VkSemaphoreSubmitInfo gPassSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, deferred.GetGPassSemaphore());
-    VkSubmitInfo2 gPassSubmitInfo = CreateSubmitInfo(gPassBufferInfo, &gPassWaitInfo, 1, &gPassSignalInfo, 1);
-
-    VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &gPassSubmitInfo, VK_NULL_HANDLE));
-
-
-    //--LPASS--
-    auto& lPassCmd = currentFrame.lPassCommands;
-    VK_CHECK(vkResetCommandBuffer(lPassCmd, 0));
-    VK_CHECK(vkBeginCommandBuffer(lPassCmd, &cmdBufferBeginInfo));
-
-    TransitionDepthImage(lPassCmd, testLights.sunlight.shadowMap.image, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL);
-    deferred.GetFramebuffer().TransitionImages(lPassCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    {
-        FunctionTimeMeasure measure{ stats.lPassDrawTime };
-        deferred.DrawLPass(mainDrawContext, lPassCmd);
-    }
-
-    PreparePresentableImage(lPassCmd);
-
-    VK_CHECK(vkEndCommandBuffer(lPassCmd));
-
-    //TODO semaphores are shared between frames
-    VkCommandBufferSubmitInfo lPassBufferSubmitInfo = CreateCommandBufferSubmitInfo(lPassCmd);
-    VkSemaphoreSubmitInfo waitSemaphores[2];
-    waitSemaphores[0] = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, shadowPass.GetSemaphore());
-    waitSemaphores[1] = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, deferred.GetGPassSemaphore());
-    VkSemaphoreSubmitInfo lPassSignalInfo = CreateSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, deferred.GetLPassSemaphore());
-    VkSubmitInfo2 lPassSubmitInfo = CreateSubmitInfo(lPassBufferSubmitInfo, waitSemaphores, 2, &lPassSignalInfo, 1);
-
-    VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &lPassSubmitInfo, currentFrame.renderFence));
-
-
-    //--PRESENT--
-    swapchain.PresentImage(&deferred.GetLPassSemaphore(), graphicsQueue);
-    if (swapchain.IsAwaitingResize())
-    {
-        return;
-    }
-
-    frameNumber++;
+    //TODO temp spinlock
+    fmt::println("Waiting for previous frame.            Frame ID {}", frameNumber);
+    
+    //Should await some CPU work
+    fmt::println("Start frame work.                      Frame ID {}", frameNumber);
+    //renderThreadPool.StartFrameWork();
+    currentFrame.UnlockQueuesLock(PREPARE_CPU_DATA);
 }
 
 void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd)
@@ -424,8 +531,6 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd)
         TransitionImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
         BlitImage(cmd, presentableImage, swapchain.GetImage(), drawExtent, swapchain.GetImageSize());
     }
-
-    DrawImgui(cmd, swapchain.GetImage(), swapchain.GetImageView(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 }
 
 void Vel::Renderer::PrepareImguiFrame()
@@ -436,20 +541,14 @@ void Vel::Renderer::PrepareImguiFrame()
         ImGui::Text("Camera");
         ImGui::Text("position  %f  %f  %f", mainCamera.GetPosition().x, mainCamera.GetPosition().y, mainCamera.GetPosition().z);
         ImGui::SliderFloat("Speed", &mainCamera.speed, 0.001f, 1.f);
-        ImGui::SliderFloat("roughness", &testRoughness, 0.01f, 1.f);
-        ImGui::SliderFloat("metallic", &testMetallic, 0.0001f, 0.1f);
         ImGui::Text("Perf");
         ImGui::Text("frametime %f ms", stats.frametime);
-        ImGui::Text("drawtime %f ms", stats.dedicatedMaterialDrawTime);
+        ImGui::Text("context creation %f ms", stats.contextCreation);
         ImGui::Text("gpass drawtime %f ms", stats.gPassDrawTime);
-        ImGui::Text("gpass drawtime %f ms", stats.gPassesAverage);
+        ImGui::Text("gpass average %f ms", stats.gPassesAverage);
         ImGui::Text("lpass drawtime %f ms", stats.lPassDrawTime);
         ImGui::Text("scene update %f ms", stats.sceneUpdateTime);
     });
-}
-
-void Vel::Renderer::DrawShadows()
-{
 }
 
 void Vel::Renderer::DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout)
@@ -473,8 +572,8 @@ void Vel::Renderer::InitTestData()
     loadedScenes["lightSource"] = *cube;
 
     //TODO size per surface type material
-    mainDrawContext.opaqueSurfaces.resize(MaterialInstance::instancesCount);
-    mainDrawContext.transparentSurfaces.resize(MaterialInstance::instancesCount);
+    //mainDrawContext.opaqueSurfaces.resize(MaterialInstance::instancesCount);
+    //mainDrawContext.transparentSurfaces.resize(MaterialInstance::instancesCount);
 }
 
 void Vel::Renderer::InitTestLightData()
@@ -482,14 +581,12 @@ void Vel::Renderer::InitTestLightData()
     testLights.lights.ambient = glm::vec4{ 0.05f, 0.05f, 0.05f, 1.0f };
 
     VkExtent3D shadowMapResolution = {
-        .width = 2048,
-        .height = 2048,
+        .width = 1024,
+        .height = 1024,
         .depth = 1,
     };
     testLights.sunlight.InitShadowData(gpuAllocator, shadowMapResolution);
     testLights.sunlight.InitLightData(glm::normalize(glm::vec4{ 0.5f, 1.f, 0.5f, 1.0f }), glm::vec4{ 1.0f, 0.85f, 0.3f, 1.0f });
-    //testLights.sunlight.direction = glm::normalize(glm::vec4{ 0.5f, -0.5f, 0.5f, 1.0f });
-    //testLights.sunlight.color = glm::vec4{ 1.0f, 0.85f, 0.2f, 1.0f };
 
     testLights.lights.pointLightsCount = 2;
     testLights.pointLightsBuffer = gpuAllocator.CreateBuffer(sizeof(PointLight) * testLights.lights.pointLightsCount, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -643,61 +740,40 @@ void Vel::Renderer::InitTestTextures()
     });
 }
 
-void Vel::Renderer::CreateCommands()
+void Vel::Renderer::CreateFrameData()
 {
-    VkCommandPoolCreateInfo commandPoolInfo {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+    for (auto& frame : frames)
+    {
+        frame.Init(device, graphicsQueueFamily);
+        renderThreadPool.SetupFrameData(frame);
+    }
+}
+
+void Vel::Renderer::CreateCommandsInfo()
+{
+    primaryCommandBegin = VkCommandBufferBeginInfo {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = graphicsQueueFamily
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
     };
+}
+
+VkCommandBuffer Vel::Renderer::CreateCommandBuffer(VkCommandPool pool, VkCommandBufferLevel level)
+{
+    VkCommandBuffer buffer;
 
     VkCommandBufferAllocateInfo cmdAllocateInfo {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandPool = pool,
+        .level = level,
         .commandBufferCount = 1
     };
 
-    for (auto& frameInfo : frames)
-    {
-        VK_CHECK(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &frameInfo.commandPool));
+    VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &buffer));
 
-        cmdAllocateInfo.commandPool = frameInfo.commandPool;
-
-        VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.shadowCommands));
-        VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.skyboxCommands));
-        VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.gPassCommands));
-        VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocateInfo, &frameInfo.lPassCommands));
-
-        frameInfo.cleanupQueue.Push( [&]() { vkDestroyCommandPool(device, frameInfo.commandPool, nullptr); } );
-    }
-}
-
-void Vel::Renderer::CreateSyncStructures()
-{
-    VkFenceCreateInfo fenceInfo {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_FENCE_CREATE_SIGNALED_BIT
-    };
-
-    VkSemaphoreCreateInfo semaphoreInfo {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = nullptr
-    };
-
-    for (auto& frame : frames)
-    {
-        VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &frame.renderFence));
-        frame.cleanupQueue.Push([&]() { vkDestroyFence(device, frame.renderFence, nullptr); });
-
-        VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &frame.swapchainSemaphore));
-        frame.cleanupQueue.Push([&]()
-        {
-            vkDestroySemaphore(device, frame.swapchainSemaphore, nullptr);
-        });
-    }
+    return buffer;
 }
 
 void Vel::Renderer::CreateAllocator()
@@ -731,11 +807,18 @@ void Vel::Renderer::CreateCameraDescriptors()
             {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4}
         };
 
-        frameInfo.frameDescriptors = DescriptorAllocatorDynamic{};
-        frameInfo.frameDescriptors.InitPool(device, 100, frameSizes);
+        frameInfo.GetSceneData().frameDescriptors = DescriptorAllocatorDynamic{};
+        frameInfo.GetSceneData().frameDescriptors.InitPool(device, 100, frameSizes);
 
-        delQueue.Push([&]() {
-            frameInfo.frameDescriptors.Cleanup();
+        frameInfo.GetSceneData().cameraDataBuffer = gpuAllocator.CreateBuffer(sizeof(SceneCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+        frameInfo.GetSceneData().cameraDescriptorSet = frameInfo.GetSceneData().frameDescriptors.Allocate(sceneCameraDataDescriptorLayout);
+        DescriptorWriter writer;
+        writer.WriteBuffer(0, frameInfo.GetSceneData().cameraDataBuffer.buffer, sizeof(SceneCameraData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        writer.UpdateSet(device, frameInfo.GetSceneData().cameraDescriptorSet);
+
+        frameInfo.cleanupQueue.Push([buffer = frameInfo.GetSceneData().cameraDataBuffer, this]() {
+            gpuAllocator.DestroyBuffer(buffer);
         });
     }
 
@@ -748,6 +831,7 @@ void Vel::Renderer::Cleanup()
 {
     if (isInitialized)
     {
+        renderThreadPool.Cleanup();
         vkDeviceWaitIdle(device);
 
         loadedScenes.clear();
@@ -758,8 +842,7 @@ void Vel::Renderer::Cleanup()
 
         for (auto& frame : frames)
         {
-            frame.cleanupQueue.Flush();
-            frame.frameCleanupQueue.Flush();
+            frame.Cleanup();
         }
 
         delQueue.Flush();

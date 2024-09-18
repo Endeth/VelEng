@@ -27,7 +27,7 @@ namespace Vel
         VkPresentModeKHR presentMode;
         VkImageUsageFlagBits additionalUsageFlags;
 
-        VkPresentInfoKHR presentInfo;
+        VkPresentInfoKHR presentInfo; //TODO make thread safe
 
         std::vector<VkImage> swapchainImages;
         std::vector<VkImageView> swapchainImageViews;

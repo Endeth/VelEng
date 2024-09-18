@@ -42,6 +42,7 @@
 namespace Vel
 {
     constexpr static uint32_t FRAME_TIMEOUT = 1000000000;
+    constexpr static uint32_t RENDER_THREADS_COUNT = 2;
 
     struct Vertex
     {
@@ -95,6 +96,67 @@ namespace Vel
         AllocatedBuffer indexBuffer;
         AllocatedBuffer vertexBuffer;
         VkDeviceAddress vertexBufferAddress;
+    };
+
+    // General work queue
+    //  -- prepare cpu data and send (unlocks on job done)
+    //  -- prepare light data and send (unlocks on job done)
+    //  -- set initial images layout (semaphore signal)
+    //  -- maybe get swapchain?
+
+    // Main context work queue (adds work to record gpass and unlocks it on no more work)
+    // |
+    // v
+    // Record gpass work commands queue (unlocks on no more work)
+    // |
+    // | -- waits for initial img layout semaphore on GPU
+    // v
+    // Queue gpass callback (unlocks on finish) or work commands queue (unlocks on no more work)
+
+    // Shadow context work queue (adds work to record shadows and unlocks it on no more work)
+    // |
+    // v
+    // Record shadows commands work queue (unlocks on no more work)
+    // |
+    // | -- waits for initial img layout semaphore on GPU
+    // v
+    // Queue shadows callback (unlocks on finish) or work commands queue (unlocks on no more work)
+
+    // LPass + blit record and present queue
+    // -- might happen only after camera and lights, queue waits for semaphores gpass shadows skybox and imgs layout
+    // -- blit waits for getting swapchain
+    // -- present waits for swapchain and lpass semaphore
+
+    enum RenderQueueType : uint8_t
+    {
+        GENERAL,
+        PREPARED_FRAME_HANDLER,
+        MAIN_CONTEXT,
+        MAIN_COMMANDS_RECORD,
+        SHADOW_CONTEXT,
+        SHADOW_COMMANDS_RECORD,
+        LPASS_COMMANDS_RECORD
+    };
+
+    enum RenderStages : uint8_t
+    {
+        NONE,
+        PREPARE_CPU_DATA,
+        PREPARE_MAIN_CONTEXT,
+        PREPARE_SHADOW_CONTEXT,
+        SET_INITIAL_IMAGES_LAYOUT,
+        UPDATE_GPU_CAMERA_DATA,
+        UPDATE_GPU_LIGHT_DATA,
+        FRAME_PREPARED,
+        RECORD_GPASS,
+        RECORD_SHADOWS,
+        QUEUE_GPASS,
+        QUEUE_SHADOWS,
+        RECORD_QUEUE_SKYBOX,
+        RECORD_QUEUE_LPASS,
+        GET_SWAPCHAIN_IMAGE,
+        //SWAPCHAIN_IMAGE_BLIT,
+        SWAPCHAIN_PRESENT
     };
 
     enum class MaterialPass : uint8_t

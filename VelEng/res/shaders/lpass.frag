@@ -44,7 +44,7 @@ void main()
 	vec3 normal = texture(normalsTexture, inUV).rgb;
 	vec3 metallicRoughness = texture(metallicRoughnessTexture, inUV).rgb;
 
-	float roughnessFactor = sceneCamera.testData.g;
+	float roughnessFactor = 1.f;
 	float metallicFactor = 0.01f;
 	float roughness = roughnessFactor * metallicRoughness.g;
 	roughness = max(roughness, 1e-2);
@@ -68,7 +68,7 @@ void main()
 	projectionCoords.z += bias; //bias;
 	//float sampledShadow = texture(sampler2D(shadowsTexture, shadowsSampler), projectionCoords.xy).r;
 	//sunlightColor *= projectionCoords.z > sampledShadow  ? 1.0 : 0.0;;
-	float sampledShadow = MultiSampleShadowMapGrid(projectionCoords);
+	float sampledShadow = MultiSampleShadowMapPoisson(projectionCoords);
 	sunlightColor *= sampledShadow;
 
 	vec3 colorResult = max(ambientColor, sunlightColor) + pointLightsIntensity;
@@ -76,7 +76,7 @@ void main()
 	colorResult.y = min(colorResult.y, color.y);
 	colorResult.z = min(colorResult.z, color.z);
 
-	//Skybox fuckery
+	//Skybox fuckery - might be resolved with proper blending...? gbuffer stores alpha
 	colorResult *= alpha;
 	colorResult += color * (1 - alpha);
 

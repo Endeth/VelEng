@@ -52,7 +52,7 @@ void Vel::SkyboxPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_
 void Vel::SkyboxPass::Init(VkDevice dev, VkExtent2D renderExtent, AllocatedImage& skyboxImage, AllocatedImage& drawImage)
 {
     device = dev;
-    drawExtent = renderExtent;
+    drawExtent = renderExtent; //TODO: RESIZE; can be fully dynamic
     drawImageView = drawImage.imageView;
 
     VkSamplerCreateInfo samplerCreateInfo{
@@ -80,13 +80,6 @@ void Vel::SkyboxPass::Init(VkDevice dev, VkExtent2D renderExtent, AllocatedImage
     descriptorWriter.WriteImageSampler(0, skyboxImage.imageView, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
     descriptorWriter.UpdateSet(device, skyboxDescriptorSet);
-
-    VkSemaphoreCreateInfo semaphoreInfo{
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = nullptr
-    };
-
-    VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &finishDrawing));
 
     PrebuildRenderInfo();
 }
@@ -183,7 +176,6 @@ void Vel::SkyboxPass::Draw(VkCommandBuffer cmd, const Camera& camera)
 void Vel::SkyboxPass::Cleanup()
 {
     descriptorPool.Cleanup();
-    vkDestroySemaphore(device, finishDrawing, nullptr);
     vkDestroyDescriptorSetLayout(device, skyboxLayout, nullptr);
     pipeline.Cleanup();
     vkDestroySampler(device, sampler, nullptr);

@@ -4,12 +4,12 @@
 void Vel::ShadowPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t layoutsCount)
 {
     VkShaderModule vertexModule;
-    if (!LoadShaderModule(GET_SHADER_PATH("directional.vert"), device, &vertexModule))
+    if (!LoadShaderModule(GET_SHADER_PATH("shadow_directional_light.vert"), device, &vertexModule))
     {
         fmt::print("Error when building the vertex shader \n");
     }
     VkShaderModule fragmentModule;
-    if (!LoadShaderModule(GET_SHADER_PATH("directional.frag"), device, &fragmentModule))
+    if (!LoadShaderModule(GET_SHADER_PATH("shadow_directional_light.frag"), device, &fragmentModule))
     {
         fmt::print("Error when building the fragment shader \n");
     }
@@ -75,13 +75,6 @@ void Vel::ShadowPass::Init(VkDevice dev, Sunlight& sunlight)
 
     descriptorWriter.UpdateSet(device, shadowPassDescriptorSet);
 
-    VkSemaphoreCreateInfo semaphoreInfo{
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = nullptr
-    };
-
-    VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &finishDrawing));
-
     PrebuildRenderInfo();
 }
 
@@ -126,7 +119,6 @@ void Vel::ShadowPass::Draw(const DrawContext& context, VkCommandBuffer cmd)
 void Vel::ShadowPass::Cleanup()
 {
     descriptorPool.Cleanup();
-    vkDestroySemaphore(device, finishDrawing, nullptr);
     vkDestroyDescriptorSetLayout(device, shadowPassLayout, nullptr);
     pipeline.Cleanup();
 }

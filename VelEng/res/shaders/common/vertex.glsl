@@ -1,3 +1,6 @@
+#ifndef VERTEX_GLSL
+#define VERTEX_GLSL
+
 struct Vertex
 {
 	vec3 position;
@@ -6,3 +9,5 @@ struct Vertex
 	float v;
 	vec4 tangent;
 };
+
+#endif

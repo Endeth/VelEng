@@ -1,3 +1,6 @@
+#ifndef LIGHTNING_GLSL
+#define LIGHTNING_GLSL
+
 #include "brdf/brdf.glsl"
 
 struct PointLight
@@ -43,3 +46,5 @@ vec3 ProcessPointLights(vec3 position, vec3 normal, vec3 view,
 
 	return pointLightsIntensity;
 }
+
+#endif

@@ -143,7 +143,7 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT //For debug show
     };
 
-    VkExtent3D imageExtent{ drawExtent.width, drawExtent.height, 1 };
+    VkExtent3D imageExtent{ drawExtent.width, drawExtent.height, 1 }; //TODO: RESIZE;
     framebuffer.position = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R32G32B32A32_SFLOAT, gPassAttachmentsUsage);
     framebuffer.color = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_UNORM, gPassAttachmentsUsage);
     framebuffer.normals = mainAllocator->CreateImage(imageExtent, VK_FORMAT_R8G8B8A8_SNORM, gPassAttachmentsUsage);
@@ -213,9 +213,6 @@ void Vel::DeferredRenderer::Init(VkDevice dev, GPUAllocator* allocator, VkExtent
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         .pNext = nullptr
     };
-
-    VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &gPassFinishDrawing));
-    VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &lPassFinishDrawing));
 
     PreBuildRenderInfo();
 }
@@ -351,8 +348,6 @@ void Vel::DeferredRenderer::Cleanup()
     mainAllocator->DestroyImage(drawImage);
     mainAllocator->DestroyBuffer(drawRect.indexBuffer);
     mainAllocator->DestroyBuffer(drawRect.vertexBuffer);
-    vkDestroySemaphore(device, gPassFinishDrawing, nullptr);
-    vkDestroySemaphore(device, lPassFinishDrawing, nullptr);
     vkDestroyDescriptorSetLayout(device, gPassDescriptorLayout, nullptr);
     vkDestroyDescriptorSetLayout(device, framebufferDescriptorLayout, nullptr);
     vkDestroyDescriptorSetLayout(device, lightsDescriptorLayout, nullptr);
@@ -380,7 +375,7 @@ Vel::MaterialInstance Vel::DeferredRenderer::CreateMaterialInstance(const Materi
     return materialInstance;
 }
 
-void Vel::DeferredRenderer::DrawGPass(const DrawContext& context, VkCommandBuffer cmd)
+void Vel::DeferredRenderer::DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd)
 {
     TransitionDepthImage(cmd, framebuffer.depth.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
@@ -394,28 +389,31 @@ void Vel::DeferredRenderer::DrawGPass(const DrawContext& context, VkCommandBuffe
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPass.GetPipelineLayout(), 0, 1, &sceneCameraDataDescriptorSet, 0, nullptr);
 
     VkBuffer lastIndexBuffer = VK_NULL_HANDLE;
-    for (const auto& materialDraws : context.opaqueSurfaces)
+    for (const auto& context : contexts)
     {
-        if (!materialDraws.empty())
+        for (const auto& materialDraws : context.opaqueSurfaces)
         {
-            auto material = materialDraws[0].materialData;
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPass.GetPipelineLayout(), 1, 1, &material->descriptorSet, 0, nullptr);
-            for (const auto& drawData : materialDraws)
+            if (!materialDraws.empty())
             {
-                if (lastIndexBuffer != drawData.indexBuffer)
+                auto material = materialDraws[0].materialData;
+                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPass.GetPipelineLayout(), 1, 1, &material->descriptorSet, 0, nullptr);
+                for (const auto& drawData : materialDraws)
                 {
-                    lastIndexBuffer = drawData.indexBuffer;
-                    vkCmdBindIndexBuffer(cmd, drawData.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                    if (lastIndexBuffer != drawData.indexBuffer)
+                    {
+                        lastIndexBuffer = drawData.indexBuffer;
+                        vkCmdBindIndexBuffer(cmd, drawData.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                    }
+
+                    GPUDrawPushConstants pushConstants{
+                        .worldMatrix = drawData.transform,
+                        .vertexBuffer = drawData.vertexBufferAddress
+                    };
+
+                    vkCmdPushConstants(cmd, gPass.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &pushConstants);
+
+                    vkCmdDrawIndexed(cmd, drawData.indexCount, 1, drawData.firstIndex, 0, 0);
                 }
-
-                GPUDrawPushConstants pushConstants{
-                    .worldMatrix = drawData.transform,
-                    .vertexBuffer = drawData.vertexBufferAddress
-                };
-
-                vkCmdPushConstants(cmd, gPass.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &pushConstants);
-
-                vkCmdDrawIndexed(cmd, drawData.indexCount, 1, drawData.firstIndex, 0, 0);
             }
         }
     }
@@ -423,7 +421,7 @@ void Vel::DeferredRenderer::DrawGPass(const DrawContext& context, VkCommandBuffe
     vkCmdEndRendering(cmd);
 }
 
-void Vel::DeferredRenderer::DrawLPass(const DrawContext& context, VkCommandBuffer cmd)
+void Vel::DeferredRenderer::DrawLPass(VkCommandBuffer cmd)
 {
     TransitionImage(cmd, drawImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 

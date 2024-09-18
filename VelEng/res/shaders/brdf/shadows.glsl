@@ -1,3 +1,6 @@
+#ifndef SHADOWS_SAMPLING_GLSL
+#define SHADOWS_SAMPLING_GLSL
+
 vec2 poissonDisk[16] = vec2[](
    vec2( -0.94201624, -0.39906216 ),
    vec2( 0.94558609, -0.76890725 ),
@@ -63,6 +66,8 @@ float MultiSampleShadowMapGrid(vec3 projCoords)
 
 float GetShadowBias(vec3 lightDirection, vec3 fragNormal)
 {    
-	float texelsSampleDistance = sceneCamera.testData.b; //0.001
+	float texelsSampleDistance = 0.0007; //0.001
 	return ( texelsSampleDistance / 2 ) * (dot(lightDirection, fragNormal) + 1); //direction = Frag position - light position
 }
+
+#endif

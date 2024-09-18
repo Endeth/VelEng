@@ -5,6 +5,21 @@
 
 namespace Vel
 {
+    constexpr uint32_t MAX_LIGHTS = 10;
+
+    enum LightType : uint32_t
+    {
+        DIRECTIONAL = 0,
+        POINT = 1
+    };
+
+    struct GPULightsUniformBufferData
+    {
+        LightType type;
+        glm::mat4 viewProj;
+        glm::vec4 position;
+    };
+
     struct SceneLights
     {
         glm::vec4 ambient;

@@ -1,3 +1,6 @@
+#ifndef BRDF_GLSL
+#define BRDF_GLSL
+
 #define PI 3.141592
 
 // Specular BRDF functions
@@ -77,3 +80,4 @@ vec3 BRDF(vec3 diffuseColor, float roughness, vec3 fresnel0, vec3 normal, vec3 v
 	return specular + diffuse;
 }
 
+#endif

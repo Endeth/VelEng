@@ -22,11 +22,6 @@ namespace Vel
         void Init(VkDevice dev, Sunlight& sunlight);
         void Draw(const DrawContext& context, VkCommandBuffer cmd);
 
-        VkSemaphore GetSemaphore()
-        {
-            return finishDrawing;
-        }
-
         void Cleanup();
 
     private:
@@ -36,7 +31,6 @@ namespace Vel
 
         VkDescriptorSetLayout shadowPassLayout;
         VkDescriptorSet shadowPassDescriptorSet;
-        VkSemaphore finishDrawing;
         ShadowPipeline pipeline;
 
         VkExtent3D drawExtent;
@@ -49,9 +43,5 @@ namespace Vel
         VkRect2D renderScissor;
 
         void PrebuildRenderInfo();
-        //VkRenderingAttachmentInfo BuildAttachmentInfo();
-        //VkRenderingInfo BuildRenderInfo();
-        //VkViewport BuildRenderViewport();
-        //VkRect2D BuildRenderScissors();
     };
 }
