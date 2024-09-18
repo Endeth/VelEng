@@ -1,7 +1,66 @@
 set(HEADERS ${HEADERS} PARENT_SCOPE)
 set(SOURCE ${SOURCE} PARENT_SCOPE)
 
-add_subdirectory(src)
+set(HEADERS
+	${HEADERS}
+	${CMAKE_CURRENT_SOURCE_DIR}/include/VelEng.h
+
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/MeshLoader.h
+
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Renderer.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Frames.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Deferred.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/ShadowPass.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/SkyboxPass.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/VulkanTypes.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/VulkanUtils.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Swapchain.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Descriptors.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Pipeline.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/PipelineBuilder.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/GPUAllocator.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Material.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Renderable.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Lighting.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Camera.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/rendering/Images.h
+
+	${CMAKE_CURRENT_SOURCE_DIR}/include/ui/VelImgui.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/ui/GUIValue.h
+
+	${CMAKE_CURRENT_SOURCE_DIR}/include/utils/DeletionQueue.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/utils/RenderThreadPool.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/utils/TSQueue.h
+)
+
+set(SOURCE
+	${SOURCE}
+	${CMAKE_CURRENT_SOURCE_DIR}/src/VelEng.cpp
+	
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/MeshLoader.cpp
+
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Renderer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Frames.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Deferred.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/ShadowPass.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/SkyboxPass.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/VulkanUtils.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Swapchain.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Descriptors.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Pipeline.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/PipelineBuilder.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/GPUAllocator.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Material.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Renderable.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Lighting.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Camera.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/Images.cpp
+
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ui/VelImgui.cpp
+
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils/RenderThreadPool.cpp
+)
+
 add_subdirectory(res)
 
 foreach(FILE ${SOURCE} ${HEADERS} )

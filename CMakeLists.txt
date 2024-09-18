@@ -13,5 +13,5 @@ include_directories(${CMAKE_SOURCE_DIR}/VelEng/external)
 add_subdirectory(VelEng)
 
 if(USE_VELTEST)
-	add_subdirectory(VelTest)
+	add_subdirectory(tests)
 endif()

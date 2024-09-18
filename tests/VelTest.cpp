@@ -3,8 +3,6 @@
 
 #include "VelEng.h"
 #include <iostream>
-#include "utils/TSQueue.h"
-#include "utils/RenderThreadPool.h"
 
 int main()
 {
