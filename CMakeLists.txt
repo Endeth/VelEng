@@ -72,16 +72,21 @@ set(SOURCE
 
 add_subdirectory(res)
 
-foreach(FILE ${SOURCE} ${HEADERS} )
+foreach(FILE ${HEADERS} )
 	get_filename_component(ABSOLUTE_PATH "${FILE}" ABSOLUTE)
 	get_filename_component(PARENT_DIR "${ABSOLUTE_PATH}" DIRECTORY)
-	string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" GROUP "${PARENT_DIR}")
+	string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/include" "" GROUP "${PARENT_DIR}")
 	string(REPLACE "/" "\\" GROUP "${GROUP}")
-		if ("${FILE}" MATCHES ".*\\.cpp")
-		    set(GROUP "Source Files${GROUP}")
-		elseif("${FILE}" MATCHES ".*\\.h")
-		    set(GROUP "Header Files${GROUP}")
-		endif()
+	set(GROUP "VelEng${GROUP}")
+	source_group("${GROUP}" FILES "${FILE}")
+endforeach()
+
+foreach(FILE ${SOURCE} )
+	get_filename_component(ABSOLUTE_PATH "${FILE}" ABSOLUTE)
+	get_filename_component(PARENT_DIR "${ABSOLUTE_PATH}" DIRECTORY)
+	string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/src" "" GROUP "${PARENT_DIR}")
+	string(REPLACE "/" "\\" GROUP "${GROUP}")
+	set(GROUP "VelEng${GROUP}")
 	source_group("${GROUP}" FILES "${FILE}")
 endforeach()
 
@@ -93,6 +98,7 @@ configure_file (
 )
 include_directories(${PROJECT_BINARY_DIR}/generated/)
 set(HEADERS ${HEADERS} ${PROJECT_BINARY_DIR}/generated/config/VelEngConfig.h)
+source_group("VelEng" FILES "${PROJECT_BINARY_DIR}/generated/config/VelEngConfig.h")
 
 add_library(VelEng ${SOURCE} ${HEADERS})
 set_property(TARGET VelEng PROPERTY CXX_STANDARD 20)
