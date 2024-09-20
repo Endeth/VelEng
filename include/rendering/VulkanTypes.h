@@ -76,30 +76,6 @@ namespace Vel
         glm::vec4 testData;
     };
 
-    struct AllocatedImage
-    {
-        VkImage image;
-        VkImageView imageView;
-        VkImageUsageFlags usageFlags;
-        VmaAllocation allocation;
-        VkExtent3D extent;
-        VkFormat format;
-    };
-
-    struct AllocatedBuffer
-    {
-        VkBuffer buffer;
-        VmaAllocation allocation;
-        VmaAllocationInfo info;
-    };
-
-    struct GPUMeshBuffers
-    {
-        AllocatedBuffer indexBuffer;
-        AllocatedBuffer vertexBuffer;
-        VkDeviceAddress vertexBufferAddress;
-    };
-
     // General work queue
     //  -- prepare cpu data and send (unlocks on job done)
     //  -- prepare light data and send (unlocks on job done)
@@ -175,20 +151,6 @@ namespace Vel
         VkPipelineLayout pipelineLayout;
     };
 
-    struct MaterialResources
-    {
-        AllocatedImage colorImage;
-        VkSampler colorSampler; //Use one sampler;
-        AllocatedImage normalsImage;
-        VkSampler normalsSampler;
-        AllocatedImage metallicRoughnessImage;
-        VkSampler metallicRoughnessSampler;
-        AllocatedImage emissiveImage; //separate?
-        VkSampler emissiveSampler;
-        VkBuffer dataBuffer; //Model materials constants buffer
-        uint32_t dataBufferOffset; //Material offset
-    };
-
     struct MaterialConstants
     {
         glm::vec4 color;
@@ -214,21 +176,6 @@ namespace Vel
         //MaterialPipeline* pipeline; //Fixed pipelines right now
         VkDescriptorSet descriptorSet;
         MaterialPass passType;
-    };
-
-    struct GeoSurface
-    {
-        uint32_t startIndex;
-        uint32_t count;
-        std::shared_ptr<MaterialInstance> materialInstance;
-    };
-
-    struct MeshAsset
-    {
-        std::string name;
-
-        std::vector<GeoSurface> surfaces;
-        GPUMeshBuffers meshBuffers;
     };
 
     struct LightData

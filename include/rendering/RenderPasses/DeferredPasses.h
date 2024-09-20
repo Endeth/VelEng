@@ -3,6 +3,7 @@
 
 #include "Rendering/VulkanTypes.h"
 
+#include "Rendering/Buffers/Buffers.h"
 #include "Rendering/Buffers/GPUAllocator.h"
 
 #include "Rendering/RenderPasses/Descriptors.h"
@@ -28,6 +29,21 @@ namespace Vel
         void CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t layoutsCount);
     };
 
+    struct DeferredMaterialResources
+    {
+        AllocatableImage colorImage;
+        VkSampler colorSampler; //Use one sampler;
+        AllocatableImage normalsImage;
+        VkSampler normalsSampler;
+        AllocatableImage metallicRoughnessImage;
+        VkSampler metallicRoughnessSampler;
+        AllocatableImage emissiveImage; //separate?
+        VkSampler emissiveSampler;
+        VkBuffer dataBuffer; //Model materials constants buffer
+        uint32_t dataBufferOffset; //Material offset
+    };
+
+    struct DrawContext;
     //TODO Separate
     class DeferredPasses
     {
@@ -42,12 +58,12 @@ namespace Vel
                 METALLIC_ROUGHNESS = 3,
             };
 
-            AllocatedImage position;
-            AllocatedImage color;
-            AllocatedImage normals;
-            AllocatedImage metallicRoughness;
+            AllocatableImage position;
+            AllocatableImage color;
+            AllocatableImage normals;
+            AllocatableImage metallicRoughness;
 
-            AllocatedImage depth;
+            AllocatableImage depth;
 
             VkDescriptorSet framebufferDescriptor;
 
@@ -60,9 +76,9 @@ namespace Vel
             VkImageView sunlightShadowMapView);
         void Cleanup();
 
-        MaterialInstance CreateMaterialInstance(const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const;
+        MaterialInstance CreateMaterialInstance(const DeferredMaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const;
         Framebuffer CreateUnallocatedFramebuffer(const VkExtent3D& extent);
-        AllocatedImage CreateUnallocatedLPassDrawImage(const VkExtent3D& extent);
+        AllocatableImage CreateUnallocatedLPassDrawImage(const VkExtent3D& extent);
 
         void SetRenderExtent(const VkExtent2D& extent);
         void SetFramebufferGPassAttachment(const Framebuffer& framebuffer);
@@ -70,7 +86,7 @@ namespace Vel
         void SetCameraDescriptorSet(VkDescriptorSet cameraSet) { sceneCameraDataDescriptorSet = cameraSet; }
 
         void DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd, const Framebuffer& framebuffer);
-        void DrawLPass(VkCommandBuffer cmd, const AllocatedImage& drawImage, const Framebuffer& framebuffer);
+        void DrawLPass(VkCommandBuffer cmd, const AllocatableImage& drawImage, const Framebuffer& framebuffer);
 
     private:
         VkDevice device;

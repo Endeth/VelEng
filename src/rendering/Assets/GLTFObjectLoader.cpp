@@ -160,12 +160,12 @@ void Vel::GLTFObjectLoader::CreateMaterials(RenderableGLTF& sceneData, fastgltf:
     };
 
     sceneData.descriptorPool.InitPool(device, gltfAsset.materials.size(), sizes);
-    std::unordered_map<size_t, AllocatedImage> images;
+    std::unordered_map<size_t, AllocatableImage> images;
 
     size_t counter = 0;
     for (fastgltf::Image& image : gltfAsset.images)
     {
-        std::optional<AllocatedImage> img = LoadGltfAssetImage(*renderer->GetAllocator(), gltfAsset, image, parentPath);
+        std::optional<AllocatableImage> img = LoadGltfAssetImage(*renderer->GetAllocator(), gltfAsset, image, parentPath);
         if (img.has_value())
         {
             images[counter] = *img;
@@ -193,7 +193,7 @@ void Vel::GLTFObjectLoader::CreateMaterials(RenderableGLTF& sceneData, fastgltf:
         constants.metallicRoughnessFactor.g = mat.pbrData.metallicFactor;
         constants.metallicRoughnessFactor.b = mat.pbrData.roughnessFactor;
 
-        MaterialResources materialResources;
+        DeferredMaterialResources materialResources;
         materialResources.colorImage = renderer->whiteImage;
         materialResources.colorSampler = renderer->defaultSamplerLinear;
         materialResources.normalsImage = renderer->defaultNormalsImage;

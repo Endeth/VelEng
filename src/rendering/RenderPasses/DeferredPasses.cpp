@@ -303,7 +303,7 @@ void Vel::DeferredPasses::Cleanup()
     vkDestroySampler(device, shadowsSampler, nullptr);
 }
 
-Vel::MaterialInstance Vel::DeferredPasses::CreateMaterialInstance(const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const
+Vel::MaterialInstance Vel::DeferredPasses::CreateMaterialInstance(const DeferredMaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const
 {
     MaterialInstance materialInstance;
     materialInstance.descriptorSet = descriptorAllocator.Allocate(gPassDescriptorLayout);
@@ -354,9 +354,9 @@ Vel::DeferredPasses::Framebuffer Vel::DeferredPasses::CreateUnallocatedFramebuff
     return framebuffer;
 }
 
-Vel::AllocatedImage Vel::DeferredPasses::CreateUnallocatedLPassDrawImage(const VkExtent3D& extent)
+Vel::AllocatableImage Vel::DeferredPasses::CreateUnallocatedLPassDrawImage(const VkExtent3D& extent)
 {
-    AllocatedImage image;
+    AllocatableImage image;
     image.format = VK_FORMAT_R8G8B8A8_UNORM;
     image.extent = extent;
     image.usageFlags = { VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT };
@@ -454,7 +454,7 @@ void Vel::DeferredPasses::DrawGPass(const std::vector<DrawContext>& contexts, Vk
     vkCmdEndRendering(cmd);
 }
 
-void Vel::DeferredPasses::DrawLPass(VkCommandBuffer cmd, const AllocatedImage& drawImage, const Framebuffer& framebuffer)
+void Vel::DeferredPasses::DrawLPass(VkCommandBuffer cmd, const AllocatableImage& drawImage, const Framebuffer& framebuffer)
 {
     lPassDrawAttachment.imageView = drawImage.imageView;
 

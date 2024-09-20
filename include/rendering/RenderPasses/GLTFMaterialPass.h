@@ -5,10 +5,12 @@
 #include "Rendering/Buffers/GPUAllocator.h"
 
 #include "Rendering/RenderPasses/Descriptors.h"
+#include "Rendering/RenderPasses/DeferredPasses.h"
 #include "Rendering/RenderPasses/Pipeline.h"
 
 namespace Vel
 {
+    struct DeferredMaterialResources;
     class GLTFMetallicRoughness
     {
     public:
@@ -16,7 +18,7 @@ namespace Vel
         void BuildPipelines();
         void ClearResources();
 
-        MaterialInstance WriteMaterial(MaterialPass pass, const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator);
+        MaterialInstance WriteMaterial(MaterialPass pass, const DeferredMaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator);
 
     private:
         VkDevice device;

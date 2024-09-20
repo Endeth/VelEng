@@ -6,6 +6,8 @@
 #include <fastgltf/util.hpp>
 
 #include "Rendering/VulkanTypes.h"
+
+#include "Rendering/Buffers/Buffers.h"
 #include "Rendering/Buffers/GPUAllocator.h"
 
 #define GET_TEXTURE_PATH(name) TEXTURE_PATH name
@@ -31,5 +33,5 @@ namespace Vel
     };
 
     //TODO Can I hasss asset manager plssss?
-    std::optional<AllocatedImage> LoadGltfAssetImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath);
+    std::optional<AllocatableImage> LoadGltfAssetImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath);
 }

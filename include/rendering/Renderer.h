@@ -5,6 +5,7 @@
 #include "Utils/RenderThreadPool.h"
 #include "Rendering/Assets/GLTFObjectLoader.h"
 
+#include "Rendering/Buffers/Buffers.h"
 #include "Rendering/Buffers/GPUAllocator.h"
 
 #include "Rendering/Frame/Frames.h"
@@ -41,8 +42,8 @@ namespace Vel
     {
         Sunlight sunlight;
         LightData lights;
-        AllocatedBuffer lightsDataBuffer;
-        AllocatedBuffer pointLightsBuffer;
+        AllocatableBuffer lightsDataBuffer;
+        AllocatableBuffer pointLightsBuffer;
 
         PointLight* pointLightsGPUData; //Used for position update
 
@@ -64,11 +65,11 @@ namespace Vel
         GPUAllocator* GetAllocator(){ return &gpuAllocator; }
         const DeferredPasses& GetDeferredRenderer() const { return deferredPasses; }
 
-        AllocatedImage whiteImage;
-        AllocatedImage defaultNormalsImage;
-        AllocatedImage defaultMetallicRoughnessImage;
-        AllocatedImage defaultCubeImage;
-        AllocatedImage errorCheckerboardImage;
+        AllocatableImage whiteImage;
+        AllocatableImage defaultNormalsImage;
+        AllocatableImage defaultMetallicRoughnessImage;
+        AllocatableImage defaultCubeImage;
+        AllocatableImage errorCheckerboardImage;
         VkSampler defaultSamplerLinear;
 
         void Cleanup();

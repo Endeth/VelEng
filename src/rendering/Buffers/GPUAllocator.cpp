@@ -20,7 +20,7 @@ void Vel::GPUAllocator::Cleanup()
 	vmaDestroyAllocator(vmaAllocator);
 }
 
-Vel::AllocatedBuffer Vel::GPUAllocator::CreateBuffer(size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage)
+Vel::AllocatableBuffer Vel::GPUAllocator::CreateBuffer(size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage)
 {
     VkBufferCreateInfo bufferInfo {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -34,18 +34,18 @@ Vel::AllocatedBuffer Vel::GPUAllocator::CreateBuffer(size_t size, VkBufferUsageF
 		.usage = memoryUsage
 	};
 
-    AllocatedBuffer newBuffer;
+	AllocatableBuffer newBuffer;
     VK_CHECK(vmaCreateBuffer(vmaAllocator, &bufferInfo, &vmaAllocInfo, &newBuffer.buffer, &newBuffer.allocation, &newBuffer.info));
 
     return newBuffer;
 }
 
-void Vel::GPUAllocator::DestroyBuffer(const AllocatedBuffer& buffer)
+void Vel::GPUAllocator::DestroyBuffer(const AllocatableBuffer& buffer)
 {
 	vmaDestroyBuffer(vmaAllocator, buffer.buffer, buffer.allocation);
 }
 
-Vel::AllocatedBuffer& Vel::GPUAllocator::GetStagingBuffer()
+Vel::AllocatableBuffer& Vel::GPUAllocator::GetStagingBuffer()
 {
 	return stagingBuffer;
 }
@@ -147,7 +147,7 @@ VkBufferImageCopy Vel::GPUAllocator::CreateBufferImageCopy(VkExtent3D extent, ui
 	};
 }
 
-void Vel::GPUAllocator::AllocateImage(AllocatedImage& image)
+void Vel::GPUAllocator::AllocateImage(AllocatableImage& image)
 {
 	VkImageCreateInfo imageCreateInfo = Create2DImageCreateInfo(image.extent, image.format, image.usageFlags);
 
@@ -164,9 +164,9 @@ void Vel::GPUAllocator::AllocateImage(AllocatedImage& image)
 	VK_CHECK(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &image.imageView));
 }
 
-Vel::AllocatedImage Vel::GPUAllocator::CreateAllocatedImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
+Vel::AllocatableImage Vel::GPUAllocator::CreateAllocatableImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
 {
-	AllocatedImage newImage;
+	AllocatableImage newImage;
 	newImage.format = format;
 	newImage.extent = extent;
 	newImage.usageFlags = usage;
@@ -176,14 +176,14 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateAllocatedImage(VkExtent3D extent, V
 	return newImage;
 }
 
-Vel::AllocatedImage Vel::GPUAllocator::CreateImageFromData(void* data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
+Vel::AllocatableImage Vel::GPUAllocator::CreateImageFromData(void* data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
 {
 	//TODO staging buffer
 	size_t dataSize = extent.depth * extent.width * extent.height * 4U;
-	AllocatedBuffer uploadBuffer = CreateBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	AllocatableBuffer uploadBuffer = CreateBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	memcpy(uploadBuffer.info.pMappedData, data, dataSize);
 
-	AllocatedImage newImage = CreateAllocatedImage(extent, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+	AllocatableImage newImage = CreateAllocatableImage(extent, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 	submitter.Submit([&](VkCommandBuffer cmd) {
 		TransitionImage(cmd, newImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -199,9 +199,9 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateImageFromData(void* data, VkExtent3
 	return newImage;
 }
 
-Vel::AllocatedImage Vel::GPUAllocator::CreateAllocatedCubeImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
+Vel::AllocatableImage Vel::GPUAllocator::CreateAllocatableCubeImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
 {
-	AllocatedImage newImage;
+	AllocatableImage newImage;
 	newImage.format = format;
 	newImage.extent = extent;
 	newImage.usageFlags = usage;
@@ -221,11 +221,11 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateAllocatedCubeImage(VkExtent3D exten
 	return newImage;
 }
 
-Vel::AllocatedImage Vel::GPUAllocator::CreateCubeImageFromData(std::array<unsigned char*, cubeTextureLayers> data , VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
+Vel::AllocatableImage Vel::GPUAllocator::CreateCubeImageFromData(std::array<unsigned char*, cubeTextureLayers> data , VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
 {
 	size_t layerSize = extent.width * extent.height * extent.depth * 4U;
 	size_t dataSize = layerSize * cubeTextureLayers;
-	AllocatedBuffer uploadBuffer = CreateBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	AllocatableBuffer uploadBuffer = CreateBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	for (int i = 0; i < cubeTextureLayers; ++i)
 	{
@@ -233,7 +233,7 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateCubeImageFromData(std::array<unsign
 		memcpy(layerMemory + (layerSize * i), data[i], layerSize);
 	}
 
-	AllocatedImage newImage = CreateAllocatedCubeImage(extent, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+	AllocatableImage newImage = CreateAllocatableCubeImage(extent, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 	submitter.Submit([&](VkCommandBuffer cmd) {
 		TransitionImage(cmd, newImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -272,7 +272,7 @@ Vel::GPUMeshBuffers Vel::GPUAllocator::UploadMesh(std::span<uint32_t> indices, s
 	newSurface.vertexBufferAddress = vkGetBufferDeviceAddress(device, &deviceAdressInfo);
 
 	//TODO create a single staging, resize it first launch, keep max size in config?
-	AllocatedBuffer staging = CreateBuffer(vertexBufferSize + indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+	AllocatableBuffer staging = CreateBuffer(vertexBufferSize + indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 	void* data = staging.info.pMappedData;
 
 	memcpy(data, vertices.data(), vertexBufferSize);
@@ -306,7 +306,7 @@ void Vel::GPUAllocator::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>
 	submitter.Submit(std::move(function));
 }
 
-void Vel::GPUAllocator::DestroyImage(const AllocatedImage& image)
+void Vel::GPUAllocator::DestroyImage(const AllocatableImage& image)
 {
 	vkDestroyImageView(device, image.imageView, nullptr);
 	vmaDestroyImage(vmaAllocator, image.image, image.allocation);

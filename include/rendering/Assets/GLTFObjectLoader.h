@@ -4,7 +4,10 @@
 #include <fastgltf/parser.hpp>
 
 #include "Rendering/VulkanTypes.h"
+
+#include "Rendering/Buffers/Buffers.h"
 #include "Rendering/Buffers/GPUAllocator.h"
+
 //#include "Rendering/RenderPasses/GLTFMaterialPass.h"
 #include "Rendering/Scene/Renderable.h"
 
@@ -14,6 +17,21 @@ namespace Vel
 {
     class Renderer;
     class RenderableGLTF;
+
+    struct GeoSurface
+    {
+        uint32_t startIndex;
+        uint32_t count;
+        std::shared_ptr<MaterialInstance> materialInstance;
+    };
+
+    struct MeshAsset
+    {
+        std::string name;
+
+        std::vector<GeoSurface> surfaces;
+        GPUMeshBuffers meshBuffers;
+    };
 
     class GLTFObjectLoader
     {

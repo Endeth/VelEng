@@ -2,13 +2,15 @@
 
 #include "Rendering/VulkanTypes.h"
 
+#include "Rendering/Buffers/Buffers.h"
+
 #include "Rendering/Assets/GLTFObjectLoader.h"
 
 #include "Rendering/RenderPasses/GLTFMaterialPass.h"
 
 namespace Vel
 {
-    struct RenderData //Dedicated Material
+    struct RenderData
     {
         uint32_t indexCount;
         uint32_t firstIndex;
@@ -20,7 +22,7 @@ namespace Vel
         VkDeviceAddress vertexBufferAddress;
     };
 
-    struct DrawContext //Dedicated Material
+    struct DrawContext
     {
         DrawContext() = default;
         DrawContext(const size_t materialsInstances)
@@ -28,6 +30,7 @@ namespace Vel
             opaqueSurfaces.resize(materialsInstances);
             transparentSurfaces.resize(materialsInstances);
         }
+        DrawContext(DrawContext& other) = delete;
         DrawContext(DrawContext&& other)
         {
             opaqueSurfaces = std::move(other.opaqueSurfaces);
@@ -78,6 +81,7 @@ namespace Vel
         glm::mat4 worldTransform;
     };
 
+    struct MeshAsset;
     class MeshNode : public RenderableNode
     {
     public:
@@ -95,7 +99,7 @@ namespace Vel
     public:
         std::unordered_map<std::string, std::shared_ptr<MeshAsset>> meshes;
         std::unordered_map<std::string, std::shared_ptr<RenderableNode>> nodes;
-        std::unordered_map<size_t, AllocatedImage> images; //TODO vector, just to destroy images
+        std::unordered_map<size_t, AllocatableImage> images; //TODO vector, just to destroy images
         std::unordered_map<std::string, std::shared_ptr<MaterialInstance>> materials;
 
         std::vector<std::shared_ptr<RenderableNode>> topNodes;
@@ -103,7 +107,7 @@ namespace Vel
 
         DescriptorAllocatorDynamic descriptorPool;
 
-        AllocatedBuffer materialDataBuffer;
+        AllocatableBuffer materialDataBuffer;
 
         virtual void Draw(const glm::mat4& topMatrix, DrawContext& context);
         ~RenderableGLTF();

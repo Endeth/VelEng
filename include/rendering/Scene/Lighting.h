@@ -2,6 +2,7 @@
 
 #include "Rendering/VulkanTypes.h"
 
+#include "Rendering/Buffers/Buffers.h"
 #include "Rendering/Buffers/GPUAllocator.h"
 
 #include "Rendering/Scene/Camera.h"
@@ -41,8 +42,8 @@ namespace Vel
         glm::mat4 viewProj;
 
         VkExtent3D shadowResolution;
-        AllocatedImage shadowMap;
-        AllocatedBuffer gpuViewProjData;
+        AllocatableImage shadowMap;
+        AllocatableBuffer gpuViewProjData;
 
         void InitLightData(const glm::vec3& dir, const glm::vec4& col);
         void InitShadowData(GPUAllocator& allocator, VkExtent3D shadowMapResolution);

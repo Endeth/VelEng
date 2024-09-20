@@ -500,7 +500,7 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd, FrameData& fram
 {
     VkImage presentableImage = VK_NULL_HANDLE;
     VkImageLayout transitionSrcLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    AllocatedBuffer& buff = gpuAllocator.GetStagingBuffer();
+    AllocatableBuffer& buff = gpuAllocator.GetStagingBuffer();
 
     TransitionImage(cmd, swapchain.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 

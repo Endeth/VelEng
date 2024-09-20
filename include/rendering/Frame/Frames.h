@@ -2,6 +2,8 @@
 
 #include "Rendering/VulkanTypes.h"
 
+#include "Rendering/Buffers/Buffers.h"
+
 #include "Rendering/RenderPasses/Descriptors.h"
 #include "Rendering/RenderPasses/DeferredPasses.h"
 
@@ -19,7 +21,7 @@ namespace Vel
 
         struct SceneData
         {
-            AllocatedBuffer cameraDataBuffer;
+            AllocatableBuffer cameraDataBuffer;
             VkDescriptorSet cameraDescriptorSet;
             DescriptorAllocatorDynamic frameDescriptors;
         };
@@ -42,7 +44,7 @@ namespace Vel
         {
             std::vector<DrawContext> gPassDrawContexts;
 
-            AllocatedImage lPassDrawImage;
+            AllocatableImage lPassDrawImage;
             DeferredPasses::Framebuffer gPassFramebuffer;
         } resources;
 

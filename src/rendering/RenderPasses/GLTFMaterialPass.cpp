@@ -84,7 +84,7 @@ void Vel::GLTFMetallicRoughness::ClearResources()
     vkDestroyDescriptorSetLayout(device, materialLayout, nullptr);
 }
 
-Vel::MaterialInstance Vel::GLTFMetallicRoughness::WriteMaterial(MaterialPass pass, const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator)
+Vel::MaterialInstance Vel::GLTFMetallicRoughness::WriteMaterial(MaterialPass pass, const DeferredMaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator)
 {
     MaterialInstance materialInstance;
     materialInstance.passType = pass;

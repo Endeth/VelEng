@@ -15,7 +15,7 @@ void Vel::Sunlight::InitShadowData(GPUAllocator& allocator, VkExtent3D shadowMap
         | VK_IMAGE_USAGE_SAMPLED_BIT
         | VK_IMAGE_USAGE_TRANSFER_SRC_BIT //TODO needed?
         | VK_IMAGE_USAGE_TRANSFER_DST_BIT; //TODO remove debug dst_bit
-    shadowMap = allocator.CreateAllocatedImage(shadowMapResolution, VK_FORMAT_D32_SFLOAT, usageFlags);
+    shadowMap = allocator.CreateAllocatableImage(shadowMapResolution, VK_FORMAT_D32_SFLOAT, usageFlags);
 }
 
 void Vel::Sunlight::UpdateCameraPosition(const Camera& mainCamera)

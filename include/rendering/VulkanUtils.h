@@ -4,6 +4,8 @@
 
 #include "Rendering/VulkanTypes.h"
 
+#include "Rendering/Buffers/Buffers.h"
+
 
 namespace Vel
 {
@@ -33,7 +35,7 @@ namespace Vel
     void TransitionImages(VkCommandBuffer cmdBuffer, uint32_t count, VkImage* images, VkImageLayout* srcLayouts, VkImageLayout* dstLayouts);
     void ClearImage(VkCommandBuffer cmdBuffer, VkImage image, VkClearColorValue color, VkImageAspectFlagBits aspectFlags);
     void BlitImage(VkCommandBuffer cmdBuffer, VkImage src, VkImage dst, VkExtent3D srcSize, VkExtent3D dstSize);
-    void CopyDepthToColorImage(VkCommandBuffer cmdBuffer, VkImage src, AllocatedBuffer& buf, VkImage dst, VkExtent3D copy);
+    void CopyDepthToColorImage(VkCommandBuffer cmdBuffer, VkImage src, AllocatableBuffer& buf, VkImage dst, VkExtent3D copy);
 
     VkRenderingAttachmentInfo CreateColorAttachmentInfo(VkImageView imageView);
     //VkRenderingInfo CreateGeometryDrawRenderInfo(VkRenderingAttachmentInfo* color, uint32_t colorAttachmentsCount, VkRenderingAttachmentInfo* depth);

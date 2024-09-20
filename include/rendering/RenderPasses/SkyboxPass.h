@@ -23,8 +23,8 @@ namespace Vel
     class SkyboxPass
     {
     public:
-        void Init(VkDevice dev, AllocatedImage& skyboxImage);
-        void Draw(VkCommandBuffer cmd, const Camera &camera, const AllocatedImage& drawImage);
+        void Init(VkDevice dev, AllocatableImage& skyboxImage);
+        void Draw(VkCommandBuffer cmd, const Camera &camera, const AllocatableImage& drawImage);
 
         void Cleanup();
 

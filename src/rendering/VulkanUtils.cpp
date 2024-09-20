@@ -173,7 +173,7 @@ void Vel::BlitImage(VkCommandBuffer cmdBuffer, VkImage src, VkImage dst, VkExten
     vkCmdBlitImage2(cmdBuffer, &blitInfo);
 }
 
-void Vel::CopyDepthToColorImage(VkCommandBuffer cmdBuffer, VkImage src, AllocatedBuffer& buf, VkImage dst, VkExtent3D copySize)
+void Vel::CopyDepthToColorImage(VkCommandBuffer cmdBuffer, VkImage src, AllocatableBuffer& buf, VkImage dst, VkExtent3D copySize)
 {
     VkBufferImageCopy regions {
         .bufferOffset = 0,

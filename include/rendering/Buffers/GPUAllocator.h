@@ -2,6 +2,8 @@
 
 #include "Rendering/VulkanTypes.h"
 
+#include "Rendering/Buffers/Buffers.h"
+
 namespace Vel
 {
     class ImmediateSubmitter
@@ -28,9 +30,9 @@ namespace Vel
         void Init(VkDevice dev, VmaAllocatorCreateInfo allocatorCreateInfo, uint32_t graphicsQueueFamily, VkQueue targetQueue);
         void Cleanup();
 
-        AllocatedBuffer CreateBuffer(size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
-        void DestroyBuffer(const AllocatedBuffer& buffer);
-        AllocatedBuffer& GetStagingBuffer();
+        AllocatableBuffer CreateBuffer(size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+        void DestroyBuffer(const AllocatableBuffer& buffer);
+        AllocatableBuffer& GetStagingBuffer();
 
         VkImageCreateInfo Create2DImageCreateInfo(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
         VkImageCreateInfo CreateCubeImageCreateInfo(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
@@ -38,21 +40,21 @@ namespace Vel
         VkImageViewCreateInfo CreateCubeImageViewCreateInfo(VkFormat format, VkImage image);
         VkBufferImageCopy CreateBufferImageCopy(VkExtent3D extent, uint32_t layersCount);
 
-        void AllocateImage(AllocatedImage& image);
-        AllocatedImage CreateAllocatedImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
-        AllocatedImage CreateImageFromData(void* data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
-        AllocatedImage CreateAllocatedCubeImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
-        AllocatedImage CreateCubeImageFromData(std::array<unsigned char*, cubeTextureLayers> data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
+        void AllocateImage(AllocatableImage& image);
+        AllocatableImage CreateAllocatableImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
+        AllocatableImage CreateImageFromData(void* data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
+        AllocatableImage CreateAllocatableCubeImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
+        AllocatableImage CreateCubeImageFromData(std::array<unsigned char*, cubeTextureLayers> data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
 
         GPUMeshBuffers UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
         void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
-        void DestroyImage(const AllocatedImage& image);
+        void DestroyImage(const AllocatableImage& image);
     private:
         VkDevice device;
         VmaAllocator vmaAllocator;
 
         ImmediateSubmitter submitter;
 
-        AllocatedBuffer stagingBuffer;
+        AllocatableBuffer stagingBuffer;
     };
 }

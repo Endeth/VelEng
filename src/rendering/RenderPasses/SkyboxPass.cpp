@@ -49,7 +49,7 @@ void Vel::SkyboxPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_
     vkDestroyShaderModule(device, fragmentModule, nullptr);
 }
 
-void Vel::SkyboxPass::Init(VkDevice dev, AllocatedImage& skyboxImage)
+void Vel::SkyboxPass::Init(VkDevice dev, AllocatableImage& skyboxImage)
 {
     device = dev;
 
@@ -82,7 +82,7 @@ void Vel::SkyboxPass::Init(VkDevice dev, AllocatedImage& skyboxImage)
     PrebuildRenderInfo();
 }
 
-void Vel::SkyboxPass::Draw(VkCommandBuffer cmd, const Camera& camera, const AllocatedImage& drawImage)
+void Vel::SkyboxPass::Draw(VkCommandBuffer cmd, const Camera& camera, const AllocatableImage& drawImage)
 {
     VkExtent2D drawExtent = { .width = drawImage.extent.width, .height = drawImage.extent.height };
     renderingAttachmentInfo.imageView = drawImage.imageView;

@@ -5,9 +5,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-std::optional<Vel::AllocatedImage> Vel::LoadGltfAssetImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath)
+std::optional<Vel::AllocatableImage> Vel::LoadGltfAssetImage(GPUAllocator& allocator, fastgltf::Asset& asset, fastgltf::Image& image, const std::filesystem::path& parentPath)
 {
-    AllocatedImage newImage = {};
+    AllocatableImage newImage = {};
 
     int width;
     int height;
@@ -79,7 +79,7 @@ std::optional<Vel::AllocatedImage> Vel::LoadGltfAssetImage(GPUAllocator& allocat
     {
         return newImage;
     }
-    return std::optional<Vel::AllocatedImage>(newImage);
+    return std::optional<Vel::AllocatableImage>(newImage);
 }
 
 Vel::STBImage::STBImage(const std::filesystem::path& imagePath)
