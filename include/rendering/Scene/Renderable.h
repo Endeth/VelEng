@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Rendering/VulkanTypes.h"
-#include "Rendering/Material.h"
-#include "Rendering/MeshLoader.h"
+
+#include "Rendering/Assets/GLTFObjectLoader.h"
+
+#include "Rendering/RenderPasses/GLTFMaterialPass.h"
 
 namespace Vel
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VulkanTypes.h"
+#include "Rendering/VulkanTypes.h"
 
 namespace Vel
 {
@@ -38,10 +38,11 @@ namespace Vel
         VkImageViewCreateInfo CreateCubeImageViewCreateInfo(VkFormat format, VkImage image);
         VkBufferImageCopy CreateBufferImageCopy(VkExtent3D extent, uint32_t layersCount);
 
-        AllocatedImage CreateImage(VkExtent3D size, VkFormat format, VkImageUsageFlags usage);
-        AllocatedImage CreateImage(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage);
-        AllocatedImage CreateCubeImage(VkExtent3D size, VkFormat format, VkImageUsageFlags usage);
-        AllocatedImage CreateCubeImage(std::array<unsigned char*, cubeTextureLayers> data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage);
+        void AllocateImage(AllocatedImage& image);
+        AllocatedImage CreateAllocatedImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
+        AllocatedImage CreateImageFromData(void* data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
+        AllocatedImage CreateAllocatedCubeImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
+        AllocatedImage CreateCubeImageFromData(std::array<unsigned char*, cubeTextureLayers> data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage);
 
         GPUMeshBuffers UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
         void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);

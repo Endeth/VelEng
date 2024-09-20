@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Rendering/VulkanTypes.h"
-#include "Rendering/Descriptors.h"
+
+#include "Rendering/RenderPasses/Descriptors.h"
+#include "Rendering/RenderPasses/DeferredPasses.h"
 
 #include "Utils/DeletionQueue.h"
 #include "Utils/TSQueue.h"
@@ -22,19 +24,6 @@ namespace Vel
             DescriptorAllocatorDynamic frameDescriptors;
         };
 
-        struct Resources
-        {
-            //DrawContext context;
-            AllocatedImage drawImage;
-
-            //GPass framebuffer
-            AllocatedImage position;
-            AllocatedImage color;
-            AllocatedImage normals;
-            AllocatedImage metallicRoughness;
-            AllocatedImage depth;
-        };
-
         struct Synchronization
         {
             VkSemaphore swapchainSemaphore;
@@ -48,8 +37,17 @@ namespace Vel
             std::atomic<bool> rendering = false;
         };
 
+        //TODO maybe separate resources from work oriented code?
+        struct FrameResources
+        {
+            std::vector<DrawContext> gPassDrawContexts;
+
+            AllocatedImage lPassDrawImage;
+            DeferredPasses::Framebuffer gPassFramebuffer;
+        } resources;
+
         void Init(VkDevice device, uint32_t queueFamilyIndex);
-        //void Resize();
+        //void Resize(VkExtent3D size);
 
         void StartNew(uint32_t frameIdx);
         const uint32_t GetFrameIdx() const;
@@ -73,6 +71,18 @@ namespace Vel
         void Cleanup();
         DeletionQueue cleanupQueue;
     private:
+        uint32_t idx;
+
+        TSQueue<VkCommandPool> commandPools;
+        Synchronization sync;
+        SceneData sceneData;
+
+        std::list<RenderWorkQueue> frameWorkQueues;
+        std::function<void()> onWorkAdd;
+        std::function<void()> onQueueUnlock;
+
+        DeletionQueue frameEndCleanup;
+
         void CreateCommandPools(VkDevice device, uint32_t queueFamilyIndex);
         void CreateSynchronization(VkDevice device);
         void CreateResources();
@@ -87,16 +97,5 @@ namespace Vel
         }
 
         void PrepareQueuesUnlockingOrder();
-        uint32_t idx;
-
-        TSQueue<VkCommandPool> commandPools;
-        Synchronization sync;
-        SceneData sceneData;
-
-        std::list<RenderWorkQueue> frameWorkQueues;
-        std::function<void()> onWorkAdd;
-        std::function<void()> onQueueUnlock;
-
-        DeletionQueue frameEndCleanup;
     };
 }

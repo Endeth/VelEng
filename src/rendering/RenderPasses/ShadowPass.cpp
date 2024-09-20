@@ -51,12 +51,9 @@ void Vel::ShadowPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_
     vkDestroyShaderModule(device, fragmentModule, nullptr);
 }
 
-void Vel::ShadowPass::Init(VkDevice dev, Sunlight& sunlight)
+void Vel::ShadowPass::Init(VkDevice dev, const Sunlight& sunlight)
 {
     device = dev;
-    drawExtent = sunlight.shadowResolution;
-    drawImageView = sunlight.shadowMap.imageView;
-    drawImage = sunlight.shadowMap.image;
 
     DescriptorLayoutBuilder builder;
     builder.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
@@ -79,9 +76,19 @@ void Vel::ShadowPass::Init(VkDevice dev, Sunlight& sunlight)
     PrebuildRenderInfo();
 }
 
-void Vel::ShadowPass::Draw(const DrawContext& context, VkCommandBuffer cmd)
+void Vel::ShadowPass::Draw(const DrawContext& context, VkCommandBuffer cmd, const Sunlight& sunlight)
 {
-    TransitionDepthImage(cmd, drawImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+    depthAttachment.imageView = sunlight.shadowMap.imageView;
+
+    renderingInfo.renderArea = {
+        .offset = { 0, 0 },
+        .extent = { .width = sunlight.shadowResolution.width, .height = sunlight.shadowResolution.height }
+    };
+
+    renderViewport.width = (float)sunlight.shadowResolution.width;
+    renderViewport.height = (float)sunlight.shadowResolution.height;
+
+    renderScissor.extent = { .width = sunlight.shadowResolution.width, .height = sunlight.shadowResolution.height };
 
     vkCmdBeginRendering(cmd, &renderingInfo);
 
@@ -129,7 +136,6 @@ void Vel::ShadowPass::PrebuildRenderInfo()
     depthAttachment = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
         .pNext = nullptr,
-        .imageView = drawImageView,
         .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -139,7 +145,6 @@ void Vel::ShadowPass::PrebuildRenderInfo()
     renderingInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
         .pNext = nullptr,
-        .renderArea = {.offset = { 0, 0 }, .extent = { drawExtent.width, drawExtent.height } },
         .layerCount = 1,
         .colorAttachmentCount = 0,
         .pColorAttachments = nullptr,
@@ -150,8 +155,6 @@ void Vel::ShadowPass::PrebuildRenderInfo()
     renderViewport = {
         .x = 0,
         .y = 0,
-        .width = (float)drawExtent.width,
-        .height = (float)drawExtent.height,
         .minDepth = 0.f,
         .maxDepth = 1.f
     };
@@ -161,9 +164,5 @@ void Vel::ShadowPass::PrebuildRenderInfo()
             .x = 0,
             .y = 0
         },
-        .extent = {
-            .width = drawExtent.width,
-            .height = drawExtent.height
-        }
     };
 }

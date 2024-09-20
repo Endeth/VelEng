@@ -1,13 +1,15 @@
 #pragma once
 
 #include "Rendering/VulkanTypes.h"
-#include "Rendering/Descriptors.h"
-#include "Rendering/GPUAllocator.h"
-#include "Rendering/Lighting.h"
-#include "Rendering/Renderable.h"
 
+#include "Rendering/Buffers/GPUAllocator.h"
+
+#include "Rendering/RenderPasses/Descriptors.h"
 #include "Rendering/RenderPasses/Pipeline.h"
 #include "Rendering/RenderPasses/PipelineBuilder.h"
+
+#include "Rendering/Scene/Lighting.h"
+#include "Rendering/Scene/Renderable.h"
 
 namespace Vel
 {
@@ -21,8 +23,8 @@ namespace Vel
     class ShadowPass
     {
     public:
-        void Init(VkDevice dev, Sunlight& sunlight);
-        void Draw(const DrawContext& context, VkCommandBuffer cmd);
+        void Init(VkDevice dev, const Sunlight& sunlight);
+        void Draw(const DrawContext& context, VkCommandBuffer cmd, const Sunlight& sunlight);
 
         void Cleanup();
 
@@ -35,9 +37,9 @@ namespace Vel
         VkDescriptorSet shadowPassDescriptorSet;
         ShadowPipeline pipeline;
 
-        VkExtent3D drawExtent;
-        VkImageView drawImageView;
-        VkImage drawImage;
+        //VkExtent3D drawExtent;
+        //VkImageView drawImageView;
+        //VkImage drawImage;
 
         VkRenderingAttachmentInfo depthAttachment;
         VkRenderingInfo renderingInfo;

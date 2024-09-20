@@ -4,9 +4,9 @@
 #include <fastgltf/parser.hpp>
 
 #include "Rendering/VulkanTypes.h"
-#include "Rendering/GPUAllocator.h"
-#include "Rendering/Material.h"
-#include "Rendering/Renderable.h"
+#include "Rendering/Buffers/GPUAllocator.h"
+//#include "Rendering/RenderPasses/GLTFMaterialPass.h"
+#include "Rendering/Scene/Renderable.h"
 
 #define GET_MESH_PATH(name) MESH_PATH name
 
@@ -15,7 +15,7 @@ namespace Vel
     class Renderer;
     class RenderableGLTF;
 
-    class MeshLoader
+    class GLTFObjectLoader
     {
     public:
         void Init(VkDevice dev, Renderer* ren);

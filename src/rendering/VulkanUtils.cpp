@@ -131,7 +131,7 @@ void Vel::ClearImage(VkCommandBuffer cmdBuffer, VkImage image, VkClearColorValue
     vkCmdClearColorImage(cmdBuffer, image, VK_IMAGE_LAYOUT_GENERAL, &color, 1, &clearRange);
 }
 
-void Vel::BlitImage(VkCommandBuffer cmdBuffer, VkImage src, VkImage dst, VkExtent2D srcSize, VkExtent2D dstSize)
+void Vel::BlitImage(VkCommandBuffer cmdBuffer, VkImage src, VkImage dst, VkExtent3D srcSize, VkExtent3D dstSize)
 {
     VkImageBlit2 blitRegion{
         .sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2,
@@ -152,11 +152,11 @@ void Vel::BlitImage(VkCommandBuffer cmdBuffer, VkImage src, VkImage dst, VkExten
 
     blitRegion.srcOffsets[1].x = srcSize.width;
     blitRegion.srcOffsets[1].y = srcSize.height;
-    blitRegion.srcOffsets[1].z = 1;
+    blitRegion.srcOffsets[1].z = srcSize.depth;
 
     blitRegion.dstOffsets[1].x = dstSize.width;
     blitRegion.dstOffsets[1].y = dstSize.height;
-    blitRegion.dstOffsets[1].z = 1;
+    blitRegion.dstOffsets[1].z = srcSize.depth;
 
     VkBlitImageInfo2 blitInfo{
         .sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2,

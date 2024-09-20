@@ -1,4 +1,4 @@
-#include "Rendering/Renderable.h"
+#include "Rendering/Scene/Renderable.h"
 
 void Vel::RenderableNode::SetLocalTransform(const glm::mat4& matrix)
 {

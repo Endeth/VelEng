@@ -49,11 +49,9 @@ void Vel::SkyboxPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_
     vkDestroyShaderModule(device, fragmentModule, nullptr);
 }
 
-void Vel::SkyboxPass::Init(VkDevice dev, VkExtent2D renderExtent, AllocatedImage& skyboxImage, AllocatedImage& drawImage)
+void Vel::SkyboxPass::Init(VkDevice dev, AllocatedImage& skyboxImage)
 {
     device = dev;
-    drawExtent = renderExtent; //TODO: RESIZE; can be fully dynamic
-    drawImageView = drawImage.imageView;
 
     VkSamplerCreateInfo samplerCreateInfo{
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -82,6 +80,47 @@ void Vel::SkyboxPass::Init(VkDevice dev, VkExtent2D renderExtent, AllocatedImage
     descriptorWriter.UpdateSet(device, skyboxDescriptorSet);
 
     PrebuildRenderInfo();
+}
+
+void Vel::SkyboxPass::Draw(VkCommandBuffer cmd, const Camera& camera, const AllocatedImage& drawImage)
+{
+    VkExtent2D drawExtent = { .width = drawImage.extent.width, .height = drawImage.extent.height };
+    renderingAttachmentInfo.imageView = drawImage.imageView;
+
+    renderingInfo.renderArea = {
+        .offset = { 0, 0 },
+        .extent = drawExtent
+    };
+
+    renderViewport.width = (float)drawExtent.width;
+    renderViewport.height = (float)drawExtent.height;
+
+    renderScissor.extent = drawExtent;
+
+    vkCmdBeginRendering(cmd, &renderingInfo);
+    vkCmdSetViewport(cmd, 0, 1, &renderViewport);
+
+    vkCmdSetScissor(cmd, 0, 1, &renderScissor);
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetPipeline());
+
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetPipelineLayout(), 0, 1, &skyboxDescriptorSet, 0, nullptr);
+    SkyboxPushConstants pushConstants;
+    pushConstants.inverseViewProjection = glm::inverse(camera.GetViewProjectionMatrix());
+    pushConstants.cameraPosition = glm::vec4(camera.GetPosition(), 1.0f);
+
+    vkCmdPushConstants(cmd, pipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SkyboxPushConstants), &pushConstants);
+    vkCmdDraw(cmd, 3, 1, 0, 0);
+
+    vkCmdEndRendering(cmd);
+}
+
+void Vel::SkyboxPass::Cleanup()
+{
+    descriptorPool.Cleanup();
+    vkDestroyDescriptorSetLayout(device, skyboxLayout, nullptr);
+    pipeline.Cleanup();
+    vkDestroySampler(device, sampler, nullptr);
 }
 
 void Vel::SkyboxPass::PrebuildRenderInfo()
@@ -113,7 +152,7 @@ VkRenderingInfo Vel::SkyboxPass::BuildRenderInfo()
     VkRenderingInfo renderInfo{
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
         .pNext = nullptr,
-        .renderArea = {.offset = { 0, 0 }, .extent = { drawExtent.width, drawExtent.height } },
+        //.renderArea = {.offset = { 0, 0 }, .extent = { drawExtent.width, drawExtent.height } },
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &renderingAttachmentInfo,
@@ -129,8 +168,6 @@ VkViewport Vel::SkyboxPass::BuildRenderViewport()
     VkViewport viewport{
         .x = 0,
         .y = 0,
-        .width = (float)drawExtent.width,
-        .height = (float)drawExtent.height,
         .minDepth = 0.f,
         .maxDepth = 1.f
     };
@@ -144,39 +181,7 @@ VkRect2D Vel::SkyboxPass::BuildRenderScissors()
         .offset = {
             .x = 0,
             .y = 0
-        },
-        .extent = {
-            .width = drawExtent.width,
-            .height = drawExtent.height
         }
     };
     return scissorsRect;
-}
-
-void Vel::SkyboxPass::Draw(VkCommandBuffer cmd, const Camera& camera)
-{
-    vkCmdBeginRendering(cmd, &renderingInfo);
-
-    vkCmdSetViewport(cmd, 0, 1, &renderViewport);
-    vkCmdSetScissor(cmd, 0, 1, &renderScissor);
-
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetPipeline());
-
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetPipelineLayout(), 0, 1, &skyboxDescriptorSet, 0, nullptr);
-    SkyboxPushConstants pushConstants;
-    pushConstants.inverseViewProjection = glm::inverse(camera.GetViewProjectionMatrix());
-    pushConstants.cameraPosition = glm::vec4(camera.GetPosition(), 1.0f);
-
-    vkCmdPushConstants(cmd, pipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SkyboxPushConstants), &pushConstants);
-    vkCmdDraw(cmd, 3, 1, 0, 0);
-
-    vkCmdEndRendering(cmd);
-}
-
-void Vel::SkyboxPass::Cleanup()
-{
-    descriptorPool.Cleanup();
-    vkDestroyDescriptorSetLayout(device, skyboxLayout, nullptr);
-    pipeline.Cleanup();
-    vkDestroySampler(device, sampler, nullptr);
 }

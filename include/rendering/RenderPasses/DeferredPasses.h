@@ -2,12 +2,15 @@
 #include <deque>
 
 #include "Rendering/VulkanTypes.h"
-#include "Rendering/Descriptors.h"
-#include "Rendering/GPUAllocator.h"
-#include "Rendering/Renderable.h"
 
+#include "Rendering/Buffers/GPUAllocator.h"
+
+#include "Rendering/RenderPasses/Descriptors.h"
 #include "Rendering/RenderPasses/Pipeline.h"
 #include "Rendering/RenderPasses/PipelineBuilder.h"
+
+#include "Rendering/Scene/Renderable.h"
+
 
 namespace Vel
 {
@@ -25,75 +28,88 @@ namespace Vel
         void CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t layoutsCount);
     };
 
+    //TODO Separate
     class DeferredPasses
     {
     public:
         struct Framebuffer
         {
+            enum ImageType : uint8_t
+            {
+                POSITION = 0,
+                COLOR = 1,
+                NORMALS = 2,
+                METALLIC_ROUGHNESS = 3,
+            };
+
             AllocatedImage position;
             AllocatedImage color;
             AllocatedImage normals;
             AllocatedImage metallicRoughness;
+
             AllocatedImage depth;
 
+            VkDescriptorSet framebufferDescriptor;
+
             void TransitionImages(VkCommandBuffer cmd, VkImageLayout src, VkImageLayout dst);
+            void TransitionImagesForAttachment(VkCommandBuffer cmd);
+            void TransitionImagesForDescriptors(VkCommandBuffer cmd);
         };
 
-        void Init(VkDevice dev, GPUAllocator* allocator, VkExtent2D renderExtent,
-            VkDescriptorSetLayout cameraDescriptorLayout,
-            VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize, VkImageView sunlightShadowMapView,
-            GPUMeshBuffers&& rect);
+        void Init(VkDevice dev, VkDescriptorSetLayout cameraDescriptorLayout, VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize,
+            VkImageView sunlightShadowMapView);
         void Cleanup();
 
         MaterialInstance CreateMaterialInstance(const MaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const;
+        Framebuffer CreateUnallocatedFramebuffer(const VkExtent3D& extent);
+        AllocatedImage CreateUnallocatedLPassDrawImage(const VkExtent3D& extent);
+
+        void SetRenderExtent(const VkExtent2D& extent);
+        void SetFramebufferGPassAttachment(const Framebuffer& framebuffer);
+        void SetFramebufferDescriptor(Framebuffer& framebuffer);
         void SetCameraDescriptorSet(VkDescriptorSet cameraSet) { sceneCameraDataDescriptorSet = cameraSet; }
 
-        void DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd);
-        //void DrawShadows(const DrawContext& context);
-        void DrawLPass(VkCommandBuffer cmd);
-
-        Framebuffer& GetFramebuffer() { return framebuffer; }
-        AllocatedImage& GetDrawImage() { return drawImage; }
+        void DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd, const Framebuffer& framebuffer);
+        void DrawLPass(VkCommandBuffer cmd, const AllocatedImage& drawImage, const Framebuffer& framebuffer);
 
     private:
         VkDevice device;
-        GPUAllocator* mainAllocator;
         DescriptorAllocatorDynamic descriptorPool;
-        DescriptorWriter descriptorWriter;
 
-        VkExtent2D drawExtent;
         VkSampler sampler;
         VkSampler shadowsSampler;
 
         VkDescriptorSet sceneCameraDataDescriptorSet;
 
         GPassPipeline gPass;
+        VkRenderingInfo gPassRenderInfo;
         VkDescriptorSetLayout gPassDescriptorLayout;
-        AllocatedImage defaultColorMap;
-        AllocatedImage defaultNormalMap;
-        AllocatedImage defaultMetalRoughnessMap;
-        Framebuffer framebuffer;
+        VkRenderingAttachmentInfo gPassDepthAttachmentInfo;
+        //TODO until asset manager
+        //AllocatedImage defaultColorMap;
+        //AllocatedImage defaultNormalMap;
+        //AllocatedImage defaultMetalRoughnessMap;
 
         LPassPipeline lPass;
+        VkRenderingInfo lPassRenderInfo;
         VkDescriptorSetLayout framebufferDescriptorLayout;
         VkDescriptorSetLayout lightsDescriptorLayout;
-        VkDescriptorSet framebufferDescriptorSet;
+        //VkDescriptorSet framebufferDescriptorSet;
         VkDescriptorSet lightsDescriptorSet;
-        GPUMeshBuffers drawRect;
-        AllocatedImage drawImage;
+        VkRenderingAttachmentInfo lPassDrawAttachment;
+        //AllocatedImage drawImage;
 
         VkRenderingAttachmentInfo framebufferAttachments[4];
-        VkRenderingAttachmentInfo gPassDepthAttachmentInfo;
-        VkRenderingAttachmentInfo lPassDrawAttachment;
-        VkRenderingInfo gPassRenderInfo;
-        VkRenderingInfo lPassRenderInfo;
 
         VkViewport renderViewport;
         VkRect2D renderScissor;
 
-        void PreBuildRenderInfo();
-        VkRenderingAttachmentInfo BuildGPassAttachmentInfo(VkImageView imageView, VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR);
-        VkRenderingAttachmentInfo BuildLPassAttachmentInfo(VkImageView imageView);
+        void CreateSamplers();
+        void CreateGPassDescriptorLayouts();
+        void CreateLPassDescriptorLayouts();
+
+        void BuildRenderInfo();
+        VkRenderingAttachmentInfo BuildAttachmentInfo(VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR);
         VkRenderingAttachmentInfo BuildDepthAttachmentInfo();
         VkRenderingInfo BuildRenderInfo(VkRenderingAttachmentInfo* color, uint32_t colorAttachmentsCount, VkRenderingAttachmentInfo* depth);
         VkViewport BuildRenderViewport();

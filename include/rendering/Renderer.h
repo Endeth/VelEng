@@ -3,19 +3,22 @@
 #include "utils/DeletionQueue.h"
 
 #include "Utils/RenderThreadPool.h"
-#include "Rendering/Frames.h"
-#include "Rendering/Swapchain.h"
-#include "Rendering/GPUAllocator.h"
-#include "Rendering/MeshLoader.h"
-#include "Rendering/Camera.h"
-#include "Rendering/Material.h"
-#include "Rendering/Lighting.h"
-#include "Rendering/Renderable.h"
+#include "Rendering/Assets/GLTFObjectLoader.h"
 
-#include "Rendering/RenderPasses/Pipeline.h"
+#include "Rendering/Buffers/GPUAllocator.h"
+
+#include "Rendering/Frame/Frames.h"
+#include "Rendering/Frame/Swapchain.h"
+
 #include "Rendering/RenderPasses/DeferredPasses.h"
+#include "Rendering/RenderPasses/GLTFMaterialPass.h"
+#include "Rendering/RenderPasses/Pipeline.h"
 #include "Rendering/RenderPasses/ShadowPass.h"
 #include "Rendering/RenderPasses/SkyboxPass.h"
+
+#include "Rendering/Scene/Camera.h"
+#include "Rendering/Scene/Lighting.h"
+#include "Rendering/Scene/Renderable.h"
 
 #include "ui/VelImgui.h"
 
@@ -134,16 +137,16 @@ namespace Vel
         };//*/
         FrameData frames[FRAME_DATA_SIZE];
 
-        MeshLoader meshLoader;
+        GLTFObjectLoader meshLoader;
 
         SkyboxPass skyboxPass;
         ShadowPass shadowPass;
         DeferredPasses deferredPasses;
-        std::vector<DrawContext> mainDrawContexts;
+        //std::vector<DrawContext> mainDrawContexts;
         std::mutex drawContextMutex;
         std::mutex graphicsQueueMutex;
         //DrawContext mainDrawContext; //TODO let's try to use vector
-        VkExtent2D drawExtent;
+        VkExtent3D drawExtent;
         float renderScale = 1.f;
 
         Camera mainCamera;
@@ -186,7 +189,7 @@ namespace Vel
         void LPassCommandRecord(FrameData& frame);
         void QueueGPUWork(VkCommandBuffer cmd, const std::vector<VkSemaphore>&& wait, VkSemaphore signal, VkFence fence = VK_NULL_HANDLE);
 
-        void PreparePresentableImage(VkCommandBuffer cmd);
+        void PreparePresentableImage(VkCommandBuffer cmd, FrameData& frame);
 
         void PrepareImguiFrame();
         void DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout);

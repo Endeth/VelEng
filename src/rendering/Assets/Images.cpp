@@ -1,4 +1,4 @@
-#include "Rendering/Images.h"
+#include "Rendering/Assets/Images.h"
 
 #include <iostream>
 
@@ -16,7 +16,7 @@ std::optional<Vel::AllocatedImage> Vel::LoadGltfAssetImage(GPUAllocator& allocat
     auto createImage = [&](unsigned char* data)
     {
         VkExtent3D imageSize{ .width = static_cast<uint32_t>(width), .height = static_cast<uint32_t>(height), .depth = 1 };
-        newImage = allocator.CreateImage(data, imageSize, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+        newImage = allocator.CreateImageFromData(data, imageSize, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
         stbi_image_free(data);
     };
 

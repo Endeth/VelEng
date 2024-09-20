@@ -1,4 +1,4 @@
-#include "Rendering/Material.h"
+#include "Rendering/RenderPasses/GLTFMaterialPass.h"
 
 #include "Rendering/RenderPasses/PipelineBuilder.h"
 

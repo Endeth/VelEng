@@ -1,4 +1,4 @@
-#include "Rendering/GPUAllocator.h"
+#include "Rendering/Buffers/GPUAllocator.h"
 
 #include "Rendering/VulkanUtils.h"
 
@@ -147,42 +147,48 @@ VkBufferImageCopy Vel::GPUAllocator::CreateBufferImageCopy(VkExtent3D extent, ui
 	};
 }
 
-Vel::AllocatedImage Vel::GPUAllocator::CreateImage(VkExtent3D size, VkFormat format, VkImageUsageFlags usage)
+void Vel::GPUAllocator::AllocateImage(AllocatedImage& image)
 {
-	AllocatedImage newImage;
-	newImage.imageFormat = format;
-	newImage.imageExtent = size;
+	VkImageCreateInfo imageCreateInfo = Create2DImageCreateInfo(image.extent, image.format, image.usageFlags);
 
-	VkImageCreateInfo imageCreateInfo = Create2DImageCreateInfo(size, format, usage);
-
-	VmaAllocationCreateInfo allocinfo {
+	VmaAllocationCreateInfo allocinfo{
 		.usage = VMA_MEMORY_USAGE_GPU_ONLY,
 		.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	};
 
-	VK_CHECK(vmaCreateImage(vmaAllocator, &imageCreateInfo, &allocinfo, &newImage.image, &newImage.allocation, nullptr));
+	VK_CHECK(vmaCreateImage(vmaAllocator, &imageCreateInfo, &allocinfo, &image.image, &image.allocation, nullptr));
 
-	VkImageAspectFlags aspectFlag = format == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-	VkImageViewCreateInfo imageViewCreateInfo = Create2DImageViewCreateInfo(format, aspectFlag, newImage.image);
+	VkImageAspectFlags aspectFlag = image.format == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+	VkImageViewCreateInfo imageViewCreateInfo = Create2DImageViewCreateInfo(image.format, aspectFlag, image.image);
 
-	VK_CHECK(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &newImage.imageView));
+	VK_CHECK(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &image.imageView));
+}
+
+Vel::AllocatedImage Vel::GPUAllocator::CreateAllocatedImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
+{
+	AllocatedImage newImage;
+	newImage.format = format;
+	newImage.extent = extent;
+	newImage.usageFlags = usage;
+
+	AllocateImage(newImage);
 
 	return newImage;
 }
 
-Vel::AllocatedImage Vel::GPUAllocator::CreateImage(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage)
+Vel::AllocatedImage Vel::GPUAllocator::CreateImageFromData(void* data, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
 {
-	size_t dataSize = size.depth * size.width * size.height * 4U;
+	//TODO staging buffer
+	size_t dataSize = extent.depth * extent.width * extent.height * 4U;
 	AllocatedBuffer uploadBuffer = CreateBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
 	memcpy(uploadBuffer.info.pMappedData, data, dataSize);
 
-	AllocatedImage newImage = CreateImage(size, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+	AllocatedImage newImage = CreateAllocatedImage(extent, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 	submitter.Submit([&](VkCommandBuffer cmd) {
 		TransitionImage(cmd, newImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-		VkBufferImageCopy copyRegion = CreateBufferImageCopy(size, 1);
+		VkBufferImageCopy copyRegion = CreateBufferImageCopy(extent, 1);
 		vkCmdCopyBufferToImage(cmd, uploadBuffer.buffer, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 		TransitionImage(cmd, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -193,13 +199,14 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateImage(void* data, VkExtent3D size, 
 	return newImage;
 }
 
-Vel::AllocatedImage Vel::GPUAllocator::CreateCubeImage(VkExtent3D size, VkFormat format, VkImageUsageFlags usage)
+Vel::AllocatedImage Vel::GPUAllocator::CreateAllocatedCubeImage(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
 {
 	AllocatedImage newImage;
-	newImage.imageFormat = format;
-	newImage.imageExtent = size;
+	newImage.format = format;
+	newImage.extent = extent;
+	newImage.usageFlags = usage;
 
-	VkImageCreateInfo imageCreateInfo = CreateCubeImageCreateInfo(size, format, usage);
+	VkImageCreateInfo imageCreateInfo = CreateCubeImageCreateInfo(extent, format, usage);
 
 	VmaAllocationCreateInfo allocinfo{
 		.usage = VMA_MEMORY_USAGE_GPU_ONLY,
@@ -214,9 +221,9 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateCubeImage(VkExtent3D size, VkFormat
 	return newImage;
 }
 
-Vel::AllocatedImage Vel::GPUAllocator::CreateCubeImage(std::array<unsigned char*, cubeTextureLayers> data , VkExtent3D size, VkFormat format, VkImageUsageFlags usage)
+Vel::AllocatedImage Vel::GPUAllocator::CreateCubeImageFromData(std::array<unsigned char*, cubeTextureLayers> data , VkExtent3D extent, VkFormat format, VkImageUsageFlags usage)
 {
-	size_t layerSize = size.depth * size.width * size.height * 4U;
+	size_t layerSize = extent.width * extent.height * extent.depth * 4U;
 	size_t dataSize = layerSize * cubeTextureLayers;
 	AllocatedBuffer uploadBuffer = CreateBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
@@ -226,12 +233,12 @@ Vel::AllocatedImage Vel::GPUAllocator::CreateCubeImage(std::array<unsigned char*
 		memcpy(layerMemory + (layerSize * i), data[i], layerSize);
 	}
 
-	AllocatedImage newImage = CreateCubeImage(size, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+	AllocatedImage newImage = CreateAllocatedCubeImage(extent, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 	submitter.Submit([&](VkCommandBuffer cmd) {
 		TransitionImage(cmd, newImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-		VkBufferImageCopy copyRegion = CreateBufferImageCopy(size, 6);
+		VkBufferImageCopy copyRegion = CreateBufferImageCopy(extent, 6);
 
 		vkCmdCopyBufferToImage(cmd, uploadBuffer.buffer, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 		 

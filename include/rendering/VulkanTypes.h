@@ -12,6 +12,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
+
 #include <vk_mem_alloc.h>
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -42,7 +43,7 @@
 namespace Vel
 {
     constexpr static uint32_t FRAME_TIMEOUT = 1000000000;
-    constexpr static uint32_t RENDER_THREADS_COUNT = 2;
+    constexpr static uint32_t RENDER_THREADS_COUNT = 1;
 
     struct Vertex
     {
@@ -79,9 +80,10 @@ namespace Vel
     {
         VkImage image;
         VkImageView imageView;
+        VkImageUsageFlags usageFlags;
         VmaAllocation allocation;
-        VkExtent3D imageExtent;
-        VkFormat imageFormat;
+        VkExtent3D extent;
+        VkFormat format;
     };
 
     struct AllocatedBuffer

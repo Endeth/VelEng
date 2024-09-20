@@ -1,4 +1,4 @@
-#include "Rendering/Lighting.h"
+#include "Rendering/Scene/Lighting.h"
 
 void Vel::Sunlight::InitLightData(const glm::vec3& dir, const glm::vec4& col)
 {
@@ -11,8 +11,11 @@ void Vel::Sunlight::InitShadowData(GPUAllocator& allocator, VkExtent3D shadowMap
 {
     gpuViewProjData = allocator.CreateBuffer(sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
     shadowResolution = shadowMapResolution;
-    shadowMap = allocator.CreateImage(shadowMapResolution, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT ); //TODO remove debug dst_bit
+    VkImageUsageFlags usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+        | VK_IMAGE_USAGE_SAMPLED_BIT
+        | VK_IMAGE_USAGE_TRANSFER_SRC_BIT //TODO needed?
+        | VK_IMAGE_USAGE_TRANSFER_DST_BIT; //TODO remove debug dst_bit
+    shadowMap = allocator.CreateAllocatedImage(shadowMapResolution, VK_FORMAT_D32_SFLOAT, usageFlags);
 }
 
 void Vel::Sunlight::UpdateCameraPosition(const Camera& mainCamera)

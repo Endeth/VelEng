@@ -7,7 +7,7 @@
 #include <condition_variable>
 
 #include "rendering/VulkanTypes.h"
-#include "rendering/Frames.h"
+#include "rendering/Frame/Frames.h"
 #include "utils/TSQueue.h"
 
 namespace Vel

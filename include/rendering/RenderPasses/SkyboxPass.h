@@ -1,12 +1,15 @@
 #pragma once
 
 #include "Rendering/VulkanTypes.h"
-#include "Rendering/Descriptors.h"
-#include "Rendering/GPUAllocator.h"
-#include "Rendering/Camera.h"
 
+#include "Rendering/Buffers/GPUAllocator.h"
+
+#include "Rendering/RenderPasses/Descriptors.h"
 #include "Rendering/RenderPasses/Pipeline.h"
 #include "Rendering/RenderPasses/PipelineBuilder.h"
+
+#include "Rendering/Scene/Camera.h"
+
 
 namespace Vel
 {
@@ -20,8 +23,8 @@ namespace Vel
     class SkyboxPass
     {
     public:
-        void Init(VkDevice dev, VkExtent2D renderExtent, AllocatedImage& skyboxImage, AllocatedImage& drawImage);
-        void Draw(VkCommandBuffer cmd, const Camera &camera);
+        void Init(VkDevice dev, AllocatedImage& skyboxImage);
+        void Draw(VkCommandBuffer cmd, const Camera &camera, const AllocatedImage& drawImage);
 
         void Cleanup();
 
@@ -34,7 +37,6 @@ namespace Vel
         VkDescriptorSet skyboxDescriptorSet;
         SkyboxPipeline pipeline;
 
-        VkExtent2D drawExtent;
         VkSampler sampler;
         VkImageView drawImageView;
 

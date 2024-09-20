@@ -7,7 +7,8 @@
 
 #include "Rendering/VulkanTypes.h"
 #include "Rendering/VulkanUtils.h"
-#include "Rendering/Images.h"
+
+#include "Rendering/Assets/Images.h"
 
 
 #ifdef _DEBUG
@@ -73,20 +74,24 @@ void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
     graphicsQueue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
     graphicsQueueFamily = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
 
-    drawExtent = windowExtent;
+    drawExtent = VkExtent3D {
+        .width = windowExtent.width,
+        .height = windowExtent.height,
+        .depth = 1
+    };
 
     mainCamera.SetPosition(glm::vec3(0, 0, 0));
     mainCamera.SetProjection((float)drawExtent.width / (float)drawExtent.height, 70.f);
 
     CreateAllocator();
     swapchain.Init(physicalDevice, device, surface, windowExtent);
-    CreateFrameData();
     CreateCameraDescriptors(); //TODO move to frame data
     CreateCommandsInfo();
 
     InitTestLightData(); //TODO divide into creating buffers and test lights
     InitShadowPass();
     InitDeferred();
+    CreateFrameData();
 
     InitTestTextures();
     InitSkyboxPass();
@@ -163,11 +168,6 @@ void Vel::Renderer::HandleSDLEvent(SDL_Event* sdlEvent)
 void Vel::Renderer::UpdateScene()
 {
     FunctionTimeMeasure measure{ stats.sceneUpdateTime };
-    for (auto& context : mainDrawContexts)
-    {
-        context.Clear();
-    }
-    mainDrawContexts.clear();
 
     UpdateCamera();
 
@@ -242,9 +242,9 @@ void Vel::Renderer::SkyboxDraw(FrameData& frame)
     VK_CHECK(vkResetCommandBuffer(skyboxCmd, 0));
     VK_CHECK(vkBeginCommandBuffer(skyboxCmd, &primaryCommandBegin));
 
-    deferredPasses.GetFramebuffer().TransitionImages(skyboxCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    frame.resources.gPassFramebuffer.TransitionImagesForAttachment(skyboxCmd);
     {
-        skyboxPass.Draw(skyboxCmd, mainCamera);
+        skyboxPass.Draw(skyboxCmd, mainCamera, frame.resources.gPassFramebuffer.color);
     }
 
     VK_CHECK(vkEndCommandBuffer(skyboxCmd));
@@ -275,7 +275,7 @@ void Vel::Renderer::GPassCommandRecord(FrameData& frame)
 
     {
         FunctionTimeMeasure measure{ stats.gPassDrawTime };
-        deferredPasses.DrawGPass(mainDrawContexts, gPassCmd);
+        deferredPasses.DrawGPass(frame.resources.gPassDrawContexts, gPassCmd, frame.resources.gPassFramebuffer);
     }
     ++stats.gPassesCount;
     stats.gPassesAccTime += stats.gPassDrawTime;
@@ -302,7 +302,8 @@ void Vel::Renderer::LightSourceShadowWork(FrameData& frame)
     VK_CHECK(vkResetCommandBuffer(shadowCmd, 0));
     VK_CHECK(vkBeginCommandBuffer(shadowCmd, &primaryCommandBegin));
 
-    shadowPass.Draw(shadowContext, shadowCmd);
+    TransitionDepthImage(shadowCmd, testLights.sunlight.shadowMap.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+    shadowPass.Draw(shadowContext, shadowCmd, testLights.sunlight);
 
     VK_CHECK(vkEndCommandBuffer(shadowCmd));
 
@@ -320,13 +321,15 @@ void Vel::Renderer::LPassCommandRecord(FrameData& frame)
     VK_CHECK(vkBeginCommandBuffer(lPassCmd, &primaryCommandBegin));
 
     TransitionDepthImage(lPassCmd, testLights.sunlight.shadowMap.image, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL);
-    deferredPasses.GetFramebuffer().TransitionImages(lPassCmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    frame.resources.gPassFramebuffer.TransitionImagesForDescriptors(lPassCmd);
+    TransitionImage(lPassCmd, frame.resources.lPassDrawImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     {
         FunctionTimeMeasure measure{ stats.lPassDrawTime };
-        deferredPasses.DrawLPass(lPassCmd);
+        deferredPasses.DrawLPass(lPassCmd, frame.resources.lPassDrawImage, frame.resources.gPassFramebuffer);
     }
 
-    PreparePresentableImage(lPassCmd); //TODO rename to OnFrameRenderEnd
+    PreparePresentableImage(lPassCmd, frame); //TODO rename to OnFrameRenderEnd
 
     DrawImgui(lPassCmd, swapchain.GetImage(), swapchain.GetImageView(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
@@ -393,6 +396,11 @@ void Vel::Renderer::Draw()
     currentFrame.AddWork(GENERAL, [&]() {
         UpdateScene();
         UpdateFrameDescriptors();
+        for (auto& context : currentFrame.resources.gPassDrawContexts)
+        {
+            context.Clear();
+        }
+        currentFrame.resources.gPassDrawContexts.clear();
 
         swapchain.AcquireNextImageIndex(currentFrame.GetSync().swapchainSemaphore);
         if (swapchain.IsAwaitingResize())
@@ -415,15 +423,15 @@ void Vel::Renderer::Draw()
     });
     currentFrame.AddWork(MAIN_CONTEXT, [&]() {
         for (int i = 0; i < 25; ++i)
-            GPassContextWork(loadedScenes["model"], modelMatrix2, mainDrawContexts);
+            GPassContextWork(loadedScenes["model"], modelMatrix2, currentFrame.resources.gPassDrawContexts);
     });
     currentFrame.AddWork(MAIN_CONTEXT, [&]() {
         for (int i = 0; i < 25; ++i)
-            GPassContextWork(loadedScenes["model"], modelMatrix2, mainDrawContexts);
+            GPassContextWork(loadedScenes["model"], modelMatrix2, currentFrame.resources.gPassDrawContexts);
     });
     currentFrame.AddWork(MAIN_CONTEXT, [&]() {
         for (int i = 0; i < 25; ++i)
-            GPassContextWork(loadedScenes["model"], modelMatrix2, mainDrawContexts);
+            GPassContextWork(loadedScenes["model"], modelMatrix2, currentFrame.resources.gPassDrawContexts);
     });
     currentFrame.AddWork(MAIN_CONTEXT, [&]() {
         fmt::println("Main context work done.                Frame ID {}", currentFrame.GetFrameIdx());
@@ -488,7 +496,7 @@ void Vel::Renderer::Draw()
     currentFrame.UnlockQueuesLock(PREPARE_CPU_DATA);
 }
 
-void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd)
+void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd, FrameData& frame)
 {
     VkImage presentableImage = VK_NULL_HANDLE;
     VkImageLayout transitionSrcLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -496,40 +504,42 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd)
 
     TransitionImage(cmd, swapchain.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
+    auto& framebuffer = frame.resources.gPassFramebuffer;
     switch (imageToPresent)
     {
     case 1:
-        presentableImage = deferredPasses.GetFramebuffer().position.image;
+        presentableImage = framebuffer.position.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
     case 2:
-        presentableImage = deferredPasses.GetFramebuffer().color.image;
+        presentableImage = framebuffer.color.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
     case 3:
-        presentableImage = deferredPasses.GetFramebuffer().normals.image;
+        presentableImage = framebuffer.normals.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
     case 4:
-        presentableImage = deferredPasses.GetFramebuffer().metallicRoughness.image;
+        presentableImage = framebuffer.metallicRoughness.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
     case 5:
         presentableImage = testLights.sunlight.shadowMap.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
         TransitionDepthImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-        CopyDepthToColorImage(cmd, presentableImage, buff, swapchain.GetImage(), testLights.sunlight.shadowMap.imageExtent);
+        CopyDepthToColorImage(cmd, presentableImage, buff, swapchain.GetImage(), testLights.sunlight.shadowMap.extent);
         break;
     default:
-        presentableImage = deferredPasses.GetDrawImage().image;
+        presentableImage = frame.resources.lPassDrawImage.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         break;
     }
 
     if (imageToPresent != 5)
     {
+        VkExtent3D swapchainExtent = { swapchain.GetImageSize().width, swapchain.GetImageSize().height };
         TransitionImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-        BlitImage(cmd, presentableImage, swapchain.GetImage(), drawExtent, swapchain.GetImageSize());
+        BlitImage(cmd, presentableImage, swapchain.GetImage(), drawExtent, swapchainExtent);
     }
 }
 
@@ -665,7 +675,7 @@ Vel::GPUMeshBuffers Vel::Renderer::CreateRectangle()
 
 void Vel::Renderer::InitSkyboxPass()
 {
-    skyboxPass.Init(device, drawExtent, defaultCubeImage, deferredPasses.GetFramebuffer().color);
+    skyboxPass.Init(device, defaultCubeImage);
 }
 
 void Vel::Renderer::InitShadowPass()
@@ -675,20 +685,21 @@ void Vel::Renderer::InitShadowPass()
 
 void Vel::Renderer::InitDeferred()
 {
-    deferredPasses.Init(device, &gpuAllocator, drawExtent, sceneCameraDataDescriptorLayout, testLights.lightsDataBuffer.buffer, sizeof(LightData), testLights.sunlight.shadowMap.imageView, CreateRectangle());
+    deferredPasses.Init(device,sceneCameraDataDescriptorLayout, testLights.lightsDataBuffer.buffer, sizeof(LightData), testLights.sunlight.shadowMap.imageView);
+    deferredPasses.SetRenderExtent(VkExtent2D{drawExtent.width, drawExtent.height});
 }
 
 void Vel::Renderer::InitTestTextures()
 {
     uint32_t white = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
-    whiteImage = gpuAllocator.CreateImage((void*)&white, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+    whiteImage = gpuAllocator.CreateImageFromData((void*)&white, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
     uint32_t normals = glm::packUnorm4x8(glm::vec4(0.5f, 0.5f, 1.0f, 0.0f));
-    defaultNormalsImage = gpuAllocator.CreateImage((void*)&normals, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+    defaultNormalsImage = gpuAllocator.CreateImageFromData((void*)&normals, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
     RenderableGLTF::defaultNormalsImage = defaultNormalsImage.image; //TODO temp until asset manager
 
     uint32_t metallicRoughness = glm::packUnorm4x8(glm::vec4(0.0f, 1.0f, 1.0f, 0.0f));
-    defaultMetallicRoughnessImage = gpuAllocator.CreateImage((void*)&metallicRoughness, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+    defaultMetallicRoughnessImage = gpuAllocator.CreateImageFromData((void*)&metallicRoughness, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
     RenderableGLTF::defaultMetallicRoughnessImage = defaultMetallicRoughnessImage.image; //TODO temp until asset manager
 
     uint32_t black = glm::packUnorm4x8(glm::vec4(0, 0, 0, 0));
@@ -701,7 +712,7 @@ void Vel::Renderer::InitTestTextures()
             pixels[y * 16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
         }
     }
-    errorCheckerboardImage = gpuAllocator.CreateImage((void*)pixels.data(), VkExtent3D{16, 16, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+    errorCheckerboardImage = gpuAllocator.CreateImageFromData((void*)pixels.data(), VkExtent3D{16, 16, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
     RenderableGLTF::errorCheckerboardImage = errorCheckerboardImage.image; //TODO temp until asset manager
 
     STBImage front(GET_TEXTURE_PATH("skybox/front.png"));
@@ -719,7 +730,7 @@ void Vel::Renderer::InitTestTextures()
     cubeImages[4] = front.GetImageData();
     cubeImages[5] = back.GetImageData();
 
-    defaultCubeImage = gpuAllocator.CreateCubeImage(cubeImages, front.GetSize(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+    defaultCubeImage = gpuAllocator.CreateCubeImageFromData(cubeImages, front.GetSize(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
     VkSamplerCreateInfo samplerCreateInfo {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -746,6 +757,27 @@ void Vel::Renderer::CreateFrameData()
     {
         frame.Init(device, graphicsQueueFamily);
         renderThreadPool.SetupFrameData(frame);
+
+        frame.resources.gPassFramebuffer = deferredPasses.CreateUnallocatedFramebuffer(drawExtent);
+        gpuAllocator.AllocateImage(frame.resources.gPassFramebuffer.position);
+        gpuAllocator.AllocateImage(frame.resources.gPassFramebuffer.color);
+        gpuAllocator.AllocateImage(frame.resources.gPassFramebuffer.normals);
+        gpuAllocator.AllocateImage(frame.resources.gPassFramebuffer.metallicRoughness);
+        gpuAllocator.AllocateImage(frame.resources.gPassFramebuffer.depth);
+        deferredPasses.SetFramebufferDescriptor(frame.resources.gPassFramebuffer);
+
+        frame.resources.lPassDrawImage = deferredPasses.CreateUnallocatedLPassDrawImage(drawExtent);
+        gpuAllocator.AllocateImage(frame.resources.lPassDrawImage);
+
+        //TODO TEMP; we'll probably move that to GPUImage Deallocate()
+        delQueue.Push([&]() {
+            gpuAllocator.DestroyImage(frame.resources.gPassFramebuffer.position);
+            gpuAllocator.DestroyImage(frame.resources.gPassFramebuffer.color);
+            gpuAllocator.DestroyImage(frame.resources.gPassFramebuffer.normals);
+            gpuAllocator.DestroyImage(frame.resources.gPassFramebuffer.metallicRoughness);
+            gpuAllocator.DestroyImage(frame.resources.gPassFramebuffer.depth);
+            gpuAllocator.DestroyImage(frame.resources.lPassDrawImage);
+        });
     }
 }
 

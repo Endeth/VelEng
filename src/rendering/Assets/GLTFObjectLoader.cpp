@@ -1,4 +1,4 @@
-#include "Rendering/MeshLoader.h"
+#include "Rendering/Assets/GLTFObjectLoader.h"
 
 #include <memory>
 #include <unordered_map>
@@ -7,12 +7,14 @@
 
 #include "stb_image.h"
 #include <glm/gtx/quaternion.hpp>
-
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/tools.hpp>
 
 #include "Rendering/Renderer.h"
-#include "Rendering/Images.h"
+
+#include "Rendering/Assets/Images.h"
+
+#include "Rendering/RenderPasses/Descriptors.h"
 
 VkFilter ExtractFilter(fastgltf::Filter filter)
 {
@@ -46,19 +48,19 @@ VkSamplerMipmapMode ExtractMipmapMode(fastgltf::Filter filter)
     }
 }
 
-void Vel::MeshLoader::Init(VkDevice dev, Renderer* ren)
+void Vel::GLTFObjectLoader::Init(VkDevice dev, Renderer* ren)
 {
     device = dev;
     renderer = ren;
 }
 
-void Vel::MeshLoader::Cleanup()
+void Vel::GLTFObjectLoader::Cleanup()
 {
     meshes.clear();
     materials.clear();
 }
 
-std::optional<std::shared_ptr<Vel::RenderableGLTF>> Vel::MeshLoader::loadGltf(const std::filesystem::path& filePath)
+std::optional<std::shared_ptr<Vel::RenderableGLTF>> Vel::GLTFObjectLoader::loadGltf(const std::filesystem::path& filePath)
 {
     std::shared_ptr<RenderableGLTF> scene = std::make_shared<RenderableGLTF>();
     scene->device = device;
@@ -82,7 +84,7 @@ std::optional<std::shared_ptr<Vel::RenderableGLTF>> Vel::MeshLoader::loadGltf(co
     return scene;
 }
 
-bool Vel::MeshLoader::LoadAsset(const std::filesystem::path& filePath, fastgltf::Asset& gltfAsset)
+bool Vel::GLTFObjectLoader::LoadAsset(const std::filesystem::path& filePath, fastgltf::Asset& gltfAsset)
 {
     fastgltf::Parser parser{};
 
@@ -129,7 +131,7 @@ bool Vel::MeshLoader::LoadAsset(const std::filesystem::path& filePath, fastgltf:
     return true;
 }
 
-void Vel::MeshLoader::CreateSamplers(RenderableGLTF& sceneData, fastgltf::Asset& gltfAsset)
+void Vel::GLTFObjectLoader::CreateSamplers(RenderableGLTF& sceneData, fastgltf::Asset& gltfAsset)
 {
     for (fastgltf::Sampler& sampler : gltfAsset.samplers)
     {
@@ -150,7 +152,7 @@ void Vel::MeshLoader::CreateSamplers(RenderableGLTF& sceneData, fastgltf::Asset&
     }
 }
 
-void Vel::MeshLoader::CreateMaterials(RenderableGLTF& sceneData, fastgltf::Asset& gltfAsset)
+void Vel::GLTFObjectLoader::CreateMaterials(RenderableGLTF& sceneData, fastgltf::Asset& gltfAsset)
 {
     std::vector<DescriptorPoolSizeRatio> sizes = { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3 },
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3 },
@@ -235,7 +237,7 @@ void Vel::MeshLoader::CreateMaterials(RenderableGLTF& sceneData, fastgltf::Asset
     }
 }
 
-void Vel::MeshLoader::CreateSurfaces(RenderableGLTF& sceneData, fastgltf::Asset& gltfAsset)
+void Vel::GLTFObjectLoader::CreateSurfaces(RenderableGLTF& sceneData, fastgltf::Asset& gltfAsset)
 {
     std::vector<uint32_t> indices;
     std::vector<Vertex> vertices;
@@ -344,7 +346,7 @@ void Vel::MeshLoader::CreateSurfaces(RenderableGLTF& sceneData, fastgltf::Asset&
     }
 }
 
-void Vel::MeshLoader::CreateNodeTree(RenderableGLTF& sceneData, fastgltf::Asset& gltfAsset)
+void Vel::GLTFObjectLoader::CreateNodeTree(RenderableGLTF& sceneData, fastgltf::Asset& gltfAsset)
 {
     std::vector<std::shared_ptr<RenderableNode>> nodes;
     for (fastgltf::Node& node : gltfAsset.nodes)
