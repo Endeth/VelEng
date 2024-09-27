@@ -37,6 +37,12 @@ namespace Vel
             transparentSurfaces = std::move(other.transparentSurfaces);
         }
 
+        void operator=(DrawContext&& other)
+        {
+            opaqueSurfaces = std::move(other.opaqueSurfaces);
+            transparentSurfaces = std::move(other.transparentSurfaces);
+        }
+
         void Clear()
         {
             for (auto& materialSurfaces : opaqueSurfaces)

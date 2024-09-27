@@ -40,8 +40,9 @@ void Vel::SkyboxPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_
     pipelineBuilder.DisableBlending();
 
     pipelineBuilder.SetColorAttachmentFormat(VK_FORMAT_R8G8B8A8_UNORM);
-    pipelineBuilder.SetDepthFormat(VK_FORMAT_D32_SFLOAT);
-    pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
+    //pipelineBuilder.SetDepthFormat(VK_FORMAT_D32_SFLOAT);
+    //pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
+    pipelineBuilder.DisableDepthTest();
 
     pipeline = pipelineBuilder.BuildGfxPipeline(device);
 

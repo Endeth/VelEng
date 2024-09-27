@@ -43,7 +43,7 @@
 namespace Vel
 {
     constexpr static uint32_t FRAME_TIMEOUT = 1000000000;
-    constexpr static uint32_t RENDER_THREADS_COUNT = 1;
+    constexpr static uint32_t RENDER_THREADS_COUNT = 2;
 
     struct Vertex
     {
@@ -52,6 +52,13 @@ namespace Vel
         glm::vec3 normal;
         float uv_y;
         glm::vec4 tangent;
+    };
+
+    struct ImageBarrierInfo
+    {
+        VkPipelineStageFlags2 stageMask;
+        VkAccessFlags2 accessFlags;
+        VkImageLayout layout;
     };
 
     struct GPUDrawPushConstants
@@ -76,43 +83,20 @@ namespace Vel
         glm::vec4 testData;
     };
 
-    // General work queue
-    //  -- prepare cpu data and send (unlocks on job done)
-    //  -- prepare light data and send (unlocks on job done)
-    //  -- set initial images layout (semaphore signal)
-    //  -- maybe get swapchain?
-
-    // Main context work queue (adds work to record gpass and unlocks it on no more work)
-    // |
-    // v
-    // Record gpass work commands queue (unlocks on no more work)
-    // |
-    // | -- waits for initial img layout semaphore on GPU
-    // v
-    // Queue gpass callback (unlocks on finish) or work commands queue (unlocks on no more work)
-
-    // Shadow context work queue (adds work to record shadows and unlocks it on no more work)
-    // |
-    // v
-    // Record shadows commands work queue (unlocks on no more work)
-    // |
-    // | -- waits for initial img layout semaphore on GPU
-    // v
-    // Queue shadows callback (unlocks on finish) or work commands queue (unlocks on no more work)
-
-    // LPass + blit record and present queue
-    // -- might happen only after camera and lights, queue waits for semaphores gpass shadows skybox and imgs layout
-    // -- blit waits for getting swapchain
-    // -- present waits for swapchain and lpass semaphore
-
     enum RenderQueueType : uint8_t
     {
+        // CPU
         GENERAL,
-        PREPARED_FRAME_HANDLER,
         MAIN_CONTEXT,
         MAIN_COMMANDS_RECORD,
         SHADOW_CONTEXT,
         SHADOW_COMMANDS_RECORD,
+        CPU_WORK_DONE,
+
+        // GPU
+        SKYBOX_RECORD_AND_QUEUE,
+        MAIN_COMMANDS_QUEUE,
+        SHADOW_COMMANDS_QUEUE,
         LPASS_COMMANDS_RECORD
     };
 
@@ -178,21 +162,45 @@ namespace Vel
         MaterialPass passType;
     };
 
+    // Frame GPU data
     struct LightData
     {
         glm::vec4 ambient;
         glm::vec4 sunlightDirection;
         glm::vec4 sunlightColor;
-        glm::mat4 sunlightViewProj;
+        glm::mat4 sunlightViewProj; //TODO this data is same as in shadow map descriptor.
         uint32_t sunlightShadowMapID;
 
         uint32_t pointLightsCount;
         VkDeviceAddress pointLightBuffer;
     };
 
-    struct PointLight
-    {
-        glm::vec4 position;
-        glm::vec4 color;
-    };
+    // General work queue
+    //  -- prepare cpu data and send (unlocks on job done)
+    //  -- prepare light data and send (unlocks on job done)
+    //  -- set initial images layout (semaphore signal)
+    //  -- maybe get swapchain?
+
+    // Main context work queue (adds work to record gpass and unlocks it on no more work)
+    // |
+    // v
+    // Record gpass work commands queue (unlocks on no more work)
+    // |
+    // | -- waits for initial img layout semaphore on GPU
+    // v
+    // Queue gpass callback (unlocks on finish) or work commands queue (unlocks on no more work)
+
+    // Shadow context work queue (adds work to record shadows and unlocks it on no more work)
+    // |
+    // v
+    // Record shadows commands work queue (unlocks on no more work)
+    // |
+    // | -- waits for initial img layout semaphore on GPU
+    // v
+    // Queue shadows callback (unlocks on finish) or work commands queue (unlocks on no more work)
+
+    // LPass + blit record and present queue
+    // -- might happen only after camera and lights, queue waits for semaphores gpass shadows skybox and imgs layout
+    // -- blit waits for getting swapchain
+    // -- present waits for swapchain and lpass semaphore
 }

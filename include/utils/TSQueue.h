@@ -13,6 +13,9 @@ namespace Vel
     class TSQueue
     {
     public:
+        //TODO resource guard returning resource to q in destructor maybe?
+        //class ReturningGetter{};
+
         void Push(Item&& t)
         {
             std::lock_guard lock(mut);

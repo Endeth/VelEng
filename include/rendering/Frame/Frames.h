@@ -14,6 +14,7 @@ namespace Vel
 {
     class RenderThreadPool;
 
+    // TODO divide data into cpu and gpu
     class FrameData
     {
     public:
@@ -21,38 +22,56 @@ namespace Vel
 
         struct SceneData
         {
+            DescriptorAllocatorDynamic frameDescriptors;
+
             AllocatableBuffer cameraDataBuffer;
             VkDescriptorSet cameraDescriptorSet;
-            DescriptorAllocatorDynamic frameDescriptors;
+
+            // Containts all light information (including info about point light buffers)
+            AllocatableBuffer globalLightsDataBuffer;
+            VkDescriptorSet globalLightsDescriptorSet;
+            AllocatableBuffer pointLightsDataBuffer;
         };
 
         struct Synchronization
         {
             VkSemaphore swapchainSemaphore;
-            VkSemaphore skyboxSemaphore;
-            VkSemaphore gPassSemaphore;
-            VkSemaphore shadowsSemaphore; //TODO dynamic queue?
-            VkSemaphore lPassSemaphore;
+            VkSemaphore skyboxWorkSemaphore;
+            VkSemaphore gPassWorkSemaphore;
+            VkSemaphore shadowsWorkSemaphore; //TODO dynamic queue?
+            VkSemaphore lPassWorkSemaphore;
+
+            std::condition_variable CPUCondVar;
+            std::atomic<bool> workingOnCPU = false;
+            std::condition_variable GPUCondVar;
+            std::atomic<bool> workingOnGPU = false;
+            std::mutex workMutex;
+
             VkFence renderFence;
-            std::atomic<bool> inProgress = false;
-            std::atomic<bool> preparing = false;
-            std::atomic<bool> rendering = false;
         };
 
         //TODO maybe separate resources from work oriented code?
         struct FrameResources
         {
+            //Camera CPU data buffer
+            //Lights CPU data buffer
+
             std::vector<DrawContext> gPassDrawContexts;
+            DrawContext shadowDrawContext;
+
+            VkCommandBuffer gPassDrawCommand;
+            VkCommandBuffer shadowsDrawCommand;
 
             AllocatableImage lPassDrawImage;
             DeferredPasses::Framebuffer gPassFramebuffer;
+            //Maybe all shadowmaps
         } resources;
 
         void Init(VkDevice device, uint32_t queueFamilyIndex);
         //void Resize(VkExtent3D size);
 
         void StartNew(uint32_t frameIdx);
-        const uint32_t GetFrameIdx() const;
+        const uint64_t GetFrameIdx() const;
 
         VkCommandPool GetAvailableCommandPool();
         void ReaddCommandPool(VkCommandPool pool);
@@ -73,7 +92,7 @@ namespace Vel
         void Cleanup();
         DeletionQueue cleanupQueue;
     private:
-        uint32_t idx;
+        uint64_t idx;
 
         TSQueue<VkCommandPool> commandPools;
         Synchronization sync;

@@ -12,12 +12,22 @@ void Vel::FrameData::Init(VkDevice device, uint32_t queueFamilyIndex)
 
 void Vel::FrameData::StartNew(uint32_t frameIdx)
 {
+    sync.workingOnCPU.store(true);
     ClearWorkQueues();
+
+    for (auto& context : resources.gPassDrawContexts)
+    {
+        context.Clear();
+    }
+    resources.gPassDrawContexts.clear();
+
+    resources.shadowDrawContext.Clear();
+
     frameEndCleanup.Flush();
     idx = frameIdx;
 }
 
-const uint32_t Vel::FrameData::GetFrameIdx() const
+const uint64_t Vel::FrameData::GetFrameIdx() const
 {
     return idx;
 }
@@ -68,7 +78,6 @@ bool Vel::FrameData::HasWork()
 
 void Vel::FrameData::ClearWorkQueues()
 {
-
     for (auto& queue : frameWorkQueues)
     {
         queue.Clear();
@@ -173,25 +182,37 @@ void Vel::FrameData::CreateSynchronization(VkDevice device)
         .flags = VK_FENCE_CREATE_SIGNALED_BIT
     };
 
-    VkSemaphoreCreateInfo semaphoreInfo {
+    VkSemaphoreCreateInfo workSemaphoreInfo {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         .pNext = nullptr
+    };
+
+    VkSemaphoreTypeCreateInfo timelineCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
+        .pNext = NULL,
+        .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
+        .initialValue = 1
+    };
+    VkSemaphoreCreateInfo resourceSemaphoreInfo {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = &timelineCreateInfo
     };
 
     VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &sync.renderFence));
     cleanupQueue.Push([d = device, this]() { vkDestroyFence(d, sync.renderFence, nullptr); });
 
-    VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &sync.swapchainSemaphore));
-    VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &sync.skyboxSemaphore));
-    VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &sync.gPassSemaphore));
-    VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &sync.shadowsSemaphore));
-    VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &sync.lPassSemaphore));
+    VK_CHECK(vkCreateSemaphore(device, &workSemaphoreInfo, nullptr, &sync.swapchainSemaphore));
+    VK_CHECK(vkCreateSemaphore(device, &workSemaphoreInfo, nullptr, &sync.skyboxWorkSemaphore));
+    VK_CHECK(vkCreateSemaphore(device, &workSemaphoreInfo, nullptr, &sync.gPassWorkSemaphore));
+    VK_CHECK(vkCreateSemaphore(device, &workSemaphoreInfo, nullptr, &sync.shadowsWorkSemaphore));
+    VK_CHECK(vkCreateSemaphore(device, &workSemaphoreInfo, nullptr, &sync.lPassWorkSemaphore));
+
     cleanupQueue.Push([d = device, this]() {
         vkDestroySemaphore(d, sync.swapchainSemaphore, nullptr);
-        vkDestroySemaphore(d, sync.skyboxSemaphore, nullptr);
-        vkDestroySemaphore(d, sync.gPassSemaphore, nullptr);
-        vkDestroySemaphore(d, sync.shadowsSemaphore, nullptr);
-        vkDestroySemaphore(d, sync.lPassSemaphore, nullptr);
+        vkDestroySemaphore(d, sync.skyboxWorkSemaphore, nullptr);
+        vkDestroySemaphore(d, sync.gPassWorkSemaphore, nullptr);
+        vkDestroySemaphore(d, sync.shadowsWorkSemaphore, nullptr);
+        vkDestroySemaphore(d, sync.lPassWorkSemaphore, nullptr);
     });
 }
 
@@ -202,30 +223,43 @@ void Vel::FrameData::CreateResources()
 void Vel::FrameData::PrepareQueuesUnlockingOrder()
 {
     std::vector<RenderStages> locks = { PREPARE_CPU_DATA };
-    frameWorkQueues.emplace_back(GENERAL, locks);
+    frameWorkQueues.emplace_back(GENERAL, locks); //This mostly simulates scene logic data
 
+    //Important to properly divide scene logic to create proper queues/locks
+    //Transfer scene data (camera and lights) occurs after world is finished updatind and GPU res not locked (render on the same data)
+    //draw ima
+
+    // CPU
     frameWorkQueues.emplace_back(MAIN_CONTEXT, locks, [this](){
-        fmt::println("Unlock main context.                   Frame ID {}", idx);
         UnlockQueuesLock(PREPARE_MAIN_CONTEXT);
     });
     frameWorkQueues.emplace_back(SHADOW_CONTEXT, locks, [this]() {
-        fmt::println("Unlock shadow context.                 Frame ID {}", idx);
         UnlockQueuesLock(PREPARE_SHADOW_CONTEXT);
     });
 
-    locks = { PREPARE_MAIN_CONTEXT, PREPARE_SHADOW_CONTEXT };
-    frameWorkQueues.emplace_back(PREPARED_FRAME_HANDLER, locks, [this]() {
+    std::vector<RenderStages> mainContextLocks = { PREPARE_MAIN_CONTEXT };
+    frameWorkQueues.emplace_back(MAIN_COMMANDS_RECORD, mainContextLocks, [this]() {
+        UnlockQueuesLock(RECORD_GPASS);
+    });
+    std::vector<RenderStages> shadowContextLocks = { PREPARE_SHADOW_CONTEXT };
+    frameWorkQueues.emplace_back(SHADOW_COMMANDS_RECORD, shadowContextLocks, [this]() {
+        UnlockQueuesLock(RECORD_SHADOWS);
+    });
+    std::vector<RenderStages> cpuWorkDoneLocks = { RECORD_GPASS, RECORD_SHADOWS };
+    frameWorkQueues.emplace_back(CPU_WORK_DONE, cpuWorkDoneLocks, [this]() {
         UnlockQueuesLock(FRAME_PREPARED);
     });
 
-    locks = { FRAME_PREPARED };
-    frameWorkQueues.emplace_back(MAIN_COMMANDS_RECORD, locks, [this]() {
-        UnlockQueuesLock(RECORD_GPASS);
+    // GPU
+    std::vector<RenderStages> queueLocks = { FRAME_PREPARED };
+    frameWorkQueues.emplace_back(MAIN_COMMANDS_QUEUE, queueLocks, [this]() {
+        UnlockQueuesLock(QUEUE_GPASS);
     });
-    frameWorkQueues.emplace_back(SHADOW_COMMANDS_RECORD, locks, [this]() {
-        UnlockQueuesLock(RECORD_SHADOWS);
+    frameWorkQueues.emplace_back(SHADOW_COMMANDS_QUEUE, queueLocks, [this]() {
+        UnlockQueuesLock(QUEUE_SHADOWS);
     });
 
-    locks = { RECORD_GPASS, RECORD_SHADOWS }; //TODO GPU semaphore might do the lpass stage trick
-    frameWorkQueues.emplace_back(LPASS_COMMANDS_RECORD, locks);
+    //TODO let's find out if adding lPass submition to shadows or gpass (depending on which one is last) queue submition is better
+    std::vector<RenderStages> lPassLocks = { QUEUE_GPASS, QUEUE_SHADOWS /* PREPARE_CPU_DATA, RECORD_SHADOWS */};
+    frameWorkQueues.emplace_back(LPASS_COMMANDS_RECORD, lPassLocks);
 }

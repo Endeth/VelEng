@@ -105,8 +105,7 @@ void Vel::LPassPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_t
     vkDestroyShaderModule(device, fragmentModule, nullptr);
 }
 
-void Vel::DeferredPasses::Init(VkDevice dev, VkDescriptorSetLayout cameraDescriptorLayout, VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize,
-    VkImageView sunlightShadowMapView)
+void Vel::DeferredPasses::Init(VkDevice dev, VkDescriptorSetLayout cameraDescriptorLayout)
 {
     device = dev;
 
@@ -130,18 +129,12 @@ void Vel::DeferredPasses::Init(VkDevice dev, VkDescriptorSetLayout cameraDescrip
     CreateLPassDescriptorLayouts();
 
     //THREAD UNSAFE
-    lightsDescriptorSet = descriptorPool.Allocate(lightsDescriptorLayout);
+    //lightsDescriptorSet = descriptorPool.Allocate(lightsDescriptorLayout);
 
     VkDescriptorSetLayout lPassLayouts[] = { cameraDescriptorLayout, framebufferDescriptorLayout, lightsDescriptorLayout };
     constexpr uint32_t lPassLayoutsCount = sizeof(lPassLayouts) / sizeof(VkDescriptorSetLayout);
     lPass.SetDevice(device);
     lPass.CreatePipeline(lPassLayouts, lPassLayoutsCount);
-
-    DescriptorWriter descriptorWriter;
-    descriptorWriter.WriteBuffer(0, sceneLightDataBuffer, sceneLightDataBufferSize, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    descriptorWriter.WriteImages(1, &sunlightShadowMapView, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1);
-    descriptorWriter.WriteSampler(2, shadowsSampler);
-    descriptorWriter.UpdateSet(device, lightsDescriptorSet);
 
     BuildRenderInfo();
 }
@@ -284,16 +277,6 @@ VkRect2D Vel::DeferredPasses::BuildRenderScissors()
 void Vel::DeferredPasses::Cleanup()
 {
     descriptorPool.Cleanup();
-    /*
-    mainAllocator->DestroyImage(framebuffer.position);
-    mainAllocator->DestroyImage(framebuffer.color);
-    mainAllocator->DestroyImage(framebuffer.normals);
-    mainAllocator->DestroyImage(framebuffer.metallicRoughness);
-    mainAllocator->DestroyImage(framebuffer.depth);
-    mainAllocator->DestroyImage(drawImage);
-    //*/
-    //mainAllocator->DestroyBuffer(drawRect.indexBuffer); //TODO SMALL; use a bit of vert shader magic instead of rect
-    //mainAllocator->DestroyBuffer(drawRect.vertexBuffer);
     vkDestroyDescriptorSetLayout(device, gPassDescriptorLayout, nullptr);
     vkDestroyDescriptorSetLayout(device, framebufferDescriptorLayout, nullptr);
     vkDestroyDescriptorSetLayout(device, lightsDescriptorLayout, nullptr);
@@ -392,7 +375,7 @@ void Vel::DeferredPasses::SetFramebufferGPassAttachment(const Framebuffer& frame
     gPassDepthAttachmentInfo.imageView = framebuffer.depth.imageView;
 }
 
-void Vel::DeferredPasses::SetFramebufferDescriptor(Framebuffer& framebuffer)
+void Vel::DeferredPasses::UpdateFramebufferDescriptor(Framebuffer& framebuffer) const
 {
     DescriptorWriter descriptorWriter;
 
@@ -408,7 +391,7 @@ void Vel::DeferredPasses::SetFramebufferDescriptor(Framebuffer& framebuffer)
     descriptorWriter.UpdateSet(device, framebuffer.framebufferDescriptor);
 }
 
-void Vel::DeferredPasses::DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd, const Framebuffer& framebuffer)
+void Vel::DeferredPasses::DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd, const Framebuffer& framebuffer, const VkDescriptorSet& scene)
 {
     SetFramebufferGPassAttachment(framebuffer);
 
@@ -419,7 +402,7 @@ void Vel::DeferredPasses::DrawGPass(const std::vector<DrawContext>& contexts, Vk
 
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPass.GetPipeline());
 
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPass.GetPipelineLayout(), 0, 1, &sceneCameraDataDescriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPass.GetPipelineLayout(), 0, 1, &scene, 0, nullptr);
 
     VkBuffer lastIndexBuffer = VK_NULL_HANDLE;
     for (const auto& context : contexts)
@@ -454,7 +437,7 @@ void Vel::DeferredPasses::DrawGPass(const std::vector<DrawContext>& contexts, Vk
     vkCmdEndRendering(cmd);
 }
 
-void Vel::DeferredPasses::DrawLPass(VkCommandBuffer cmd, const AllocatableImage& drawImage, const Framebuffer& framebuffer)
+void Vel::DeferredPasses::DrawLPass(VkCommandBuffer cmd, const AllocatableImage& drawImage, const VkDescriptorSet& scene, const VkDescriptorSet& frame, const VkDescriptorSet& light)
 {
     lPassDrawAttachment.imageView = drawImage.imageView;
 
@@ -465,13 +448,30 @@ void Vel::DeferredPasses::DrawLPass(VkCommandBuffer cmd, const AllocatableImage&
 
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lPass.GetPipeline());
 
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lPass.GetPipelineLayout(), 0, 1, &sceneCameraDataDescriptorSet, 0, nullptr);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lPass.GetPipelineLayout(), 1, 1, &framebuffer.framebufferDescriptor, 0, nullptr);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lPass.GetPipelineLayout(), 2, 1, &lightsDescriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lPass.GetPipelineLayout(), 0, 1, &scene, 0, nullptr);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lPass.GetPipelineLayout(), 1, 1, &frame, 0, nullptr);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lPass.GetPipelineLayout(), 2, 1, &light, 0, nullptr);
 
     vkCmdDraw(cmd, 3, 1, 0, 0);
 
     vkCmdEndRendering(cmd);
+}
+
+Vel::DeferredPasses::Framebuffer::Dependencies Vel::DeferredPasses::Framebuffer::GetPipelineBarrierDependencyInfo(const ImageBarrierInfo& src, const ImageBarrierInfo& dst)
+{
+    VkImageMemoryBarrier2 barrier = GetImageMemoryBarrier(src.stageMask, src.accessFlags, src.layout, dst.stageMask, dst.accessFlags, dst.layout);
+
+    Dependencies imgBarriers;
+    imgBarriers[POSITION] = barrier;
+    imgBarriers[POSITION].image = position.image;
+    imgBarriers[COLOR] = barrier;
+    imgBarriers[COLOR].image = color.image;
+    imgBarriers[NORMALS] = barrier;
+    imgBarriers[NORMALS].image = normals.image;
+    imgBarriers[METALLIC_ROUGHNESS] = barrier;
+    imgBarriers[METALLIC_ROUGHNESS].image = metallicRoughness.image;
+
+    return imgBarriers;
 }
 
 void Vel::DeferredPasses::Framebuffer::TransitionImages(VkCommandBuffer cmd, VkImageLayout src, VkImageLayout dst)
@@ -485,6 +485,8 @@ void Vel::DeferredPasses::Framebuffer::TransitionImages(VkCommandBuffer cmd, VkI
 void Vel::DeferredPasses::Framebuffer::TransitionImagesForAttachment(VkCommandBuffer cmd)
 {
     TransitionImages(cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    //TODO temp
     TransitionDepthImage(cmd, depth.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 }
 

@@ -50,6 +50,8 @@ namespace Vel
     public:
         struct Framebuffer
         {
+            static constexpr uint8_t FRAMEBUFFER_SIZE = 4;
+
             enum ImageType : uint8_t
             {
                 POSITION = 0,
@@ -67,26 +69,27 @@ namespace Vel
 
             VkDescriptorSet framebufferDescriptor;
 
+            using Dependencies = std::array<VkImageMemoryBarrier2, Vel::DeferredPasses::Framebuffer::FRAMEBUFFER_SIZE>;
+            Dependencies GetPipelineBarrierDependencyInfo(const ImageBarrierInfo& src, const ImageBarrierInfo& dst);
             void TransitionImages(VkCommandBuffer cmd, VkImageLayout src, VkImageLayout dst);
             void TransitionImagesForAttachment(VkCommandBuffer cmd);
             void TransitionImagesForDescriptors(VkCommandBuffer cmd);
         };
 
-        void Init(VkDevice dev, VkDescriptorSetLayout cameraDescriptorLayout, VkBuffer sceneLightDataBuffer, size_t sceneLightDataBufferSize,
-            VkImageView sunlightShadowMapView);
+        void Init(VkDevice dev, VkDescriptorSetLayout cameraDescriptorLayout);
         void Cleanup();
 
         MaterialInstance CreateMaterialInstance(const DeferredMaterialResources& resources, DescriptorAllocatorDynamic& descriptorAllocator) const;
         Framebuffer CreateUnallocatedFramebuffer(const VkExtent3D& extent);
         AllocatableImage CreateUnallocatedLPassDrawImage(const VkExtent3D& extent);
 
-        void SetRenderExtent(const VkExtent2D& extent);
-        void SetFramebufferGPassAttachment(const Framebuffer& framebuffer);
-        void SetFramebufferDescriptor(Framebuffer& framebuffer);
-        void SetCameraDescriptorSet(VkDescriptorSet cameraSet) { sceneCameraDataDescriptorSet = cameraSet; }
+        VkDescriptorSetLayout GetLightDescriptorSetLayout() { return lightsDescriptorLayout; }
+        void UpdateFramebufferDescriptor(Framebuffer& framebuffer) const;
 
-        void DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd, const Framebuffer& framebuffer);
-        void DrawLPass(VkCommandBuffer cmd, const AllocatableImage& drawImage, const Framebuffer& framebuffer);
+        void SetRenderExtent(const VkExtent2D& extent);
+
+        void DrawGPass(const std::vector<DrawContext>& contexts, VkCommandBuffer cmd, const Framebuffer& framebuffer, const VkDescriptorSet& scene);
+        void DrawLPass(VkCommandBuffer cmd, const AllocatableImage& drawImage, const VkDescriptorSet& scene, const VkDescriptorSet& framebufferDescriptor, const VkDescriptorSet& lightsDescriptor);
 
     private:
         VkDevice device;
@@ -94,8 +97,6 @@ namespace Vel
 
         VkSampler sampler;
         VkSampler shadowsSampler;
-
-        VkDescriptorSet sceneCameraDataDescriptorSet;
 
         GPassPipeline gPass;
         VkRenderingInfo gPassRenderInfo;
@@ -123,6 +124,8 @@ namespace Vel
         void CreateSamplers();
         void CreateGPassDescriptorLayouts();
         void CreateLPassDescriptorLayouts();
+
+        void SetFramebufferGPassAttachment(const Framebuffer& framebuffer);
 
         void BuildRenderInfo();
         VkRenderingAttachmentInfo BuildAttachmentInfo(VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR);

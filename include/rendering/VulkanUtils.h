@@ -29,6 +29,9 @@ namespace Vel
         float* funcTime;
     };
 
+    VkImageMemoryBarrier2 GetImageMemoryBarrier(VkPipelineStageFlags2 srcStageMask, VkAccessFlags2 srcAccessMask, VkImageLayout srcLayout,
+        VkPipelineStageFlags2 dstStageMask, VkAccessFlags2 dstAccessMask, VkImageLayout dstLayout);
+
     VkImageSubresourceRange CreateImageSubresourceRangeAll(VkImageAspectFlags aspect);
     void TransitionImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout srcLayout, VkImageLayout dstLayout);
     void TransitionDepthImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout srcLayout, VkImageLayout dstLayout);

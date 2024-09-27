@@ -1,5 +1,32 @@
 #include "Rendering/VulkanUtils.h"
 
+VkImageMemoryBarrier2 Vel::GetImageMemoryBarrier(VkPipelineStageFlags2 srcStageMask, VkAccessFlags2 srcAccessMask, VkImageLayout srcLayout,
+    VkPipelineStageFlags2 dstStageMask, VkAccessFlags2 dstAccessMask, VkImageLayout dstLayout)
+{
+    VkImageMemoryBarrier2 imageBarrier {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .pNext = nullptr,
+
+        .srcStageMask = srcStageMask,
+        .srcAccessMask = srcAccessMask,
+        .dstStageMask = dstStageMask,
+        .dstAccessMask = dstAccessMask,
+
+        .oldLayout = srcLayout,
+        .newLayout = dstLayout,
+
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = VK_REMAINING_MIP_LEVELS,
+            .baseArrayLayer = 0,
+            .layerCount = VK_REMAINING_ARRAY_LAYERS
+        }
+    };
+
+    return imageBarrier;
+}
+
 void Vel::TransitionImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout srcLayout, VkImageLayout dstLayout)
 {
     VkImageMemoryBarrier2 imageBarrier {
@@ -220,7 +247,7 @@ VkSemaphoreSubmitInfo Vel::CreateSemaphoreSubmitInfo(VkPipelineStageFlags2 stage
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .pNext = nullptr,
         .semaphore = semaphore,
-        .value = 1,
+        //.value = 1,
         .stageMask = stageMask,
         .deviceIndex = 0
     };

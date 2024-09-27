@@ -20,6 +20,7 @@
 #include "Rendering/Scene/Camera.h"
 #include "Rendering/Scene/Lighting.h"
 #include "Rendering/Scene/Renderable.h"
+#include "Rendering/Scene/RenderTarget.h"
 
 #include "ui/VelImgui.h"
 
@@ -38,16 +39,15 @@ namespace Vel
         float gPassesAverage = 0;
     };
 
+    //TODO get this to scene area
     struct Lights
     {
+        glm::vec4 ambient;
         Sunlight sunlight;
-        LightData lights;
-        AllocatableBuffer lightsDataBuffer;
-        AllocatableBuffer pointLightsBuffer;
-
-        PointLight* pointLightsGPUData; //Used for position update
-
+        PointLight pointLights[2]; //TODO make dynamic or big buffer?
     };
+
+    class RenderTarget;
 
     class Renderer
     {
@@ -61,6 +61,8 @@ namespace Vel
 
         void HandleSDLEvent(SDL_Event* sdlEvent);
         void Draw();
+        void AddToDrawContext(IRenderable* target);
+        void SetDrawContextAsFilled();
 
         GPUAllocator* GetAllocator(){ return &gpuAllocator; }
         const DeferredPasses& GetDeferredRenderer() const { return deferredPasses; }
@@ -71,6 +73,7 @@ namespace Vel
         AllocatableImage defaultCubeImage;
         AllocatableImage errorCheckerboardImage;
         VkSampler defaultSamplerLinear;
+        VkSampler shadowSamplerNearest;
 
         void Cleanup();
 
@@ -84,7 +87,11 @@ namespace Vel
         VkPhysicalDevice physicalDevice;
         VkDevice device;
         VkSurfaceKHR surface;
+        // TODO make a stack/queue of available queues for threads
         VkQueue graphicsQueue;
+        // TODO gather more families and create submits based on available families
+        // map<OperationType, TSQueue<VkQueue>>
+        // but I don't think it will make that much of a difference
         uint32_t graphicsQueueFamily;
         VkCommandBufferBeginInfo primaryCommandBegin;
 
@@ -95,47 +102,6 @@ namespace Vel
         //Frame specific data
         uint32_t frameNumber = 0;
         constexpr static size_t FRAME_DATA_SIZE = 2;
-
-        /*
-        struct FrameData
-        {
-            VkCommandPool GetAvailableCommandPool()
-            {
-                VkCommandPool pool;
-                //Should always be able to return pool
-                commandPools.TryPop(pool);
-
-                return pool;
-            }
-
-            void ReaddCommandPool(VkCommandPool pool)
-            {
-                commandPools.Push(std::move(pool));
-            }
-            //Frame info
-            uint32_t idx;
-
-            //Work resources
-            std::list<RenderWorkQueue> frameWorkQueues;
-            TSQueue<VkCommandPool> commandPools;
-
-            //Sync resources
-            VkSemaphore swapchainSemaphore;
-            VkSemaphore skyboxSemaphore;
-            VkSemaphore gPassSemaphore;
-            VkSemaphore shadowsSemaphore; //TODO dynamic queue?
-            VkSemaphore lPassSemaphore;
-            std::atomic<bool> rendering = false;
-            VkFence renderFence;
-
-            //Data resources
-            AllocatedBuffer sceneCameraDataBuffer;
-            VkDescriptorSet sceneCameraDescriptorSet;
-            DescriptorAllocatorDynamic frameDescriptors;
-
-            DeletionQueue frameEndCleanup;
-            DeletionQueue cleanupQueue;
-        };//*/
         FrameData frames[FRAME_DATA_SIZE];
 
         GLTFObjectLoader meshLoader;
@@ -143,10 +109,8 @@ namespace Vel
         SkyboxPass skyboxPass;
         ShadowPass shadowPass;
         DeferredPasses deferredPasses;
-        //std::vector<DrawContext> mainDrawContexts;
         std::mutex drawContextMutex;
         std::mutex graphicsQueueMutex;
-        //DrawContext mainDrawContext; //TODO let's try to use vector
         VkExtent3D drawExtent;
         float renderScale = 1.f;
 
@@ -165,11 +129,13 @@ namespace Vel
         VkDebugUtilsMessengerEXT debugMessenger;
         uint32_t imageToPresent = 0;
 
+        //TODO kinda same
         void CreateFrameData();
+        void CreateFramesGPUData();
+
         void CreateCommandsInfo();
         VkCommandBuffer CreateCommandBuffer(VkCommandPool pool, VkCommandBufferLevel level);
         void CreateAllocator();
-        void CreateCameraDescriptors();
 
         void InitSkyboxPass();
         void InitShadowPass();
@@ -177,18 +143,26 @@ namespace Vel
         void InitImgui();
 
         void UpdateScene();
-        void UpdateActors();
+        void UpdateWorldActors();
+        void UpdateCameraCPUBuffer();
+        void UpdateCameraDescriptorsData(FrameData& frame);
         void UpdateGlobalLighting();
-        void UpdateCamera();
-        void UpdateFrameDescriptors();
+        void UpdateLightDescriptorsData(FrameData& frame);
 
-        void AwaitFramePreviousRenderDone(FrameData& frame);
+        void AwaitFrameRenderDone(FrameData& frame);
+        void AwaitTimelineSemaphore(VkSemaphore* semaphore);
+
+        // CPU
         void GPassContextWork(std::shared_ptr<RenderableGLTF> model, const glm::mat4& modelMatrix, std::vector<DrawContext>& drawContexts);
-        void GPassCommandRecord(FrameData& frame);
-        void LightSourceShadowWork(FrameData& frame);
+        void GPassCommandsRecord(FrameData& frame);
+        void ShadowMapContextWork(FrameData& frame);
+        void ShadowMapCommandsRecord(FrameData& frame);
+
+        // GPU mainly
         void SkyboxDraw(FrameData& frame);
+        void GPassQueueSubmit(FrameData& frame);
+        void ShadowMapQueueSubmit(FrameData& frame);
         void LPassCommandRecord(FrameData& frame);
-        void QueueGPUWork(VkCommandBuffer cmd, const std::vector<VkSemaphore>&& wait, VkSemaphore signal, VkFence fence = VK_NULL_HANDLE);
 
         void PreparePresentableImage(VkCommandBuffer cmd, FrameData& frame);
 
@@ -196,6 +170,7 @@ namespace Vel
         void DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout);
 
         FrameData& GetCurrentFrame(){ return frames[frameNumber % FRAME_DATA_SIZE]; }
+        FrameData& GetFillableFrame(){ return frames[frameNumber % FRAME_DATA_SIZE]; }
 
         //Testing
         std::unordered_map<std::string, std::shared_ptr<RenderableGLTF>> loadedScenes;

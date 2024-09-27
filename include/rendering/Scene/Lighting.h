@@ -43,17 +43,18 @@ namespace Vel
 
         VkExtent3D shadowResolution;
         AllocatableImage shadowMap;
-        AllocatableBuffer gpuViewProjData;
+        AllocatableBuffer shadowViewProj;
 
         void InitLightData(const glm::vec3& dir, const glm::vec4& col);
         void InitShadowData(GPUAllocator& allocator, VkExtent3D shadowMapResolution);
         void UpdateCameraPosition(const Camera& mainCamera);
     };
 
-    /*struct PointLight
+    struct PointLight
     {
-
-    };*/
+        glm::vec4 position;
+        glm::vec4 color;
+    };
 
     struct ShadedPointLight
     {

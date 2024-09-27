@@ -1,4 +1,5 @@
 #include "VelEng.h"
+#include "Actors/RenderComponent.h"
 
 namespace Vel
 {
@@ -32,6 +33,51 @@ namespace Vel
         renderer.Init(window, windowExtent);
         isInitialized = true;
     }
+
+    void Engine::HandleWindowEvents()
+    {
+        while (SDL_PollEvent(&sdlEvent) != 0)
+        {
+            if (sdlEvent.type == SDL_QUIT)
+                quit = true;
+
+            renderer.HandleSDLEvent(&sdlEvent);
+
+            if (sdlEvent.type == SDL_WINDOWEVENT)
+            {
+                if (sdlEvent.window.event == SDL_WINDOWEVENT_MINIMIZED)
+                {
+                    stopRendering = true;
+                }
+                if (sdlEvent.window.event == SDL_WINDOWEVENT_RESTORED)
+                {
+                    stopRendering = false;
+                }
+            }
+        }
+    }
+
+    void Engine::CreateScene()
+    {
+        scene = std::make_unique<Actor>();
+
+        auto world = std::make_unique<Actor>();
+        RenderComponent worldRenderer{ world.get()};
+
+        auto light1 = std::make_unique<Actor>();
+        auto light2 = std::make_unique<Actor>();
+        RenderComponent lightRenderer{ world.get() };
+        lightRenderer.SetRenderable();
+        
+        LightComponent lightComp1{ world.get() };
+        LightComponent lightComp2{ world.get() };
+
+        scene->AddChild(std::move(world));
+        world->AddChild(std::move(light1));
+        world->AddChild(std::move(light2));
+
+    }
+
     void Engine::Cleanup()
     {
         if (isInitialized)
@@ -41,43 +87,22 @@ namespace Vel
         }
     }
 
-    void Engine::Draw()
-    {
-        renderer.Draw();
-    }
-
     void Engine::Run()
     {
-        SDL_Event sdlEvent;
-        bool quit = false;
-
         while (!quit)
         {
-            while (SDL_PollEvent(&sdlEvent) != 0)
-            {
-                if (sdlEvent.type == SDL_QUIT)
-                    quit = true;
-
-                renderer.HandleSDLEvent(&sdlEvent);
-
-                if (sdlEvent.type == SDL_WINDOWEVENT) {
-                    if (sdlEvent.window.event == SDL_WINDOWEVENT_MINIMIZED) {
-                        stopRendering = true;
-                    }
-                    if (sdlEvent.window.event == SDL_WINDOWEVENT_RESTORED) {
-                        stopRendering = false;
-                    }
-                }
-            }
+            HandleWindowEvents();
 
             // do not draw if we are minimized
             if (stopRendering) {
-                // throttle the speed to avoid the endless spinning
+                // TODO can we have a nice callback?
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
 
-            Draw();
+            scene->OnFrameTick();
+
+            renderer.Draw();
         }
     }
 }

@@ -69,7 +69,7 @@ void Vel::ShadowPass::Init(VkDevice dev, const Sunlight& sunlight)
 
     shadowPassDescriptorSet = descriptorPool.Allocate(shadowPassLayout);
     descriptorWriter.Clear();
-    descriptorWriter.WriteBuffer(0, sunlight.gpuViewProjData.buffer, sizeof(glm::mat4), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    descriptorWriter.WriteBuffer(0, sunlight.shadowViewProj.buffer, sizeof(glm::mat4), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
     descriptorWriter.UpdateSet(device, shadowPassDescriptorSet);
 
