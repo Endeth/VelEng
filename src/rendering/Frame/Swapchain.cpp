@@ -24,29 +24,29 @@ void Vel::Swapchain::Init(VkPhysicalDevice physicalDevice, VkDevice dev, VkSurfa
     CreateSwapchain();
 }
 
-VkImage Vel::Swapchain::GetImage()
+VkImage Vel::Swapchain::GetImage(const FrameData& frame)
 {
-    return swapchainImages[imageIndex];
+    return swapchainImages[frame.resources.swapchainImageIndex];
 }
 
-VkImageView Vel::Swapchain::GetImageView()
+VkImageView Vel::Swapchain::GetImageView(const FrameData& frame)
 {
-    return swapchainImageViews[imageIndex];
+    return swapchainImageViews[frame.resources.swapchainImageIndex];
 }
 
-void Vel::Swapchain::AcquireNextImageIndex(VkSemaphore acquireSignal)
+void Vel::Swapchain::AcquireNextImageIndex(FrameData& frame)
 {
-    VkResult acquireResult = vkAcquireNextImageKHR(device, swapchain, FRAME_TIMEOUT, acquireSignal, nullptr, &imageIndex);
+    VkResult acquireResult = vkAcquireNextImageKHR(device, swapchain, FRAME_TIMEOUT, frame.GetSync().swapchainSemaphore, nullptr, &frame.resources.swapchainImageIndex);
     if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR)
     {
         resizeRequested = true;
     }
 }
 
-void Vel::Swapchain::PresentImage(VkSemaphore* presentSemaphore, VkQueue presentQueue)
+void Vel::Swapchain::PresentImage(FrameData& frame, VkQueue presentQueue)
 {
-    presentInfo.pWaitSemaphores = presentSemaphore;
-    presentInfo.pImageIndices = &imageIndex;
+    presentInfo.pWaitSemaphores = &frame.GetSync().lPassWorkSemaphore;
+    presentInfo.pImageIndices = &frame.resources.swapchainImageIndex;
 
     VkResult presentResult = vkQueuePresentKHR(presentQueue, &presentInfo);
     if (presentResult == VK_ERROR_OUT_OF_DATE_KHR)

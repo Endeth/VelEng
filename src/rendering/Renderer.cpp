@@ -405,7 +405,8 @@ void Vel::Renderer::LPassCommandRecord(FrameData& frame)
 
     PreparePresentableImage(cmd, frame); //TODO rename to OnFrameRenderEnd
 
-    DrawImgui(cmd, swapchain.GetImage(), swapchain.GetImageView(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    // TODO remove from lpass
+    DrawImgui(cmd, swapchain.GetImage(frame), swapchain.GetImageView(frame), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
     VK_CHECK(vkEndCommandBuffer(cmd));
 
@@ -467,7 +468,7 @@ void Vel::Renderer::Draw()
         UpdateScene();
         UpdateGlobalLighting();
 
-        swapchain.AcquireNextImageIndex(currentFrame.GetSync().swapchainSemaphore);
+        swapchain.AcquireNextImageIndex(currentFrame);
         if (swapchain.IsAwaitingResize())
         {
             currentFrame.Discard();
@@ -484,8 +485,6 @@ void Vel::Renderer::Draw()
         fmt::println("SHADOW_CONTEXT: Start work {}", currentFrame.GetFrameIdx());
         ShadowMapContextWork(currentFrame);
     }, true);
-
-    PrepareImguiFrame();
 
     currentFrame.AddWork(MAIN_COMMANDS_RECORD, [&]() {
         fmt::println("MAIN_RECORD: Start work {}", currentFrame.GetFrameIdx());
@@ -510,6 +509,9 @@ void Vel::Renderer::Draw()
             VK_CHECK(vkResetFences(device, 1, &currentFrame.GetSync().renderFence));
             fmt::println("GPU_WORK_DONE: Start work {}", oldFrame.GetFrameIdx());
             currentFrame.GetSync().workingOnGPU.store(true);
+
+            // TODO make thread safe
+            PrepareImguiFrame();
         }
 
         UpdateCameraDescriptorsData(currentFrame);
@@ -534,7 +536,7 @@ void Vel::Renderer::Draw()
         fmt::println("LPASS_QUEUE: Start work {}", currentFrame.GetFrameIdx());
         LPassCommandRecord(currentFrame);
 
-        swapchain.PresentImage(&currentFrame.GetSync().lPassWorkSemaphore, graphicsQueue);
+        swapchain.PresentImage(currentFrame, graphicsQueue);
         currentFrame.LockQueues();
     }, true);
 }
@@ -571,7 +573,8 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd, FrameData& fram
     VkImageLayout transitionSrcLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     AllocatableBuffer& buff = gpuAllocator.GetStagingBuffer();
 
-    TransitionImage(cmd, swapchain.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    auto swapchainImage = swapchain.GetImage(frame);
+    TransitionImage(cmd, swapchainImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     auto& framebuffer = frame.resources.gPassFramebuffer;
     switch (imageToPresent)
@@ -596,7 +599,7 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd, FrameData& fram
         presentableImage = renderTarget.GetSceneLights().sunlight.shadowMap.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
         TransitionDepthImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-        CopyDepthToColorImage(cmd, presentableImage, buff, swapchain.GetImage(), renderTarget.GetSceneLights().sunlight.shadowMap.extent);
+        CopyDepthToColorImage(cmd, presentableImage, buff, swapchainImage, renderTarget.GetSceneLights().sunlight.shadowMap.extent);
         break;
     default:
         presentableImage = frame.resources.lPassDrawImage.image;
@@ -608,7 +611,7 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd, FrameData& fram
     {
         VkExtent3D swapchainExtent = { swapchain.GetImageSize().width, swapchain.GetImageSize().height };
         TransitionImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-        BlitImage(cmd, presentableImage, swapchain.GetImage(), drawExtent, swapchainExtent);
+        BlitImage(cmd, presentableImage, swapchainImage, drawExtent, swapchainExtent);
     }
 }
 
@@ -633,7 +636,7 @@ void Vel::Renderer::PrepareImguiFrame()
 void Vel::Renderer::DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout)
 {
     TransitionImage(cmdBuffer, drawImage, srcLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    //vImgui.Draw(cmdBuffer, drawImageView, swapchain.GetImageSize());
+    vImgui.Draw(cmdBuffer, drawImageView, swapchain.GetImageSize());
     TransitionImage(cmdBuffer, drawImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, dstLayout);
 }
 

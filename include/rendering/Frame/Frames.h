@@ -64,6 +64,8 @@ namespace Vel
 
             AllocatableImage lPassDrawImage;
             DeferredPasses::Framebuffer gPassFramebuffer;
+
+            uint32_t swapchainImageIndex;
             //Maybe all shadowmaps
         } resources;
 
