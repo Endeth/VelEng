@@ -3,18 +3,6 @@
 
 namespace Vel
 {
-    Engine* Engine::instance = nullptr;
-
-    Engine& Engine::Instance()
-    {
-        if (instance == nullptr)
-        {
-            instance = new Engine();
-            instance->Init();
-        }
-        return *instance;
-    }
-
     void Engine::Init()
     {
         fmt::println("VelEng Init");
@@ -32,6 +20,8 @@ namespace Vel
 
         renderer.Init(window, windowExtent);
         isInitialized = true;
+
+        LoadInitialScene();
     }
 
     void Engine::HandleWindowEvents()
@@ -57,25 +47,44 @@ namespace Vel
         }
     }
 
-    void Engine::CreateScene()
+    // TODO load from disk
+    void Engine::LoadInitialScene()
     {
         scene = std::make_unique<Actor>();
+        testGLTFObject = renderer.LoadGLTF(GET_MESH_PATH("sponza/Sponza.gltf"));
+        testLightModel = renderer.LoadGLTF(GET_MESH_PATH("test/cube.glb"));
 
         auto world = std::make_unique<Actor>();
-        RenderComponent worldRenderer{ world.get()};
+        auto worldRenderer = std::make_unique<RenderComponent>(world.get(), &renderer);
+        worldRenderer->SetRenderable(testGLTFObject);
+        auto globalLight = std::make_unique<LightComponent>(world.get(), &renderer);
+        globalLight->SetType(DIRECTIONAL);
+        globalLight->SetColor({ 0, 0, 255 });
+        world->AddComponent(std::move(worldRenderer));
+        world->AddComponent(std::move(globalLight));
 
         auto light1 = std::make_unique<Actor>();
-        auto light2 = std::make_unique<Actor>();
-        RenderComponent lightRenderer{ world.get() };
-        lightRenderer.SetRenderable();
-        
-        LightComponent lightComp1{ world.get() };
-        LightComponent lightComp2{ world.get() };
+        auto lightRenderer1 = std::make_unique<RenderComponent>(world.get(), &renderer);
+        // TODO Create asset manager to populate asset pointers
+        lightRenderer1->SetRenderable(testLightModel);
+        auto lightComponent1 = std::make_unique<LightComponent>(world.get(), &renderer);
+        lightComponent1->SetType(POINT);
+        lightComponent1->SetColor({ 0, 0, 255 });
+        light1->AddComponent(std::move(lightRenderer1));
+        light1->AddComponent(std::move(lightComponent1));
 
-        scene->AddChild(std::move(world));
+        auto light2 = std::make_unique<Actor>();
+        auto lightRenderer2 = std::make_unique<RenderComponent>(world.get(), &renderer);
+        lightRenderer2->SetRenderable(testLightModel);
+        auto lightComponent2 = std::make_unique<LightComponent>(world.get(), &renderer);
+        lightComponent2->SetType(POINT);
+        lightComponent2->SetColor({255, 0, 0});
+        light2->AddComponent(std::move(lightRenderer2));
+        light2->AddComponent(std::move(lightComponent2));
+
         world->AddChild(std::move(light1));
         world->AddChild(std::move(light2));
-
+        scene->AddChild(std::move(world));
     }
 
     void Engine::Cleanup()
@@ -95,7 +104,7 @@ namespace Vel
 
             // do not draw if we are minimized
             if (stopRendering) {
-                // TODO can we have a nice callback?
+                // TODO can we have a nice callback? SDL_WINDOWEVENT_RESTORED maybe?
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }

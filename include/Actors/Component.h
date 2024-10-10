@@ -20,13 +20,6 @@ namespace Vel
         friend class Actor;
     public:
         Component(Actor* owner);
-        Component(const Component& other);
-
-        // TODO Not yet
-        Component(const Component& other) = delete;
-        void operator=(const Component&) = delete;
-        Component(Component&&) = delete;
-        void operator=(Component&&) = delete;
 
         // TODO not a fan of changing component owner, let's make a component factory, so I won't have to use this on creation
         void SetOwner(Actor* newOwner);

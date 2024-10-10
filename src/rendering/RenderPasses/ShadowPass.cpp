@@ -51,7 +51,7 @@ void Vel::ShadowPipeline::CreatePipeline(VkDescriptorSetLayout* layouts, uint32_
     vkDestroyShaderModule(device, fragmentModule, nullptr);
 }
 
-void Vel::ShadowPass::Init(VkDevice dev, const Sunlight& sunlight)
+void Vel::ShadowPass::Init(VkDevice dev)
 {
     device = dev;
 
@@ -66,12 +66,6 @@ void Vel::ShadowPass::Init(VkDevice dev, const Sunlight& sunlight)
 
     pipeline.SetDevice(device);
     pipeline.CreatePipeline(&shadowPassLayout, 1);
-
-    shadowPassDescriptorSet = descriptorPool.Allocate(shadowPassLayout);
-    descriptorWriter.Clear();
-    descriptorWriter.WriteBuffer(0, sunlight.shadowViewProj.buffer, sizeof(glm::mat4), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-
-    descriptorWriter.UpdateSet(device, shadowPassDescriptorSet);
 
     PrebuildRenderInfo();
 }
@@ -122,6 +116,15 @@ void Vel::ShadowPass::Draw(const DrawContext& context, VkCommandBuffer cmd, cons
     }
 
     vkCmdEndRendering(cmd);
+}
+
+void Vel::ShadowPass::UpdateDescriptorSet(const Sunlight& sunlight)
+{
+    shadowPassDescriptorSet = descriptorPool.Allocate(shadowPassLayout);
+    descriptorWriter.Clear();
+    descriptorWriter.WriteBuffer(0, sunlight.shadowViewProj.buffer, sizeof(glm::mat4), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+
+    descriptorWriter.UpdateSet(device, shadowPassDescriptorSet);
 }
 
 void Vel::ShadowPass::Cleanup()

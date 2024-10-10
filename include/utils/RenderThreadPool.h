@@ -15,8 +15,9 @@ namespace Vel
     class RenderThreadPool
     {
     public:
-        RenderThreadPool(const size_t threadsCount);
+        RenderThreadPool();
 
+        void Init(const size_t threadsCount);
         void Cleanup();
         void SetPrepareFrame(FrameData* frame);
         void SetWorkFrame(FrameData* frame);

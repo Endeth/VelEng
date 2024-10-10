@@ -6,10 +6,10 @@
 
 int main()
 {
-    Vel::Engine& velEng = Vel::Engine::Instance();
+    Vel::Engine velEng;
 
+    velEng.Init();
     velEng.Run();
-
     velEng.Cleanup();
 
     return 0;

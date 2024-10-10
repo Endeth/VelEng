@@ -1,7 +1,11 @@
 #include "utils/RenderThreadPool.h"
 #include <iostream>
 
-Vel::RenderThreadPool::RenderThreadPool(const size_t threadsCount) : stopPool(false)
+Vel::RenderThreadPool::RenderThreadPool() : stopPool(false), workFrame(nullptr), preparingFrame(nullptr)
+{
+}
+
+void Vel::RenderThreadPool::Init(const size_t threadsCount)
 {
     for (int i = 0; i < threadsCount; ++i)
     {

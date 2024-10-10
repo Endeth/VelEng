@@ -4,9 +4,9 @@
 
 #include "Rendering/Buffers/Buffers.h"
 
-#include "Rendering/Assets/GLTFObjectLoader.h"
-
 #include "Rendering/RenderPasses/GLTFMaterialPass.h"
+
+#include "Rendering/Resources/GLTFObjectLoader.h"
 
 namespace Vel
 {
@@ -28,19 +28,15 @@ namespace Vel
         DrawContext(const size_t materialsInstances)
         {
             opaqueSurfaces.resize(materialsInstances);
-            transparentSurfaces.resize(materialsInstances);
         }
         DrawContext(DrawContext& other) = delete;
-        DrawContext(DrawContext&& other)
+        DrawContext(DrawContext&& other) : opaqueSurfaces(std::move(other.opaqueSurfaces))
         {
-            opaqueSurfaces = std::move(other.opaqueSurfaces);
-            transparentSurfaces = std::move(other.transparentSurfaces);
         }
 
         void operator=(DrawContext&& other)
         {
             opaqueSurfaces = std::move(other.opaqueSurfaces);
-            transparentSurfaces = std::move(other.transparentSurfaces);
         }
 
         void Clear()
@@ -49,15 +45,9 @@ namespace Vel
             {
                 materialSurfaces.clear();
             }
-            for (auto& materialSurfaces : transparentSurfaces)
-            {
-                materialSurfaces.clear();
-            }
         }
 
         std::vector<std::vector<RenderData>> opaqueSurfaces;
-        std::vector<std::vector<RenderData>> transparentSurfaces;
-        //std::vector<std::vector<RenderData>> emissiveSurfaces;
     };
 
     struct ShadowContext

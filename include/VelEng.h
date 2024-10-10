@@ -10,17 +10,12 @@ namespace Vel
     class Engine
     {
     public:
-        static Engine& Instance();
-
-        void CreateScene();
-        void Cleanup();
+        void Init();
+        void LoadInitialScene();
         void Run();
-
-        Renderer* GetRenderer() { return &renderer; }
+        void Cleanup();
 
     private:
-        Engine() = default;
-        void Init();
 
         void HandleWindowEvents();
 
@@ -35,6 +30,9 @@ namespace Vel
 
         std::unique_ptr<Actor> scene;
         Renderer renderer;
+
+        std::shared_ptr<RenderableGLTF> testGLTFObject;
+        std::shared_ptr<RenderableGLTF> testLightModel;
 
         static Engine* instance;
     };

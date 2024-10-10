@@ -1,4 +1,4 @@
-#include "Rendering/Assets/GLTFObjectLoader.h"
+#include "Rendering/Resources/GLTFObjectLoader.h"
 
 #include <memory>
 #include <unordered_map>
@@ -12,9 +12,9 @@
 
 #include "Rendering/Renderer.h"
 
-#include "Rendering/Assets/Images.h"
-
 #include "Rendering/RenderPasses/Descriptors.h"
+
+#include "Rendering/Resources/Images.h"
 
 VkFilter ExtractFilter(fastgltf::Filter filter)
 {
@@ -48,10 +48,11 @@ VkSamplerMipmapMode ExtractMipmapMode(fastgltf::Filter filter)
     }
 }
 
-void Vel::GLTFObjectLoader::Init(VkDevice dev, Renderer* ren)
+void Vel::GLTFObjectLoader::Init(VkDevice dev, Renderer* ren, GPUAllocator* gpuAllocator)
 {
     device = dev;
     renderer = ren;
+    allocator = gpuAllocator;
 }
 
 void Vel::GLTFObjectLoader::Cleanup()
@@ -64,7 +65,8 @@ std::optional<std::shared_ptr<Vel::RenderableGLTF>> Vel::GLTFObjectLoader::loadG
 {
     std::shared_ptr<RenderableGLTF> scene = std::make_shared<RenderableGLTF>();
     scene->device = device;
-    scene->allocator = renderer->GetAllocator();
+    // TODO asset manager should deallocate
+    scene->allocator = allocator;
     if(filePath.has_parent_path())
         parentPath = filePath.parent_path();
 
@@ -165,7 +167,7 @@ void Vel::GLTFObjectLoader::CreateMaterials(RenderableGLTF& sceneData, fastgltf:
     size_t counter = 0;
     for (fastgltf::Image& image : gltfAsset.images)
     {
-        std::optional<AllocatableImage> img = LoadGltfAssetImage(*renderer->GetAllocator(), gltfAsset, image, parentPath);
+        std::optional<AllocatableImage> img = LoadGltfAssetImage(*allocator, gltfAsset, image, parentPath);
         if (img.has_value())
         {
             images[counter] = *img;
@@ -175,7 +177,7 @@ void Vel::GLTFObjectLoader::CreateMaterials(RenderableGLTF& sceneData, fastgltf:
     }
 
     size_t materialBufferSize = sizeof(MaterialConstants) * gltfAsset.materials.size();
-    sceneData.materialDataBuffer = renderer->GetAllocator()->CreateBuffer(materialBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    sceneData.materialDataBuffer = allocator->CreateBuffer(materialBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
     MaterialConstants* sceneMaterialConstants = (MaterialConstants*)sceneData.materialDataBuffer.info.pMappedData;
     int materialConstantsIndex = 0;
 
@@ -342,7 +344,7 @@ void Vel::GLTFObjectLoader::CreateSurfaces(RenderableGLTF& sceneData, fastgltf::
             newMesh->surfaces.push_back(newSurface);
         }
 
-        newMesh->meshBuffers = renderer->GetAllocator()->UploadMesh(indices, vertices);
+        newMesh->meshBuffers = allocator->UploadMesh(indices, vertices);
     }
 }
 

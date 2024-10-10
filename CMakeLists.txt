@@ -19,12 +19,12 @@ set(HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Actors/Component.h
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Actors/RenderComponent.h
 
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Assets/Asset.h
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Assets/AssetsManager.h
+
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Renderer.h
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/VulkanTypes.h
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/VulkanUtils.h
-
-	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Assets/Images.h
-	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Assets/GLTFObjectLoader.h
 
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Buffers/Buffers.h
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Buffers/GPUAllocator.h
@@ -40,6 +40,9 @@ set(HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/RenderPasses/ShadowPass.h
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/RenderPasses/SkyboxPass.h
 
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Resources/Images.h
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Resources/GLTFObjectLoader.h
+
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Scene/Camera.h
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Scene/Lighting.h
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Scene/Renderable.h
@@ -50,6 +53,7 @@ set(HEADERS
 
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Utils/DeletionQueue.h
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Utils/RenderThreadPool.h
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Utils/Resource.h
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Utils/TSQueue.h
 )
 
@@ -62,11 +66,11 @@ set(SOURCE
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Actors/Component.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Actors/RenderComponent.cpp
 
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Assets/Asset.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Assets/AssetsManager.cpp
+
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Renderer.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/VulkanUtils.cpp
-
-	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Assets/Images.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Assets/GLTFObjectLoader.cpp
 
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Buffers/GPUAllocator.cpp
 
@@ -81,6 +85,9 @@ set(SOURCE
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/RenderPasses/ShadowPass.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/RenderPasses/SkyboxPass.cpp
 
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Resources/Images.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Resources/GLTFObjectLoader.cpp
+
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Scene/Camera.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Scene/Lighting.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Rendering/Scene/Renderable.cpp
@@ -89,6 +96,7 @@ set(SOURCE
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/UI/VelImgui.cpp
 
 	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Utils/RenderThreadPool.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}${FILE_TYPE_FOLDER}/Utils/Resource.cpp
 )
 
 add_subdirectory(res)

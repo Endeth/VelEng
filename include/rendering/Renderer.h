@@ -3,7 +3,6 @@
 #include "utils/DeletionQueue.h"
 
 #include "Utils/RenderThreadPool.h"
-#include "Rendering/Assets/GLTFObjectLoader.h"
 
 #include "Rendering/Buffers/Buffers.h"
 #include "Rendering/Buffers/GPUAllocator.h"
@@ -16,6 +15,8 @@
 #include "Rendering/RenderPasses/Pipeline.h"
 #include "Rendering/RenderPasses/ShadowPass.h"
 #include "Rendering/RenderPasses/SkyboxPass.h"
+
+#include "Rendering/Resources/GLTFObjectLoader.h"
 
 #include "Rendering/Scene/Camera.h"
 #include "Rendering/Scene/Lighting.h"
@@ -39,29 +40,20 @@ namespace Vel
         float gPassesAverage = 0;
     };
 
-    //TODO get this to scene area
-    struct Lights
-    {
-        glm::vec4 ambient;
-        Sunlight sunlight;
-        PointLight pointLights[2]; //TODO make dynamic or big buffer?
-    };
-
     class RenderTarget;
 
     class Renderer
     {
     public:
-        Renderer(); //Only for RenderThread
-        ~Renderer();
-
-        //Configure() before Init?
-
         void Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent);
 
         void HandleSDLEvent(SDL_Event* sdlEvent);
         void Draw();
-        void AddToDrawContext(IRenderable* target);
+        void AddToRenderScene(std::shared_ptr<IRenderable> target, const glm::mat4 transformation);
+        void AddSunlightToRenderScene(const glm::vec3& direction, const glm::vec3& color);
+        void AddPointLightToRenderScene(const glm::vec3& position, const glm::vec3& color);
+        //TODO load properly in asset manager
+        std::shared_ptr<RenderableGLTF> LoadGLTF(const std::filesystem::path& filePath);
         void SetDrawContextAsFilled();
 
         GPUAllocator* GetAllocator(){ return &gpuAllocator; }
@@ -81,7 +73,6 @@ namespace Vel
         SDL_Window* window;
         bool isInitialized = false;
         RenderThreadPool renderThreadPool;
-
 
         VkInstance instance;
         VkPhysicalDevice physicalDevice;
@@ -103,8 +94,9 @@ namespace Vel
         uint32_t frameNumber = 0;
         constexpr static size_t FRAME_DATA_SIZE = 2;
         FrameData frames[FRAME_DATA_SIZE];
+        RenderTarget renderTarget;
 
-        GLTFObjectLoader meshLoader;
+        GLTFObjectLoader gltfLoader;
 
         SkyboxPass skyboxPass;
         ShadowPass shadowPass;
@@ -153,7 +145,7 @@ namespace Vel
         void AwaitTimelineSemaphore(VkSemaphore* semaphore);
 
         // CPU
-        void GPassContextWork(std::shared_ptr<RenderableGLTF> model, const glm::mat4& modelMatrix, std::vector<DrawContext>& drawContexts);
+        void GPassContextWork(std::vector<DrawContext>& drawContexts);
         void GPassCommandsRecord(FrameData& frame);
         void ShadowMapContextWork(FrameData& frame);
         void ShadowMapCommandsRecord(FrameData& frame);
@@ -173,19 +165,8 @@ namespace Vel
         FrameData& GetFillableFrame(){ return frames[frameNumber % FRAME_DATA_SIZE]; }
 
         //Testing
-        std::unordered_map<std::string, std::shared_ptr<RenderableGLTF>> loadedScenes;
-        Lights testLights;
-        glm::vec4 light1Pos;
-        glm::vec4 light2Pos;
-
-        glm::mat4 modelMatrix;
-        glm::mat4 modelMatrix2;
-        glm::mat4 light1Matrix;
-        glm::mat4 light2Matrix;
-
         void InitTestTextures();
         void InitTestData();
         void InitTestLightData();
-        GPUMeshBuffers CreateRectangle();
     };
 }

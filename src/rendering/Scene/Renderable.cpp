@@ -49,7 +49,7 @@ void Vel::MeshNode::Draw(const glm::mat4& topMatrix, DrawContext& context)
 
         if (surface.materialInstance->passType == MaterialPass::Transparent)
         {
-            context.transparentSurfaces[surface.materialInstance->index].push_back(data);
+            //context.transparentSurfaces[surface.materialInstance->index].push_back(data);
         }
         else
         {
@@ -111,7 +111,6 @@ void Vel::RenderableGLTF::Cleanup()
     }
 
     auto materialBuffer = materialDataBuffer;
-    auto samplersToDestroy = samplers;
 
     descriptorPool.Cleanup();
 

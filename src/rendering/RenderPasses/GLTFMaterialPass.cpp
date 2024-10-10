@@ -51,7 +51,7 @@ void Vel::GLTFMetallicRoughness::BuildPipelines()
     VK_CHECK(vkCreatePipelineLayout(device, &meshLayoutInfo, nullptr, &newLayout));
 
     opaquePipeline.pipelineLayout = newLayout;
-    transparentPipeline.pipelineLayout = newLayout;
+    //transparentPipeline.pipelineLayout = newLayout;
 
     VkPipelineBuilder pipelineBuilder;
     pipelineBuilder.Init(device);
@@ -68,9 +68,9 @@ void Vel::GLTFMetallicRoughness::BuildPipelines()
     pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
     opaquePipeline.pipeline = pipelineBuilder.BuildGfxPipeline(device);
 
-    pipelineBuilder.EnableBlendingAdditive();
-    pipelineBuilder.EnableDepthTest(false, VK_COMPARE_OP_GREATER_OR_EQUAL);
-    transparentPipeline.pipeline = pipelineBuilder.BuildGfxPipeline(device);
+    //pipelineBuilder.EnableBlendingAdditive();
+    //pipelineBuilder.EnableDepthTest(false, VK_COMPARE_OP_GREATER_OR_EQUAL);
+    //transparentPipeline.pipeline = pipelineBuilder.BuildGfxPipeline(device);
 
     vkDestroyShaderModule(device, vertexModule, nullptr);
     vkDestroyShaderModule(device, fragmentModule, nullptr);
@@ -80,7 +80,7 @@ void Vel::GLTFMetallicRoughness::ClearResources()
 {
     vkDestroyPipelineLayout(device, opaquePipeline.pipelineLayout, nullptr); //Shared with transparent
     vkDestroyPipeline(device, opaquePipeline.pipeline, nullptr);
-    vkDestroyPipeline(device, transparentPipeline.pipeline, nullptr);
+    //vkDestroyPipeline(device, transparentPipeline.pipeline, nullptr);
     vkDestroyDescriptorSetLayout(device, materialLayout, nullptr);
 }
 

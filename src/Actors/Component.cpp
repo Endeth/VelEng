@@ -6,10 +6,6 @@ namespace Vel
     {
     }
 
-    Component::Component(const Component& other)
-    {
-    }
-
     void Component::SetOwner(Actor* newOwner)
     {
         owner = newOwner;

@@ -1,4 +1,4 @@
-#include "Rendering/Assets/Images.h"
+#include "Rendering/Resources/Images.h"
 
 #include <iostream>
 

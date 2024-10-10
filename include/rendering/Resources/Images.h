@@ -14,6 +14,7 @@
 
 namespace Vel
 {
+    // More of a format handler/factory than a resource
     class STBImage
     {
     public:

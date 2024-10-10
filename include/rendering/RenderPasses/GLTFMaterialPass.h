@@ -24,7 +24,7 @@ namespace Vel
         VkDevice device;
 
         MaterialPipeline opaquePipeline;
-        MaterialPipeline transparentPipeline;
+        //MaterialPipeline transparentPipeline;
         VkFormat drawImageFormat;
         VkFormat depthImageFormat;
 

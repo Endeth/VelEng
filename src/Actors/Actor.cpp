@@ -2,26 +2,21 @@
 
 namespace Vel
 {
-    void Actor::AddChild(const Actor& other)
-    {
-        auto& newChild = children.emplace_back(other);
-        newChild->SetParent(this);
-    }
-
-    void Actor::AddChild(Actor&& other)
-    {
-        // TODO set pointer, delete from other's parent
-    }
-
     void Actor::AddChild(std::unique_ptr<Actor>&& other)
     {
+        other->SetParent(this);
+        children.emplace_back(std::move(other));
+    }
+
+    void Actor::AddComponent(std::unique_ptr<Component>&& other)
+    {
+        other->SetOwner(this);
         components.emplace_back(std::move(other));
     }
 
-    void Actor::AddComponent(const Component& other)
+    glm::mat4 Actor::GetTransformationMatrix()
     {
-        auto& newComponent = components.emplace_back(other);
-        newComponent->SetOwner(this);
+        return glm::translate(GetWorldPosition());
     }
 
     const glm::vec3& Actor::GetLocalPosition()

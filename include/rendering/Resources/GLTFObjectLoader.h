@@ -33,16 +33,18 @@ namespace Vel
         GPUMeshBuffers meshBuffers;
     };
 
+    // TODO again, more of a factory
     class GLTFObjectLoader
     {
     public:
-        void Init(VkDevice dev, Renderer* ren);
+        void Init(VkDevice dev, Renderer* ren, GPUAllocator* gpuAllocator);
         void Cleanup();
         std::optional<std::shared_ptr<RenderableGLTF>> loadGltf(const std::filesystem::path& filePath);
 
     private:
         VkDevice device;
         Renderer* renderer;
+        GPUAllocator* allocator;
         std::filesystem::path parentPath;
         std::vector<std::shared_ptr<MeshAsset>> meshes;
         std::vector<std::shared_ptr<MaterialInstance>> materials;

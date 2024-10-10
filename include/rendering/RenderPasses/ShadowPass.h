@@ -23,8 +23,9 @@ namespace Vel
     class ShadowPass
     {
     public:
-        void Init(VkDevice dev, const Sunlight& sunlight);
+        void Init(VkDevice dev);
         void Draw(const DrawContext& context, VkCommandBuffer cmd, const Sunlight& sunlight);
+        void UpdateDescriptorSet(const Sunlight& sunlight);
 
         void Cleanup();
 

@@ -24,29 +24,19 @@ namespace Vel
         glm::vec4 position;
     };
 
-    struct SceneLights
-    {
-        glm::vec4 ambient;
-    };
-
-    struct AmbientLight //SSAO info
-    {
-        glm::vec4 color;
-    };
-
     struct Sunlight
     {
         glm::vec3 direction;
-        glm::vec3 position;
-        glm::vec4 color;
+        glm::vec3 cameraPosition;
+        glm::vec3 color;
         glm::mat4 viewProj;
 
         VkExtent3D shadowResolution;
         AllocatableImage shadowMap;
         AllocatableBuffer shadowViewProj;
 
-        void InitLightData(const glm::vec3& dir, const glm::vec4& col);
         void InitShadowData(GPUAllocator& allocator, VkExtent3D shadowMapResolution);
+        void SetLightData(const glm::vec3& col, const glm::vec3& dir);
         void UpdateCameraPosition(const Camera& mainCamera);
     };
 
@@ -56,8 +46,10 @@ namespace Vel
         glm::vec4 color;
     };
 
-    struct ShadedPointLight
+    struct SceneLights
     {
-
+        glm::vec4 ambient;
+        Sunlight sunlight;
+        std::vector<PointLight> pointLights;
     };
 }

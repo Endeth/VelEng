@@ -8,7 +8,7 @@
 #include "Rendering/VulkanTypes.h"
 #include "Rendering/VulkanUtils.h"
 
-#include "Rendering/Assets/Images.h"
+#include "Rendering/Resources/Images.h"
 
 
 #ifdef _DEBUG
@@ -21,15 +21,6 @@ constexpr uint8_t POINT_LIGHTS_COUNT = 2;
 
 // TODO TEMP
 uint32_t Vel::MaterialInstance::instancesCount = 0;
-
-Vel::Renderer::Renderer() : //Temp?
-    renderThreadPool(RENDER_THREADS_COUNT)
-{
-}
-
-Vel::Renderer::~Renderer()
-{
-}
 
 void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
 {
@@ -111,6 +102,8 @@ void Vel::Renderer::Init(SDL_Window* sdlWindow, const VkExtent2D& windowExtent)
     InitImgui();
 
     isInitialized = true;
+
+    renderThreadPool.Init(RENDER_THREADS_COUNT);
 }
 
 void Vel::Renderer::InitImgui()
@@ -188,25 +181,25 @@ void Vel::Renderer::UpdateScene()
 
 void Vel::Renderer::UpdateGlobalLighting()
 {
-    testLights.sunlight.UpdateCameraPosition(mainCamera);
+    renderTarget.GetSceneLights().sunlight.UpdateCameraPosition(mainCamera);
 
-    testLights.pointLights[0] = {
+    /*testLights.pointLights[0] = {
         .position = light1Pos,
         .color = {0.2f, 0.2f, 1.0f, 150.0f},
     };
     testLights.pointLights[1] = {
         .position = light2Pos,
         .color = {1.0f, 0.2f, 0.2f, 100.0f},
-    };
+    };*/
 }
 
 void Vel::Renderer::UpdateLightDescriptorsData(FrameData& frame)
 {
     LightData* lightsGPUData = (LightData*)frame.GetSceneData().globalLightsDataBuffer.info.pMappedData;
-    lightsGPUData->ambient = testLights.ambient;
-    lightsGPUData->sunlightDirection = glm::vec4(testLights.sunlight.direction, 1.0f);
-    lightsGPUData->sunlightColor = testLights.sunlight.color;
-    lightsGPUData->sunlightViewProj = testLights.sunlight.viewProj;
+    lightsGPUData->ambient = renderTarget.GetSceneLights().ambient;
+    lightsGPUData->sunlightDirection = glm::vec4(renderTarget.GetSceneLights().sunlight.direction, 1.0f);
+    lightsGPUData->sunlightColor = glm::vec4(renderTarget.GetSceneLights().sunlight.color, 1.0f);
+    lightsGPUData->sunlightViewProj = renderTarget.GetSceneLights().sunlight.viewProj;
 }
 
 void Vel::Renderer::UpdateCameraCPUBuffer()
@@ -224,18 +217,18 @@ void Vel::Renderer::UpdateCameraCPUBuffer()
 void Vel::Renderer::UpdateWorldActors()
 {
     //Drawable actors logic
-    modelMatrix = glm::scale(glm::vec3{ 1, 1, 1 });
-    modelMatrix2 = glm::translate(glm::vec3{ 0, -50, 0 });
+    //modelMatrix = glm::scale(glm::vec3{ 1, 1, 1 });
+    //modelMatrix2 = glm::translate(glm::vec3{ 0, -50, 0 });
 
-    float movement1 = sin(frameNumber / 30.f) * 10.0f;
-    float movement2 = cos(frameNumber / 30.f) * 10.0f;
+    //float movement1 = sin(frameNumber / 30.f) * 10.0f;
+    //float movement2 = cos(frameNumber / 30.f) * 10.0f;
 
-    light1Pos = { movement1 + 5.0f, 2.0f, -5.0f + movement2, 0.0f };
-    light2Pos = { 15.0f, 20.0f, -20.0f + movement1, 0.0f };
+    //light1Pos = { movement1 + 5.0f, 2.0f, -5.0f + movement2, 0.0f };
+    //light2Pos = { 15.0f, 20.0f, -20.0f + movement1, 0.0f };
 
     //Light logic
-    light1Matrix = glm::translate(glm::vec3{ light1Pos.x, light1Pos.y, light1Pos.z });
-    light2Matrix = glm::translate(glm::vec3{ light2Pos.x, light2Pos.y, light2Pos.z });
+    //light1Matrix = glm::translate(glm::vec3{ light1Pos.x, light1Pos.y, light1Pos.z });
+    //light2Matrix = glm::translate(glm::vec3{ light2Pos.x, light2Pos.y, light2Pos.z });
 }
 
 void Vel::Renderer::UpdateCameraDescriptorsData(FrameData& frame)
@@ -265,12 +258,13 @@ void Vel::Renderer::AwaitTimelineSemaphore(VkSemaphore* semaphore)
     vkWaitSemaphores(device, &waitInfo, UINT64_MAX);
 }
 
-//TODO Some model grouping, Batch created after updating some actors?
-void Vel::Renderer::GPassContextWork(std::shared_ptr<RenderableGLTF> model, const glm::mat4& modelMatrix, std::vector<DrawContext>& drawContexts)
+// TODO drawable objects grouping
+void Vel::Renderer::GPassContextWork(std::vector<DrawContext>& drawContexts)
 {
+    // TODO renderTarget should now instances
     DrawContext workDrawContext(MaterialInstance::instancesCount);
 
-    model->Draw(modelMatrix, workDrawContext);
+    renderTarget.FillContext(workDrawContext);
 
     std::lock_guard lock(drawContextMutex);
     drawContexts.emplace_back(std::move(workDrawContext));
@@ -304,9 +298,11 @@ void Vel::Renderer::GPassCommandsRecord(FrameData& frame)
 void Vel::Renderer::ShadowMapContextWork(FrameData& frame)
 {
     DrawContext ctx(MaterialInstance::instancesCount);
-    loadedScenes["model"]->Draw(modelMatrix, ctx);
-    loadedScenes["lightSource"]->Draw(light1Matrix, ctx);
-    loadedScenes["lightSource"]->Draw(light2Matrix, ctx);
+    //loadedScenes["model"]->Draw(modelMatrix, ctx);
+    //loadedScenes["lightSource"]->Draw(light1Matrix, ctx);
+    //loadedScenes["lightSource"]->Draw(light2Matrix, ctx);
+
+    renderTarget.FillContext(ctx);
 
     frame.resources.shadowDrawContext = std::move(ctx);
 }
@@ -320,10 +316,10 @@ void Vel::Renderer::ShadowMapCommandsRecord(FrameData& frame)
     VK_CHECK(vkBeginCommandBuffer(shadowCmd, &primaryCommandBegin));
 
     // Can be used by previous frame LPass, but submitting requires previous LPass to finish anyway
-    TransitionDepthImage(shadowCmd, testLights.sunlight.shadowMap.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+    TransitionDepthImage(shadowCmd, renderTarget.GetSceneLights().sunlight.shadowMap.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
     // Sunlight resources not thread safe, await in queue submit
-    shadowPass.Draw(frame.resources.shadowDrawContext, shadowCmd, testLights.sunlight);
-    TransitionDepthImage(shadowCmd, testLights.sunlight.shadowMap.image, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL);
+    shadowPass.Draw(frame.resources.shadowDrawContext, shadowCmd, renderTarget.GetSceneLights().sunlight);
+    TransitionDepthImage(shadowCmd, renderTarget.GetSceneLights().sunlight.shadowMap.image, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL);
 
     VK_CHECK(vkEndCommandBuffer(shadowCmd));
     frame.resources.shadowsDrawCommand = shadowCmd;
@@ -450,7 +446,6 @@ void Vel::Renderer::Draw()
     drawExtent.height = static_cast<uint32_t>(swapchainSize.height * renderScale);
 
     auto& oldFrame = GetCurrentFrame();
-    renderThreadPool.SetPrepareFrame(&oldFrame);
     {
         auto& oldFrameSync = oldFrame.GetSync();
         std::unique_lock<std::mutex> lock(oldFrameSync.workMutex);
@@ -461,9 +456,11 @@ void Vel::Renderer::Draw()
 
     ++frameNumber;
     auto& currentFrame = GetCurrentFrame();
+    renderThreadPool.SetPrepareFrame(&currentFrame);
     currentFrame.StartNew(frameNumber);
-    renderThreadPool.SetWorkFrame(&currentFrame);
 
+    // TODO temporary
+    SetDrawContextAsFilled();
     // Always unlocked
     currentFrame.AddWork(GENERAL, [&]() {
         fmt::println("GENERAL: Start work {}", currentFrame.GetFrameIdx());
@@ -479,18 +476,8 @@ void Vel::Renderer::Draw()
 
     currentFrame.AddWork(MAIN_CONTEXT, [&]() {
         fmt::println("MAIN_CONTEXT: Start work {}", currentFrame.GetFrameIdx());
-        for (int i = 0; i < 25; ++i)
-            GPassContextWork(loadedScenes["model"], modelMatrix2, currentFrame.resources.gPassDrawContexts);
-    });
-    currentFrame.AddWork(MAIN_CONTEXT, [&]() {
-        fmt::println("MAIN_CONTEXT: Start work {}", currentFrame.GetFrameIdx());
-        for (int i = 0; i < 25; ++i)
-            GPassContextWork(loadedScenes["model"], modelMatrix2, currentFrame.resources.gPassDrawContexts);
-    });
-    currentFrame.AddWork(MAIN_CONTEXT, [&]() {
-        fmt::println("MAIN_CONTEXT: Start work {}", currentFrame.GetFrameIdx());
-        for (int i = 0; i < 25; ++i)
-            GPassContextWork(loadedScenes["model"], modelMatrix2, currentFrame.resources.gPassDrawContexts);
+        //for (int i = 0; i < 25; ++i)
+        GPassContextWork(currentFrame.resources.gPassDrawContexts);
     }, true);
 
     currentFrame.AddWork(SHADOW_CONTEXT, [&]() {
@@ -528,6 +515,7 @@ void Vel::Renderer::Draw()
         UpdateCameraDescriptorsData(currentFrame);
         UpdateLightDescriptorsData(currentFrame);
 
+        renderThreadPool.SetWorkFrame(&currentFrame);
         currentFrame.GetSync().workingOnCPU.store(false);
         currentFrame.GetSync().CPUCondVar.notify_one();
     }, true);
@@ -551,8 +539,24 @@ void Vel::Renderer::Draw()
     }, true);
 }
 
-void Vel::Renderer::AddToDrawContext(IRenderable* target)
+void Vel::Renderer::AddToRenderScene(std::shared_ptr<IRenderable> target, const glm::mat4 transformation)
 {
+    renderTarget.AddModelInstance(target.get(), transformation);
+}
+
+void Vel::Renderer::AddSunlightToRenderScene(const glm::vec3& direction, const glm::vec3& color)
+{
+    renderTarget.SetSunlight(direction, color);
+}
+
+void Vel::Renderer::AddPointLightToRenderScene(const glm::vec3& position, const glm::vec3& color)
+{
+    renderTarget.AddPointLight(position, color);
+}
+
+std::shared_ptr<Vel::RenderableGLTF> Vel::Renderer::LoadGLTF(const std::filesystem::path& filePath)
+{
+    return gltfLoader.loadGltf(filePath).value();
 }
 
 void Vel::Renderer::SetDrawContextAsFilled()
@@ -589,10 +593,10 @@ void Vel::Renderer::PreparePresentableImage(VkCommandBuffer cmd, FrameData& fram
         transitionSrcLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         break;
     case 5:
-        presentableImage = testLights.sunlight.shadowMap.image;
+        presentableImage = renderTarget.GetSceneLights().sunlight.shadowMap.image;
         transitionSrcLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
         TransitionDepthImage(cmd, presentableImage, transitionSrcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-        CopyDepthToColorImage(cmd, presentableImage, buff, swapchain.GetImage(), testLights.sunlight.shadowMap.extent);
+        CopyDepthToColorImage(cmd, presentableImage, buff, swapchain.GetImage(), renderTarget.GetSceneLights().sunlight.shadowMap.extent);
         break;
     default:
         presentableImage = frame.resources.lPassDrawImage.image;
@@ -629,91 +633,32 @@ void Vel::Renderer::PrepareImguiFrame()
 void Vel::Renderer::DrawImgui(VkCommandBuffer cmdBuffer, VkImage drawImage, VkImageView drawImageView, VkImageLayout srcLayout, VkImageLayout dstLayout)
 {
     TransitionImage(cmdBuffer, drawImage, srcLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    vImgui.Draw(cmdBuffer, drawImageView, swapchain.GetImageSize());
+    //vImgui.Draw(cmdBuffer, drawImageView, swapchain.GetImageSize());
     TransitionImage(cmdBuffer, drawImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, dstLayout);
 }
 
 void Vel::Renderer::InitTestData()
 {
-    meshLoader.Init(device, this);
-    //auto mainModel = meshLoader.loadGltf(GET_MESH_PATH("corset/Corset.gltf"));
-    //auto mainModel = meshLoader.loadGltf(GET_MESH_PATH("house/house.glb"));
-    auto mainModel = meshLoader.loadGltf(GET_MESH_PATH("sponza/Sponza.gltf"));
-    auto cube = meshLoader.loadGltf(GET_MESH_PATH("test/cube.glb"));
-
-    assert(mainModel.has_value());
-
-    loadedScenes["model"] = *mainModel;
-    loadedScenes["lightSource"] = *cube;
-
-    //TODO size per surface type material
-    //mainDrawContext.opaqueSurfaces.resize(MaterialInstance::instancesCount);
-    //mainDrawContext.transparentSurfaces.resize(MaterialInstance::instancesCount);
+    gltfLoader.Init(device, this, &gpuAllocator);
 }
 
 void Vel::Renderer::InitTestLightData()
 {
-    testLights.ambient = glm::vec4{ 0.05f, 0.05f, 0.05f, 1.0f };
-
     VkExtent3D shadowMapResolution = {
         .width = 1024,
         .height = 1024,
         .depth = 1,
     };
 
-    testLights.sunlight.InitShadowData(gpuAllocator, shadowMapResolution);
-    testLights.sunlight.InitLightData(glm::normalize(glm::vec4{ 0.5f, 1.f, 0.5f, 1.0f }), glm::vec4{ 1.0f, 0.85f, 0.3f, 1.0f });
-
-    testLights.pointLights[0] = {
-        .position = {0.0f, 0.0f, 0.0f, 0.0f},
-        .color = {0.0f, 0.0f, 1.0f, 10.0f},
-    };
-
-    testLights.pointLights[1] = {
-        .position = {0.0f, 0.0f, 0.0f, 0.0f},
-        .color = {0.0f, 0.5f, 1.0f, 1.0f},
-    };
+    auto& sceneLights = renderTarget.GetSceneLights();
+    sceneLights.sunlight.InitShadowData(gpuAllocator, shadowMapResolution);
+    sceneLights.sunlight.SetLightData(glm::normalize(glm::vec4{ 0.5f, 1.f, 0.5f, 1.0f }), glm::vec4{ 1.0f, 0.85f, 0.3f, 1.0f });
 
     delQueue.Push([&]() {
         // Shadow buffers
-        gpuAllocator.DestroyImage(testLights.sunlight.shadowMap);
-        gpuAllocator.DestroyBuffer(testLights.sunlight.shadowViewProj);
+        gpuAllocator.DestroyImage(sceneLights.sunlight.shadowMap);
+        gpuAllocator.DestroyBuffer(sceneLights.sunlight.shadowViewProj);
     });
-}
-
-Vel::GPUMeshBuffers Vel::Renderer::CreateRectangle()
-{
-    std::array<Vertex, 4> rectVertices;
-
-    rectVertices[0].position = { 1.0f,-1.0f, 0.0f };
-    rectVertices[0].uv_x = 1;
-    rectVertices[0].uv_y = 0;
-    rectVertices[1].position = { 1.0f, 1.0f, 0.0f };
-    rectVertices[1].uv_x = 1;
-    rectVertices[1].uv_y = 1;
-    rectVertices[2].position = { -1.0f, -1.0f, 0.0f };
-    rectVertices[2].uv_x = 0;
-    rectVertices[2].uv_y = 0;
-    rectVertices[3].position = { -1.0f, 1.0f, 0.0f };
-    rectVertices[3].uv_x = 0;
-    rectVertices[3].uv_y = 1;
-
-    rectVertices[0].tangent = { 1.0f, 0.0f, 0.0f, 0.0f };
-    rectVertices[1].tangent = { 1.0f, 0.0f, 0.0f, 0.0f };
-    rectVertices[2].tangent = { 1.0f, 0.0f, 0.0f, 0.0f };
-    rectVertices[3].tangent = { 1.0f, 0.0f, 0.0f, 0.0f };
-
-    std::array<uint32_t, 6> rectIndices;
-
-    rectIndices[0] = 0;
-    rectIndices[1] = 1;
-    rectIndices[2] = 2;
-
-    rectIndices[3] = 2;
-    rectIndices[4] = 1;
-    rectIndices[5] = 3;
-
-    return gpuAllocator.UploadMesh(rectIndices, rectVertices);
 }
 
 void Vel::Renderer::InitSkyboxPass()
@@ -723,7 +668,9 @@ void Vel::Renderer::InitSkyboxPass()
 
 void Vel::Renderer::InitShadowPass()
 {
-    shadowPass.Init(device, testLights.sunlight);
+    shadowPass.Init(device);
+    //TODO critical - wrong place
+    shadowPass.UpdateDescriptorSet(renderTarget.GetSceneLights().sunlight);
 }
 
 void Vel::Renderer::InitDeferred()
@@ -909,23 +856,23 @@ void Vel::Renderer::CreateFramesGPUData()
             };
             LightData* lightsGPUData = (LightData*)frameSceneData.globalLightsDataBuffer.info.pMappedData;
             *lightsGPUData = {
-                .ambient = testLights.ambient,
-                .sunlightDirection = glm::vec4(testLights.sunlight.direction, 1.0f),
-                .sunlightColor = testLights.sunlight.color,
-                .sunlightViewProj = testLights.sunlight.viewProj,
+                .ambient = renderTarget.GetSceneLights().ambient,
+                .sunlightDirection = glm::vec4(renderTarget.GetSceneLights().sunlight.direction, 1.0f),
+                .sunlightColor = glm::vec4(renderTarget.GetSceneLights().sunlight.color, 1.0f),
+                .sunlightViewProj = renderTarget.GetSceneLights().sunlight.viewProj,
 
                 //TODO Currently not used
                 .sunlightShadowMapID = 0,
 
                 //Changed only on dynamic lighting change
-                .pointLightsCount = POINT_LIGHTS_COUNT,
+                .pointLightsCount = renderTarget.GetPointLightsCount(),
                 // Const part
                 .pointLightBuffer = vkGetBufferDeviceAddress(device, &pointLightsAdressInfo)
             };
 
             DescriptorWriter descriptorWriter;
             descriptorWriter.WriteBuffer(0, frameSceneData.globalLightsDataBuffer.buffer, sizeof(LightData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            descriptorWriter.WriteImages(1, &testLights.sunlight.shadowMap.imageView, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1);
+            descriptorWriter.WriteImages(1, &renderTarget.GetSceneLights().sunlight.shadowMap.imageView, VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1);
             descriptorWriter.WriteSampler(2, shadowSamplerNearest);
             descriptorWriter.UpdateSet(device, frameSceneData.globalLightsDescriptorSet);
         }
@@ -950,7 +897,7 @@ void Vel::Renderer::Cleanup()
         renderThreadPool.Cleanup();
         vkDeviceWaitIdle(device);
 
-        loadedScenes.clear();
+        //loadedScenes.clear();
 
         shadowPass.Cleanup();
         skyboxPass.Cleanup();

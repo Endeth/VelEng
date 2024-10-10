@@ -18,11 +18,10 @@ namespace Vel
     class Actor
     {
     public:
-        void AddChild(const Actor& other);
-        void AddChild(Actor&& other);
         void AddChild(std::unique_ptr<Actor>&& other);
-        void AddComponent(const Component& other);
+        void AddComponent(std::unique_ptr<Component>&& other);
 
+        glm::mat4 GetTransformationMatrix();
         const glm::vec3& GetLocalPosition();
         glm::vec3 GetWorldPosition();
         void SetPosition(const glm::vec3& pos);
